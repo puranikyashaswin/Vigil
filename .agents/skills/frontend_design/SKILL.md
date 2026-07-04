@@ -5,97 +5,123 @@ description: "Use when designing, building, or styling the Next.js frontend inte
 
 # Frontend Design Skill
 
-This skill defines the visual identity, styling rules, typography, animation principles, and interactive components (like the 3D knowledge graph) for Vigil's Next.js frontend.
+This skill defines the visual identity, styling rules, typography, animation principles, and interactive components (like the 2D knowledge graph) for Vigil's Next.js frontend.
 
 ---
 
 ## 1. Aesthetic Identity & Theme
 
-Vigil must feel like a premium, state-of-the-art industrial intelligence console. Avoid standard, rounded layouts or default themes.
+Vigil uses a warm ivory/editorial theme derived from the Anthropic brand guidelines. Avoid dark-mode or aggressive neon palettes.
 
-### Color Palette (Custom Dark Mode)
-- **Base / Background**: Deep space charcoal (`#0B0F19`) and rich slate (`#111827`). Never pure black.
-- **Card / Surface**: Sharp-edge panels (`rounded-none`) with thin borders (`border-white/10`) and flat translucent backdrops. No rounded-xl corners or soft pill shapes.
+### Color Palette (Warm Ivory / Editorial)
+- **Background**: Warm ivory (`#faf9f5`). The page, cards, and panels all use this base.
+- **Borders / Chrome**: Light gray (`#e8e6dc`) for primary borders and dividers; mid gray (`#b0aea5`) for secondary chrome and inactive text.
+- **Text**: Dark charcoal (`#141413`) for primary text. Secondary/muted text uses `#575653` or `#b0aea5`.
 - **Accents**:
-  - Primary (Cyan): `#06B6D4` (representing intelligence/activity).
-  - Secondary (Indigo/Violet): `#6366F1` (representing linking/graph structure).
-  - Success (Emerald): `#10B981`.
-- **Branding**: Monospace subheads, technical indicators, and clean neon borders (e.g. `shadow-[0_0_10px_rgba(6,182,212,0.15)]`).
+  - Orange / Clay (`#d97757`): Primary accent for active tabs, selected borders, interactive highlights.
+  - Blue (`#6a9bcc`): Secondary accent for concept/equipment nodes and metadata links.
+  - Green (`#788c5d`): Tertiary accent for procedure nodes.
+  - Crimson (`#EF4444`): Alert-specific accent (compliance alerts, critical badges).
+- **Branding**: Monospace subheads, uppercase tracking-wide labels, and no rounded corners (`rounded-none` throughout). Shadows are minimal and muted.
 
 ### Contrast & Readability
-- All text elements must maintain a minimum contrast ratio of 4.5:1 against the dark backgrounds, conforming to WCAG AA standards.
-- Pay special attention to safety-critical text such as the "low" severity alert gray badges; use high-contrast foreground text colors (e.g., `#E5E7EB` on `#374151` background) to prevent illegibility on dark backgrounds.
+- All text elements must maintain a minimum contrast ratio of 4.5:1 against `#faf9f5`, conforming to WCAG AA standards.
+- Low-severity alert badges must use high-contrast text (`#faf9f5` on `#b0aea5`) to remain legible.
 
 ### Typography
-- **Headings**: Geometric Sans or Monospace (e.g., `Space Grotesk` or `JetBrains Mono`), tracking-tight, light or medium font weights.
-- **Body & Code**: Clean Sans (e.g., `Inter` or `Geist`) for body text; `JetBrains Mono` or `Fira Code` for all metadata keys, file paths, and terminal labels.
+- **Headings**: Monospace (`font-mono`), bold, uppercase, tracking-tight or tracking-wide.
+- **Body & Labels**: Monospace for metadata, file paths, and terminal-style labels; clean sans-serif (`font-sans`) for body prose and descriptions.
+- **Font Sizes**: Use `text-[10px]` to `text-xs` for chrome and metadata; `text-sm` for body; `text-lg` to `text-xl` for headings.
 
 ### Spacing Philosophy
-- Use grid structures with zero-border margins, sharp dividers (`border-white/5`), and high-information-density layouts.
-- Spacing gaps must be strict (`gap-4`, `gap-6`), using box borders to compartmentalize views.
+- Grid-based strict spacing (`gap-4`, `gap-6`). Panels use border dividers (`border-[#e8e6dc]`).
+- High-information-density layouts. No rounded corners, no pill shapes, no soft shadows.
 
 ---
 
-## 2. 3D Knowledge Graph Integration (`react-force-graph-3d`)
+## 2. 2D Knowledge Graph Integration (`react-force-graph-2d`)
 
-The live 3D knowledge graph visualizes the cross-linked OKF concept network. It must be a core interactive element.
+The interactive 2D knowledge graph visualizes the cross-linked OKF concept network using an Obsidian-style force layout. It is built with `react-force-graph-2d` (NOT 3D).
 
 ### Layout Integration
-- **Split-Screen View**: The 3D canvas occupies the left or center 60% of the viewport. Clicking a node opens the details card (an OKF preview) on the right 40% panel.
-- **Canvas Container**: Set canvas dimensions dynamically to fill the parent container. Use absolute positioning with `pointer-events-none` on overlay controls.
+- **Split-Screen View**: The 2D canvas occupies the left 60% of the viewport (40% on the right for the inspector/chat/alerts panel).
+- **Canvas Container**: The `ForceGraph2D` component fills its parent container, using a `useEffect` resize observer to match container dimensions.
 
-### Visual Styling of Nodes & Links
-- **Node Geometry**: Render nodes as 3D spheres. Node size must scale proportionally with the number of incoming/outgoing links to represent key concepts.
+### Node Rendering
+- **Node Style**: Solid circles with a thin border. Rendered via `nodeCanvasObject` on an HTML5 canvas.
 - **Color Coding by Concept Type**:
-  - `concept` / `equipment`: Vibrant Cyan (`#06B6D4`)
-  - `procedure`: Emerald Green (`#10B981`)
-  - `regulation`: Deep Indigo (`#6366F1`)
-  - `maintenance_log`: Muted Amber (`#F59E0B`)
-  - `alert`: Crimson Red (`#EF4444`)
-- **Link Aesthetics**: Semi-transparent lines (`rgba(255, 255, 255, 0.15)`). Highlight links connected to the hovered node in active Cyan or Violet with directional arrows.
+  - `concept` / `equipment`: Blue (`#6a9bcc`)
+  - `procedure`: Green (`#788c5d`)
+  - `regulation`: Orange / Clay (`#d97757`)
+  - `maintenance_log`: Mid Gray (`#b0aea5`)
+  - `alert`: Crimson (`#EF4444`)
+- **Node Sizing**: Nodes scale proportionally by connection count (degree). Base radius is `3.5`, plus `0.9 * degree`. The degree map is computed in a `useMemo` over all links at component mount.
+- **Label Rendering**: Node labels are drawn below each node using monospace font. Font size scales inversely with camera zoom: `Math.max(2.4, 9 / globalScale)`. Label visibility is tied to highlight state and zoom level (low-opacity at zoomed-out distances, full-opacity when zoomed in or selected).
 
-### Graph States & Live Building
-- **Empty/Initial State**: When zero documents are ingested, render a subtle starfield background with a pulsing cyan core node at the center representing "Vigil Core". Display a clean floating instruction badge: "Ingest a document to construct the intelligence graph".
-- **Ingestion Population Animation**: As new OKF concepts are parsed, animate new nodes entering the graph by flying them in from the outer canvas edges towards their target coordinate, scaling up from `0` to `1` over 800ms. Make links trace outwards dynamically using animated light particles flowing from the new node to its linked dependencies.
+### Link Rendering
+- **Default State**: Links render as thin, low-opacity lines in light gray (`#e8e6dc`) at `0.6px` width and `0.22` alpha.
+- **Hover Highlighted State**: Links connected to the hovered node render in orange/clay (`#d97757`) at `1.4px` width and `0.85` alpha.
+
+### Hover Highlight Behavior (Obsidian-Style)
+- When hovering a node, a highlight set is computed containing the hovered node, all its direct neighbors, and all links connecting them.
+- **Highlighted nodes/links**: Render at full opacity.
+- **Dimmed nodes/links** (anything not in the highlight set): Render at `0.12` alpha for nodes, `0.08` alpha for labels, and remain low-opacity for links.
+- When nothing is hovered, all nodes/links render at default opacity (highlight set is empty, so the `isHighlighted` check passes for everything).
+
+### Selection Behavior
+- Clicking a node opens the inspector panel on the right. The selected node gets an orange/clay (`#d97757`) ring (1.8px stroke) drawn around it.
+- The canvas auto-centers and zooms to the selected node (`centerAt` + `zoom(2.0, 800)` over 800ms).
+
+### D3 Force Configuration
+- **Charge Force**: Repulsion strength `-240` with `distanceMax` of `400`. This pushes nodes apart to reduce label overlap.
+- **Link Force**: Distance `115`, strength `0.65`. Longer link distance (vs default) spreads connected nodes further apart, creating room for labels.
+- **Alpha Decay**: `0.012` (slower cooling for a more settled layout).
+- **Velocity Decay**: `0.35` (dampened motion).
+- **Initial Layout**: Nodes are arranged in a circle (angle-distributed) around the canvas center before the simulation starts. After 1 second, `zoomToFit(400, 100)` is called to frame all nodes.
+
+### Empty State
+- When no nodes exist, the graph area displays a centered placeholder with the "Vigil Intelligence Core" badge and text: "Knowledge Graph is currently empty. Ingest active documents to populate nodes and links."
 
 ---
 
 ## 3. Contradiction-Alert Feed Styling
 
-Alerts generated by the Ingestion Pipeline must stand out immediately on the dashboard. Style them dynamically based on the YAML frontmatter `severity` field:
+Alerts generated by the Ingestion Pipeline are styled dynamically based on the YAML frontmatter `severity` field:
 
-| Severity | Color Base | Border / Glow | Visual Element |
+| Severity | Background | Border | Badge |
 | :--- | :--- | :--- | :--- |
-| **critical** | Deep Crimson (`#EF4444`) | Pulsing red drop-shadow | Accent icon with a slow-pulsing outer glow and bold red header |
-| **high** | Safety Orange (`#F97316`) | Solid amber outline | Accent border with exclamation icon |
-| **medium** | Warning Yellow (`#F59E0B`) | Standard muted border | Muted yellow background badge |
-| **low** | Slate/Gray (`#374151` base) | No glow, inline text | Subtle gray badge with high-contrast text (`#E5E7EB`) |
+| **critical** | `bg-red-50` | `border-red-200` with subtle red shadow glow | `bg-red-600 text-white animate-pulse` |
+| **high** | `bg-orange-50` | `border-orange-200` | `bg-orange-600 text-white` |
+| **medium** | `bg-amber-50` | `border-amber-200` | `bg-amber-500 text-black font-semibold` |
+| **low** | `bg-[#e8e6dc]/30` | `border-[#e8e6dc]` | `bg-[#b0aea5] text-[#faf9f5]` |
 
 ### Interaction:
-- Selecting an alert card must fly-out a split comparison showing side-by-side snippets of the two conflicting concepts (e.g., step vs. regulation) with highlighted diffs.
+- Clicking an alert card opens a modal overlay (`bg-black/60`) with the full alert content. The modal uses Framer Motion for enter/exit transitions (`scale: 0.98` to `1`, `y: 10` to `0`).
+- The modal header displays the severity badge, title, and a close button.
 
 ---
 
 ## 4. Animation Guidelines (`framer-motion`)
 
-Do not add distracting transitions. Animations must enhance perceived performance and structure.
+Animations are minimal and functional. They enhance perceived performance without distraction.
 
 ### When to use Framer Motion:
-1. **Sidebar / Detail Panel Fly-outs**: Use a spring transition (`type: "spring", stiffness: 300, damping: 30`) to slide panels in from the right.
-2. **Alert Cards Ingestion**: When the pipeline flags an alert, fade/scale it in (`initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 }`).
-3. **Graph Node Detail Changes**: Fade-in and shift-up (`y: 10` to `y: 0`) when switching node details to signal content update.
+1. **Tab Content Switches**: Inspector, Chat, and Alerts tab panels fade and slide slightly (`opacity` + `y: 5` to `y: 0` over 150ms) to signal content changes.
+2. **Alert Card Clicks / Modal**: Fade in backdrop with slight scale-up on the card (`initial: { scale: 0.98, y: 10 }, animate: { scale: 1, y: 0 }`).
+3. **Loading Spinners**: Subtle spin animation on refresh icons during data fetches.
 
 ### When to remain Static:
-- **Index Tables & Lists**: Standard document tables must load immediately (no individual row cascade fades) to keep data-heavy views fast.
-- **Graph Legends**: Muted static overlays.
+- **Alert Cards List**: Cards load with no staggered cascades or row animations.
+- **Graph Legend**: Static overlay with no transitions.
+- **Header / Sidebar**: No animated reveals; static chrome.
 
 ---
 
 ## 5. Mobile & Responsive Layout
 
-Field technicians operating in the field require full dashboard capability on mobile devices.
+Field technicians require full dashboard capability on mobile devices.
 
 ### Viewport Adaptation:
-- **Split-Screen Collapse**: On viewports narrower than `768px` (mobile/tablet), the 60/40 desktop split collapses. The 3D knowledge graph occupies a toggleable background view, accessible via a floating action button (FAB) in the corner.
-- **Bottom Sheets**: Detail panels and node inspect views transition from side fly-outs into swipeable bottom sheets (covering the lower 50% or full screen on swipe-up) using Framer Motion spring transitions (`y: "100%"` to `y: 0`).
-- **Expert Copilot Chat**: Adjust chat interface to use full-screen overlays on mobile to maximize keyboard typing space and readability.
+- **Split-Screen Collapse**: On viewports narrower than `768px`, the 60/40 desktop split collapses. The 2D knowledge graph occupies the top portion; the inspector/chat/alerts panel stacks below it.
+- **Flex Direction**: The main workspace uses `flex-col` on mobile (`md:flex-row` on desktop).
+- **Chat Input**: Full-width input bar at the bottom of the chat panel, sticky to the form area.

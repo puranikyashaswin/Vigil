@@ -26,7 +26,7 @@ This document serves as the project constitution and styling guidelines for the 
 - **Framework**: Next.js (App Router)
 - **Styling**: Tailwind CSS & `shadcn/ui` (custom premium aesthetic themes, avoiding generic/default shadcn styling)
 - **Animations**: `framer-motion`
-- **Data Visualization**: `react-force-graph-3d` (for live 3D knowledge graph interactions)
+- **Data Visualization**: `react-force-graph-2d` (for live 2D knowledge graph interactions, Obsidian-style force layout)
 
 ---
 
