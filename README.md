@@ -21,68 +21,51 @@ This means an operator updating a maintenance bypass procedure that violates an 
 
 ## Architecture Overview
 
-```
-                      +-------------------------------+
-                      |     Document Ingestion        |
-                      |  (PDF, DOCX, PNG, CSV, XLSX)  |
-                      +---------------+---------------+
-                                      |
-                     +----------------v----------------+
-                     |  Document Type Detection        |
-                     |  Text-native -> Local Parsers   |
-                     |  Scanned/Image -> OpenRouter OCR |
-                     +----------------+----------------+
-                                      |
-                     +----------------v----------------+
-                     |  LLM Entity Extraction          |
-                     |  (Pydantic schema, JSON output) |
-                     +----------------+----------------+
-                                      |
-                     +----------------v----------------+
-                     |  OKF Concept File Writer        |
-                     |  (YAML frontmatter + .md body)  |
-                     |  + index.md/log.md updates      |
-                     +----------------+----------------+
-                                      |
-                     +----------------v----------------+
-                     |  Contradiction Detection         |
-                     |  Forward + Reverse link check   |
-                     |  LLM comparison (temp=0.0)      |
-                     |  Alert generation if score>0.7  |
-                     +----------------+----------------+
-                                      |
-                     +----------------v----------------+
-                     |  FastEmbed + Qdrant Indexing    |
-                     |  Chunk -> BAAI/bge-small-en-v1.5|
-                     |  Payload: file_path, directory, |
-                     |  text, type                     |
-                     +----------------+----------------+
-                                      |
-         +----------------------------+----------------------------+
-         |                            |                            |
-+--------v--------+  +---------------v-------+  +------------------v------+
-|  Expert Copilot |  |  Maintenance & RCA    |  |  Compliance Agent       |
-|  (all dirs)     |  |  (equipment/ +        |  |  (procedures/ +         |
-|  Broad GraphRAG |  |   maintenance/)       |  |   regulations/)         |
-|  + citations    |  |  Root cause analysis  |  |  Violation detection    |
-+-----------------+  +-----------------------+  +-------------------------+
-         |                            |                            |
-         +----------------------------+----------------------------+
-                                      |
-                      +---------------v---------------+
-                      |  Lessons-Learned Engine       |
-                      |  (maintenance/ + alerts/)     |
-                      |  Pattern synthesis across     |
-                      |  timeframes                   |
-                      +-------------------------------+
-                                      |
-                      +---------------v---------------+
-                      |  Next.js Frontend Dashboard   |
-                      |  - 2D force-graph (Obsidian)  |
-                      |  - Chat (multi-agent router)  |
-                      |  - Alert feed + diff compare  |
-                      |  - Warm ivory editorial theme  |
-                      +-------------------------------+
+Full data flow from document ingestion through multi-agent query routing to the frontend dashboard. See [docs/architecture.md](docs/architecture.md) for a detailed breakdown of each step.
+
+```mermaid
+flowchart TD
+    DOC[/"Documents\nPDF · DOCX · PNG · CSV · XLSX"/]
+
+    subgraph PIPELINE["Ingestion Pipeline"]
+        DETECT["Type Detection"]
+        PARSER{"Text-native\nor Image?"}
+        LOCAL["Local Parsers\npdfplumber · python-docx\nopenpyxl · xlrd"]
+        OCR["OpenRouter OCR\nFree-tier Vision Models"]
+        EXTRACT["LLM Entity Extraction\nPydantic JSON schema"]
+        OKF["OKF Concept Writer\nYAML + Markdown\nindex.md + log.md"]
+        CHECK["Contradiction Detection\nForward + Reverse LLM\ncomparison (temp=0.0)"]
+        ALERT[/"Alert Generated\nto alerts/ directory\nif score > 0.7"/]
+        INDEX["Semantic Indexing\nFastEmbed · Qdrant\nBAAI/bge-small-en-v1.5"]
+    end
+
+    subgraph AGENTS["Query Agents (LangGraph)"]
+        COPILOT["Expert Copilot\nFull GraphRAG\n+ Citations"]
+        RCA["Maintenance & RCA\nRoot Cause Analysis"]
+        COMPLY["Compliance Agent\nRegulatory Violations"]
+        LEARN["Lessons-Learned\nPattern Synthesis"]
+    end
+
+    DASHBOARD[/"Next.js Dashboard\n2D Force Graph · Chat\nAlert Feed · Inspector"/]
+
+    DOC --> DETECT
+    DETECT --> PARSER
+    PARSER -- "Text-native" --> LOCAL
+    PARSER -- "Scanned" --> OCR
+    LOCAL --> EXTRACT
+    OCR --> EXTRACT
+    EXTRACT --> OKF
+    OKF --> CHECK
+    CHECK -- "Conflict found" --> ALERT
+    CHECK --> INDEX
+    INDEX --> COPILOT
+    INDEX --> RCA
+    INDEX --> COMPLY
+    INDEX --> LEARN
+    COPILOT --> DASHBOARD
+    RCA --> DASHBOARD
+    COMPLY --> DASHBOARD
+    LEARN --> DASHBOARD
 ```
 
 ---
@@ -108,24 +91,10 @@ This means an operator updating a maintenance bypass procedure that violates an 
 | Layer | Technology | Details |
 |:---|:---|:---|
 | Framework | Next.js 16 | App Router |
-| Styling | Tailwind CSS 4 | Custom warm ivory/editorial theme (Anthropic brand colors) |
+| Styling | Tailwind CSS 4 | Warm editorial visual identity inspired by Anthropic's design language (ivory surfaces, clay accent, serif/sans pairing). See [.agents/skills/frontend_design/SKILL.md](.agents/skills/frontend_design/SKILL.md) for the full color palette and typography specification. |
 | Animations | `framer-motion` | Tab transitions, modal enter/exit |
 | Graph | `react-force-graph-2d` | Obsidian-style 2D force layout |
 | Icons | `lucide-react` | |
-
-### Theme (Warm Ivory / Editorial)
-The UI uses a warm editorial palette derived from the Anthropic brand guidelines:
-
-| Role | Color | Hex |
-|:---|:---|:---|
-| Background | Warm ivory | `#faf9f5` |
-| Borders | Light gray | `#e8e6dc` |
-| Secondary chrome | Mid gray | `#b0aea5` |
-| Primary text | Dark charcoal | `#141413` |
-| Primary accent | Orange / clay | `#d97757` |
-| Secondary accent | Blue | `#6a9bcc` |
-| Tertiary accent | Green | `#788c5d` |
-| Alert accent | Crimson | `#EF4444` |
 
 ---
 
