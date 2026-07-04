@@ -282,8 +282,4 @@ vigil/
   test_documents/           # Source documents for ingestion
 ```
 
----
 
-## License
-
-Internal project. Copyright ET AI Hackathon 2026.

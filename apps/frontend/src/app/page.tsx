@@ -14,11 +14,14 @@ import {
   RefreshCw,
   FolderOpen,
   Clock,
-  ExternalLink
+  ExternalLink,
+  ChevronUp,
+  ArrowUp
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const ForceGraph2D = dynamic(() => import("@/components/ForceGraph2D"), { ssr: false });
+const SplashScreen = dynamic(() => import("@/components/SplashScreen"), { ssr: false });
 
 interface Node {
   id: string;
@@ -56,7 +59,7 @@ interface ChatMessage {
 }
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<"inspect" | "chat" | "alerts">("inspect");
+  const [activeTab, setActiveTab] = useState<"inspect" | "alerts">("inspect");
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -66,6 +69,7 @@ export default function Dashboard() {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   const loadData = async () => {
     try {
@@ -148,10 +152,15 @@ export default function Dashboard() {
     }
   };
 
+  const lastAssistantMsg = [...messages].reverse().find(m => m.role === "assistant");
+  const conversationCount = messages.length;
+
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <>
+      <SplashScreen />
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       {/* Header */}
-      <header className="h-20 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-sm px-8 flex items-center justify-between z-10 shrink-0">
+      <header className="h-20 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-sm px-8 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-clay flex items-center justify-center text-white text-sm font-bold">
             V
@@ -232,6 +241,95 @@ export default function Dashboard() {
               selectedNodeId={selectedNode?.id}
             />
           </div>
+
+          {/* Floating Chat Response Overlay */}
+          <AnimatePresence>
+            {lastAssistantMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute bottom-24 left-6 right-6 z-10 max-w-2xl mx-auto"
+              >
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl dark:shadow-black/40 p-5">
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      {lastAssistantMsg.category && `Resolved by ${lastAssistantMsg.category} agent`}
+                    </span>
+                    <button
+                      onClick={() => setMessages((prev) => prev.slice(0, -1))}
+                      className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded transition"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4">
+                    {lastAssistantMsg.content}
+                  </p>
+                  {lastAssistantMsg.citations && lastAssistantMsg.citations.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Citations:
+                        <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                          {lastAssistantMsg.citations.slice(0, 3).map((c, i) => (
+                            <li key={i}>
+                              <span className="text-clay font-medium">{c.source_file}</span> (score: {c.score.toFixed(2)})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                  {conversationCount > 1 && (
+                    <button
+                      onClick={() => setShowHistory(true)}
+                      className="mt-3 text-xs font-medium text-clay hover:text-clay/80 transition flex items-center gap-1"
+                    >
+                      View conversation ({conversationCount} messages)
+                      <ChevronUp className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Floating Chat Input Bar */}
+          <form 
+            onSubmit={handleSendMessage}
+            className="absolute bottom-6 left-6 right-6 z-10 max-w-2xl mx-auto"
+          >
+            <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-full px-5 py-3 shadow-lg dark:shadow-black/30">
+              <input 
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Ask Vigil about equipment, procedures, or compliance..."
+                className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
+              />
+              {conversationCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  title="View conversation history"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+              )}
+              <button 
+                type="submit"
+                disabled={isTyping || !inputMessage.trim()}
+                className="p-2 bg-clay hover:bg-clay/85 disabled:opacity-50 text-white rounded-full transition flex items-center justify-center cursor-pointer"
+              >
+                {isTyping ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowUp className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </form>
         </section>
 
         {/* Right Panel (40%) */}
@@ -250,17 +348,6 @@ export default function Dashboard() {
               Inspector
             </button>
             <button 
-              onClick={() => setActiveTab("chat")}
-              className={`flex-1 py-4 text-sm font-medium border-b-2 tracking-wide transition flex items-center justify-center gap-2 cursor-pointer ${
-                activeTab === "chat" 
-                  ? "border-clay text-clay bg-clay/5 dark:bg-clay/10" 
-                  : "border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50"
-              }`}
-            >
-              <MessageSquare className="w-4 h-4" />
-              Chat
-            </button>
-            <button 
               onClick={() => setActiveTab("alerts")}
               className={`flex-1 py-4 text-sm font-medium border-b-2 tracking-wide transition flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === "alerts" 
@@ -276,7 +363,6 @@ export default function Dashboard() {
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-8 relative bg-zinc-50/50 dark:bg-zinc-950/50">
             <AnimatePresence mode="wait">
-              {/* Inspector Tab */}
               {activeTab === "inspect" && (
                 <motion.div
                   key="inspect"
@@ -330,90 +416,6 @@ export default function Dashboard() {
                 </motion.div>
               )}
 
-              {/* Chat Tab */}
-              {activeTab === "chat" && (
-                <motion.div
-                  key="chat"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={{ duration: 0.15 }}
-                  className="h-full flex flex-col bg-zinc-50/50 dark:bg-zinc-950/50"
-                >
-                  <div className="flex-1 space-y-4 pr-1 min-h-[250px] overflow-y-auto">
-                    {messages.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
-                          <MessageSquare className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Start a Conversation</h3>
-                        <p className="text-base text-zinc-500 dark:text-zinc-400 max-w-xs">
-                          Query compliance rules or maintenance logs via the multi-agent router.
-                        </p>
-                      </div>
-                    ) : (
-                      messages.map((msg, index) => (
-                        <div 
-                          key={index}
-                          className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
-                        >
-                          <div className={`max-w-[90%] px-5 py-3 text-base leading-relaxed shadow-sm border rounded-lg ${
-                            msg.role === "user" 
-                              ? "bg-clay/10 dark:bg-clay/15 border-clay/20 dark:border-clay/30 text-zinc-900 dark:text-zinc-100" 
-                              : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
-                          }`}>
-                            {msg.content}
-
-                            {msg.role === "assistant" && msg.category && (
-                              <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700 flex flex-col gap-2">
-                                <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                                  Resolved by: {msg.category} agent
-                                </div>
-                                {msg.citations && msg.citations.length > 0 && (
-                                  <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                                    Citations:
-                                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                                      {msg.citations.map((c, i) => (
-                                        <li key={i}>
-                                          <span className="text-clay font-medium">{c.source_file}</span> (score: {c.score.toFixed(2)})
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                    {isTyping && (
-                      <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                        <RefreshCw className="w-4 h-4 animate-spin text-clay" />
-                        <span>Querying agent network...</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <form onSubmit={handleSendMessage} className="mt-4 flex gap-2 border-t border-zinc-200 dark:border-zinc-800 pt-6 bg-zinc-50 dark:bg-zinc-950">
-                    <input 
-                      type="text"
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      placeholder="Ask Vigil..."
-                      className="flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-3 text-base text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-clay focus:ring-1 focus:ring-clay transition"
-                    />
-                    <button 
-                      type="submit"
-                      className="px-5 py-3 bg-clay hover:bg-clay/85 text-white rounded-lg transition flex items-center justify-center cursor-pointer shadow-sm"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </form>
-                </motion.div>
-              )}
-
-              {/* Alerts Tab */}
               {activeTab === "alerts" && (
                 <motion.div
                   key="alerts"
@@ -472,6 +474,71 @@ export default function Dashboard() {
         </aside>
       </main>
 
+      {/* Conversation History Drawer */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowHistory(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-0 left-0 right-0 max-h-[60vh] bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
+                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Conversation</h3>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {messages.map((msg, index) => (
+                  <div key={index} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                    <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed rounded-2xl ${
+                      msg.role === "user"
+                        ? "bg-clay/10 dark:bg-clay/15 text-zinc-900 dark:text-zinc-100 rounded-br-md"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-bl-md"
+                    }`}>
+                      {msg.content}
+                      {msg.role === "assistant" && msg.category && (
+                        <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                            via {msg.category} agent
+                          </span>
+                          {msg.citations && msg.citations.length > 0 && (
+                            <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                              {msg.citations.map((c, i) => (
+                                <span key={i} className="text-clay font-medium">{c.source_file}{i < msg.citations!.length - 1 ? ", " : ""}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 pl-2">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-clay" />
+                    <span>Thinking...</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Alert Detail Modal */}
       <AnimatePresence>
         {selectedAlert && (
@@ -526,5 +593,6 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

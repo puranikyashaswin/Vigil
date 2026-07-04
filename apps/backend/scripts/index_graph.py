@@ -22,8 +22,10 @@ def get_qdrant_client() -> QdrantClient:
     api_key = os.getenv("QDRANT_API_KEY")
     
     if not url or "your_qdrant_url" in url:
-        logger.info("Using local persistent Qdrant database (vigil_qdrant.db) because Qdrant URL is a placeholder.")
-        return QdrantClient(path="vigil_qdrant.db")
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        db_path = os.path.join(project_root, "vigil_qdrant.db")
+        logger.info(f"Using local persistent Qdrant database ({db_path}) because Qdrant URL is a placeholder.")
+        return QdrantClient(path=db_path)
     return QdrantClient(url=url, api_key=api_key)
 
 def load_okf_files(kg_dir: str) -> List[Dict[str, Any]]:

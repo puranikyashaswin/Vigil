@@ -44,7 +44,8 @@ def get_qdrant_client() -> QdrantClient:
     url = os.getenv("QDRANT_URL")
     api_key = os.getenv("QDRANT_API_KEY")
     if not url or "your_qdrant_url" in url:
-        return QdrantClient(path="vigil_qdrant.db")
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        return QdrantClient(path=os.path.join(project_root, "vigil_qdrant.db"))
     return QdrantClient(url=url, api_key=api_key)
 
 def get_client() -> Tuple[OpenAI, str]:
