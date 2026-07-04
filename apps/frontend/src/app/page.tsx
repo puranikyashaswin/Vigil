@@ -202,34 +202,57 @@ export default function Dashboard() {
         {/* Left: Graph (60%) */}
         <section className="flex-1 h-2/3 md:h-full md:w-3/5 p-6 flex flex-col relative border-r border-zinc-200 dark:border-zinc-800">
           {/* Graph Legend Card */}
-          <div className="absolute top-6 right-6 z-10 bg-white dark:bg-zinc-900 shadow-lg dark:shadow-black/30 rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 min-w-[200px] select-none">
-            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3 pb-2 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+          {(() => {
+            const counts: Record<string, number> = {};
+            graphData.nodes.forEach(n => {
+              counts[n.type] = (counts[n.type] || 0) + 1;
+            });
+            return (
+          <div className="absolute top-6 right-6 z-10 bg-white dark:bg-zinc-900 shadow-lg dark:shadow-black/30 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 min-w-[200px] select-none">
+            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-2 pb-2 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
               <Activity className="w-4 h-4 text-clay" />
               Graph Legend
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-zinc-400 dark:bg-zinc-500 rounded-full inline-block" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Concept / Equipment</span>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-zinc-400 dark:bg-zinc-500 rounded-full shrink-0" />
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">Concept</span>
+                </div>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["concept"] || 0}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-zinc-500 dark:bg-zinc-400 rounded-full inline-block" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Procedure</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-zinc-500 dark:bg-zinc-400 rounded-full shrink-0" />
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">Procedure</span>
+                </div>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["procedure"] || 0}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-zinc-600 dark:bg-zinc-300 rounded-full inline-block" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Regulation</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-zinc-600 dark:bg-zinc-300 rounded-full shrink-0" />
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">Regulation</span>
+                </div>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["regulation"] || 0}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-zinc-700 dark:bg-zinc-200 rounded-full inline-block" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Maintenance Log</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-zinc-700 dark:bg-zinc-200 rounded-full shrink-0" />
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">Maintenance</span>
+                </div>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["maintenance_log"] || 0}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-clay rounded-full inline-block" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Compliance Alert</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-clay rounded-full shrink-0" />
+                  <span className="text-xs text-zinc-600 dark:text-zinc-400">Alert</span>
+                </div>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["alert"] || 0}</span>
               </div>
             </div>
           </div>
+            );
+          })()}
 
           <div className="flex-1 w-full h-full">
             <ForceGraph2D 
@@ -241,95 +264,6 @@ export default function Dashboard() {
               selectedNodeId={selectedNode?.id}
             />
           </div>
-
-          {/* Floating Chat Response Overlay */}
-          <AnimatePresence>
-            {lastAssistantMsg && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="absolute bottom-24 left-6 right-6 z-10 max-w-2xl mx-auto"
-              >
-                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-xl dark:shadow-black/40 p-5">
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                      {lastAssistantMsg.category && `Resolved by ${lastAssistantMsg.category} agent`}
-                    </span>
-                    <button
-                      onClick={() => setMessages((prev) => prev.slice(0, -1))}
-                      className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded transition"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4">
-                    {lastAssistantMsg.content}
-                  </p>
-                  {lastAssistantMsg.citations && lastAssistantMsg.citations.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Citations:
-                        <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                          {lastAssistantMsg.citations.slice(0, 3).map((c, i) => (
-                            <li key={i}>
-                              <span className="text-clay font-medium">{c.source_file}</span> (score: {c.score.toFixed(2)})
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                  {conversationCount > 1 && (
-                    <button
-                      onClick={() => setShowHistory(true)}
-                      className="mt-3 text-xs font-medium text-clay hover:text-clay/80 transition flex items-center gap-1"
-                    >
-                      View conversation ({conversationCount} messages)
-                      <ChevronUp className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Floating Chat Input Bar */}
-          <form 
-            onSubmit={handleSendMessage}
-            className="absolute bottom-6 left-6 right-6 z-10 max-w-2xl mx-auto"
-          >
-            <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-full px-5 py-3 shadow-lg dark:shadow-black/30">
-              <input 
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Ask Vigil about equipment, procedures, or compliance..."
-                className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
-              />
-              {conversationCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  title="View conversation history"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                </button>
-              )}
-              <button 
-                type="submit"
-                disabled={isTyping || !inputMessage.trim()}
-                className="p-2 bg-clay hover:bg-clay/85 disabled:opacity-50 text-white rounded-full transition flex items-center justify-center cursor-pointer"
-              >
-                {isTyping ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ArrowUp className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </form>
         </section>
 
         {/* Right Panel (40%) */}
@@ -473,6 +407,95 @@ export default function Dashboard() {
           </div>
         </aside>
       </main>
+
+      {/* Floating Chat Response Overlay - full-screen centered */}
+      <AnimatePresence>
+        {lastAssistantMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="fixed bottom-28 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4"
+          >
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-2xl dark:shadow-black/40 p-5">
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  {lastAssistantMsg.category && `Resolved by ${lastAssistantMsg.category} agent`}
+                </span>
+                <button
+                  onClick={() => setMessages((prev) => prev.slice(0, -1))}
+                  className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded transition"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4">
+                {lastAssistantMsg.content}
+              </p>
+              {lastAssistantMsg.citations && lastAssistantMsg.citations.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Citations:
+                    <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                      {lastAssistantMsg.citations.slice(0, 3).map((c, i) => (
+                        <li key={i}>
+                          <span className="text-clay font-medium">{c.source_file}</span> (score: {c.score.toFixed(2)})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              {conversationCount > 1 && (
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="mt-3 text-xs font-medium text-clay hover:text-clay/80 transition flex items-center gap-1"
+                >
+                  View conversation ({conversationCount} messages)
+                  <ChevronUp className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Chat Input Bar - full-screen centered */}
+      <form 
+        onSubmit={handleSendMessage}
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4"
+      >
+        <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-full px-5 py-3 shadow-lg dark:shadow-black/30">
+          <input 
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            placeholder="Ask Vigil about equipment, procedures, or compliance..."
+            className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
+          />
+          {conversationCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowHistory(!showHistory)}
+              className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              title="View conversation history"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
+          )}
+          <button 
+            type="submit"
+            disabled={isTyping || !inputMessage.trim()}
+            className="p-2 bg-clay hover:bg-clay/85 disabled:opacity-50 text-white rounded-full transition flex items-center justify-center cursor-pointer"
+          >
+            {isTyping ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <ArrowUp className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+      </form>
 
       {/* Conversation History Drawer */}
       <AnimatePresence>

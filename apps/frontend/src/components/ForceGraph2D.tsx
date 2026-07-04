@@ -125,7 +125,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
 
     const chargeForce = fgRef.current.d3Force("charge");
     if (chargeForce) {
-      chargeForce.strength(-240).distanceMax(400);
+      chargeForce.strength(-100).distanceMax(250);
     }
 
     const centerForce = fgRef.current.d3Force("center");
@@ -135,16 +135,21 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
 
     const linkForce = fgRef.current.d3Force("link");
     if (linkForce) {
-      linkForce.distance(115).strength(0.65);
+      linkForce.distance(60).strength(0.8);
+    }
+
+    const collisionForce = fgRef.current.d3Force("collision");
+    if (collisionForce) {
+      collisionForce.radius(18).strength(0.7);
     }
 
     fgRef.current.d3ReheatSimulation();
 
     setTimeout(() => {
       if (fgRef.current) {
-        fgRef.current.zoomToFit(400, 100);
+        fgRef.current.zoomToFit(300, 60);
       }
-    }, 1000);
+    }, 1200);
   }, [initializedData.nodes.length, dimensions.width, dimensions.height]);
 
   useEffect(() => {
