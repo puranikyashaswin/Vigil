@@ -11,3 +11,6 @@ Record of ingest, link, and modification actions:
 
 ### 2026-07-04
 **INGEST**: Ingested entity Newport Racing Event Survey from source test_documents/scanned_form_1.png (2026-07-04T10:37:14.319151)
+
+### 2026-07-04
+**INGEST**: Ingested entity Process Procedure P-03 from system start manual (2026-07-04T14:46:00)

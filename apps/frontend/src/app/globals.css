@@ -1,48 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-space: #0B0F19;
-  --color-bg-slate: #111827;
-  --color-accent-cyan: #06B6D4;
-  --color-accent-violet: #6366F1;
-  --color-accent-emerald: #10B981;
+  --color-bg-space: #faf9f5;
+  --color-bg-slate: #faf9f5;
+  --color-accent-cyan: #6a9bcc;
+  --color-accent-violet: #d97757;
+  --color-accent-emerald: #788c5d;
   --color-accent-amber: #F59E0B;
   --color-accent-crimson: #EF4444;
 }
 
 :root {
-  --background: #0B0F19;
-  --foreground: #F3F4F6;
+  --background: #faf9f5;
+  --foreground: #141413;
 }
 
 body {
-  background-color: #0B0F19;
-  color: #F3F4F6;
+  background-color: #faf9f5;
+  color: #141413;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
 }
 
-/* Custom Glassmorphism styling */
+/* Custom Glassmorphism styling - styled for Ivory Light theme */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.65);
+  background: rgba(250, 249, 245, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border: 1px solid #e8e6dc;
+  box-shadow: 0 4px 20px 0 rgba(20, 20, 19, 0.05);
 }
 
 .glass-card {
-  background: rgba(31, 41, 55, 0.45);
+  background: rgba(232, 230, 220, 0.35);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #e8e6dc;
 }
 
 .glow-cyan {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 0 15px rgba(106, 155, 204, 0.2);
 }
 
 .glow-crimson {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
 }
 
 /* Custom scrollbars */
@@ -52,31 +52,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(11, 15, 25, 0.5);
+  background: rgba(232, 230, 220, 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(20, 20, 19, 0.1);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* Starfield pulsing core */
-@keyframes pulse-cyan {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.15);
-    opacity: 1;
-    filter: drop-shadow(0 0 25px rgba(6, 182, 212, 0.75));
-  }
-}
-
-.pulse-core {
-  animation: pulse-cyan 3s infinite ease-in-out;
+  background: rgba(20, 20, 19, 0.25);
 }

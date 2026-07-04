@@ -29,3 +29,6 @@ Record of ingest, link, and modification actions:
 
 ### 2026-07-04
 **INGEST**: Ingested entity PDF 1.7 from source test_documents/sample-100kb.pdf (2026-07-04T10:37:14.318307)
+
+### 2026-07-04
+**INGEST**: Ingested entity Safety Regulation SR-12 from safety specifications manual (2026-07-04T14:46:00)
