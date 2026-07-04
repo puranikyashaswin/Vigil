@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -7,14 +8,9 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Vigil — Industrial Knowledge Intelligence Console",
-  description: "Multi-agent safety compliance, RCA, and 3D knowledge graph console.",
+  title: "Vigil - Industrial Knowledge Intelligence Console",
+  description: "Multi-agent safety compliance, RCA, and 2D knowledge graph console.",
 };
 
 export default function RootLayout({
@@ -23,12 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased dark`}
-    >
-      <body className="min-h-full bg-bg-space text-gray-100 flex flex-col font-sans">
-        {children}
+    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col font-sans">
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

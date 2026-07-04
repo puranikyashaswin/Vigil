@@ -188,25 +188,41 @@ def route_query_intent(state: AgentState) -> Dict[str, Any]:
 # 5. Agent Node Implementations
 def run_expert_copilot(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
+    client, model = get_client()
     contexts, citations = retrieve_contexts(query, dirs=None)
-    
+
     if not contexts or max(c["score"] for c in citations) < 0.55:
-        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: equipment/, procedures/, regulations/, maintenance/, alerts/."
+        greeting_prompt = (
+            "You are the Vigil Expert Copilot Agent, a conversational AI assistant for an industrial knowledge intelligence platform. "
+            "The user's query did not match any documents in the local knowledge base (no relevant equipment specs, procedures, regulations, "
+            "or maintenance logs were found). Respond conversationally to the user's message. If they asked a general question or greeted you, "
+            "reply helpfully and let them know they can ask about equipment, maintenance, compliance, or safety topics when ready. "
+            "If they asked a technical question, politely explain that the knowledge base does not currently contain information on that topic "
+            "and suggest ingesting relevant documents. Be concise and friendly."
+        )
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": greeting_prompt},
+                {"role": "user", "content": query}
+            ],
+            temperature=0.7
+        )
+        ans = completion.choices[0].message.content
         return {
             "retrieved_contexts": [],
             "citations": [],
-            "generated_response": response,
-            "ragas_log": {"question": query, "contexts": [], "answer": response}
+            "generated_response": ans,
+            "ragas_log": {"question": query, "contexts": [], "answer": ans}
         }
-        
-    client, model = get_client()
+
     context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
     system_prompt = (
         "You are the Vigil Expert Copilot Agent. Answer the user's technical query using the provided context. "
         "Ground your answer strictly in the sources. Cite specific documents and parameters. Do not hallucinate."
     )
     user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
-    
+
     completion = client.chat.completions.create(
         model=model,
         messages=[

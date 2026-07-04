@@ -1,48 +1,16 @@
 @import "tailwindcss";
 
-@theme {
-  --color-bg-space: #faf9f5;
-  --color-bg-slate: #faf9f5;
-  --color-accent-cyan: #6a9bcc;
-  --color-accent-violet: #d97757;
-  --color-accent-emerald: #788c5d;
-  --color-accent-amber: #F59E0B;
-  --color-accent-crimson: #EF4444;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --background: #faf9f5;
-  --foreground: #141413;
+@theme {
+  --color-clay: #d97757;
 }
 
 body {
-  background-color: #faf9f5;
-  color: #141413;
+  background-color: var(--color-zinc-50);
+  color: var(--color-zinc-900);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
-}
-
-/* Custom Glassmorphism styling - styled for Ivory Light theme */
-.glass-panel {
-  background: rgba(250, 249, 245, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid #e8e6dc;
-  box-shadow: 0 4px 20px 0 rgba(20, 20, 19, 0.05);
-}
-
-.glass-card {
-  background: rgba(232, 230, 220, 0.35);
-  backdrop-filter: blur(8px);
-  border: 1px solid #e8e6dc;
-}
-
-.glow-cyan {
-  box-shadow: 0 0 15px rgba(106, 155, 204, 0.2);
-}
-
-.glow-crimson {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
 }
 
 /* Custom scrollbars */
@@ -52,14 +20,26 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(232, 230, 220, 0.3);
+  background: var(--color-zinc-200);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--color-zinc-800);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(20, 20, 19, 0.1);
+  background: var(--color-zinc-400);
   border-radius: 3px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-600);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(20, 20, 19, 0.25);
+  background: var(--color-zinc-500);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-zinc-500);
 }

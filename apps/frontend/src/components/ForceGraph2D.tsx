@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState, useMemo } from "react";
+import { useTheme } from "next-themes";
 import ForceGraph2DClient from "react-force-graph-2d";
 
 interface Node {
@@ -32,27 +33,42 @@ interface ForceGraph2DProps {
   selectedNodeId?: string | null;
 }
 
-// Warm, muted brand guidelines palette
-const TYPE_COLORS: Record<string, string> = {
-  concept: "#6a9bcc",      // Accent Blue
-  equipment: "#6a9bcc",    // Accent Blue
-  procedure: "#788c5d",    // Accent Green
-  regulation: "#d97757",   // Accent Orange/Clay
-  maintenance_log: "#b0aea5", // Accent Gray
-  alert: "#EF4444",        // Crimson
+const LIGHT_COLORS: Record<string, string> = {
+  concept:         "#a1a1aa", // zinc-400
+  equipment:       "#a1a1aa", // zinc-400
+  procedure:       "#71717a", // zinc-500
+  regulation:      "#52525b", // zinc-600
+  maintenance_log: "#3f3f46", // zinc-700
+  alert:           "#d97757", // clay
+};
+
+const DARK_COLORS: Record<string, string> = {
+  concept:         "#71717a", // zinc-500
+  equipment:       "#71717a", // zinc-500
+  procedure:       "#a1a1aa", // zinc-400
+  regulation:      "#d4d4d8", // zinc-300
+  maintenance_log: "#e4e4e7", // zinc-200
+  alert:           "#d97757", // clay (same)
 };
 
 export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: ForceGraph2DProps) {
-  const fgRef = useRef<any>();
+  const { resolvedTheme } = useTheme();
+  const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Hover states for Obsidian style highlight
   const [hoverNode, setHoverNode] = useState<any>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<any>>(new Set());
 
-  // Compute node connection counts (degrees) for sizing
+  const isDark = resolvedTheme === "dark";
+  const TYPE_COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
+  const canvasBg = isDark ? "#09090b" : "#fafafa";
+  const canvasBorder = isDark ? "#3f3f46" : "#d4d4d8";
+  const nodeBorderLight = isDark ? "#18181b" : "#fafafa";
+  const nodeBorderSelected = isDark ? "#fafafa" : "#18181b";
+  const linkDefault = isDark ? "#52525b" : "#d4d4d8";
+
   const degrees = useMemo(() => {
     const degs: Record<string, number> = {};
     data.nodes.forEach((n) => {
@@ -67,13 +83,11 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
     return degs;
   }, [data]);
 
-  // Give nodes initial random/circular coordinates to start the physics simulation beautifully
   const initializedData = useMemo(() => {
     const nodes = data.nodes.map((n, idx) => {
       if (n.x !== undefined && n.y !== undefined) {
         return { ...n };
       }
-      // Arrange initial positions in a circular pattern around the center
       const angle = (idx / (data.nodes.length || 1)) * 2 * Math.PI;
       const radius = 120 + Math.random() * 40;
       const centerX = dimensions.width / 2;
@@ -89,7 +103,6 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
     return { nodes, links };
   }, [data, dimensions.width, dimensions.height]);
 
-  // Resize canvas to parent container
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -107,32 +120,26 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Configure D3 forces and settle animations
   useEffect(() => {
     if (!fgRef.current || initializedData.nodes.length === 0) return;
 
-    // Push force (prevent overlaps, distribute nodes nicely)
     const chargeForce = fgRef.current.d3Force("charge");
     if (chargeForce) {
       chargeForce.strength(-240).distanceMax(400);
     }
 
-    // Centering force
     const centerForce = fgRef.current.d3Force("center");
     if (centerForce) {
       centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
     }
 
-    // Link pulling force
     const linkForce = fgRef.current.d3Force("link");
     if (linkForce) {
       linkForce.distance(115).strength(0.65);
     }
 
-    // Warm up the physics engine
     fgRef.current.d3ReheatSimulation();
 
-    // Auto fit layout view
     setTimeout(() => {
       if (fgRef.current) {
         fgRef.current.zoomToFit(400, 100);
@@ -140,7 +147,6 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
     }, 1000);
   }, [initializedData.nodes.length, dimensions.width, dimensions.height]);
 
-  // Handle selection zoom
   useEffect(() => {
     if (selectedNodeId && fgRef.current && initializedData.nodes) {
       const node = initializedData.nodes.find((n) => n.id === selectedNodeId);
@@ -151,7 +157,6 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
     }
   }, [selectedNodeId, initializedData.nodes]);
 
-  // Update hover highlights
   const handleNodeHover = (node: any) => {
     setHoverNode(node);
     const hNodes = new Set<string>();
@@ -177,63 +182,59 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full relative overflow-hidden bg-[#faf9f5] border border-[#e8e6dc] rounded-none">
+    <div ref={containerRef} className="w-full h-full relative overflow-hidden bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
       {initializedData.nodes.length === 0 ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-[#faf9f5]">
-          <div className="w-16 h-16 rounded-none bg-[#e8e6dc] flex items-center justify-center mb-4 border border-[#b0aea5]">
-            <div className="w-6 h-6 bg-[#d97757]" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-zinc-50 dark:bg-zinc-950">
+          <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6 border border-zinc-300 dark:border-zinc-600">
+            <div className="w-6 h-6 bg-clay" />
           </div>
-          <h3 className="text-lg font-bold font-mono uppercase tracking-tight text-[#141413] mb-2">Vigil Intelligence Core</h3>
-          <p className="text-xs font-mono text-[#b0aea5] max-w-sm">
+          <h3 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Vigil Intelligence Core</h3>
+          <p className="text-base text-zinc-500 dark:text-zinc-400 max-w-sm">
             Knowledge Graph is currently empty. Ingest active documents to populate nodes and links.
           </p>
         </div>
       ) : (
         <ForceGraph2DClient
+          key={isDark ? "dark" : "light"}
           ref={fgRef}
           width={dimensions.width}
           height={dimensions.height}
           graphData={initializedData}
-          backgroundColor="#faf9f5"
+          backgroundColor={canvasBg}
           nodeRelSize={1}
           nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
             const label = node.label || node.id;
             const size = Math.max(3.5, 3.5 + (degrees[node.id] || 0) * 0.9);
             
-            // Dim if hover active and not highlighted
             const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
             const isSelected = selectedNodeId === node.id;
             
             ctx.save();
             
-            // Render selection ring
             if (isSelected) {
               ctx.beginPath();
               ctx.arc(node.x, node.y, size + 3.5, 0, 2 * Math.PI, false);
-              ctx.strokeStyle = "#d97757"; // Clay highlight
+              ctx.strokeStyle = "#d97757";
               ctx.lineWidth = 1.8;
               ctx.stroke();
             }
 
-            // Draw Node Circle
             ctx.beginPath();
             ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
             
-            ctx.fillStyle = TYPE_COLORS[node.type] || "#b0aea5";
+            ctx.fillStyle = TYPE_COLORS[node.type] || "#a1a1aa";
             ctx.globalAlpha = isHighlighted ? 1.0 : 0.12;
             ctx.fill();
 
-            // Border
-            ctx.strokeStyle = isSelected ? "#141413" : "#faf9f5";
+            ctx.strokeStyle = isSelected ? nodeBorderSelected : nodeBorderLight;
             ctx.lineWidth = 0.6;
             ctx.stroke();
 
-            // Text Label (Obsidian-style)
             const fontSize = Math.max(2.4, 9 / globalScale);
-            ctx.font = `${fontSize}px monospace`;
+            ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillStyle = "#141413";
+            ctx.fillStyle = isDark ? "#f4f4f5" : "#18181b";
             ctx.globalAlpha = isHighlighted ? (globalScale > 1.1 || isSelected ? 0.95 : 0.35) : 0.08;
             
             ctx.fillText(label, node.x, node.y + size + fontSize + 1.2);
@@ -252,7 +253,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
             ctx.moveTo(source.x, source.y);
             ctx.lineTo(target.x, target.y);
             
-            ctx.strokeStyle = isHighlighted ? "#d97757" : "#e8e6dc";
+            ctx.strokeStyle = isHighlighted ? "#d97757" : linkDefault;
             ctx.lineWidth = isHighlighted ? 1.4 : 0.6;
             ctx.globalAlpha = isHighlighted ? 0.85 : 0.22;
             

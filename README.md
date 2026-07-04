@@ -80,6 +80,7 @@ flowchart TD
 | Primary model | `meta-llama/llama-3.3-70b-instruct` | Via OpenRouter free tier |
 | Vision/OCR | `openrouter` API | Free-tier vision models for scanned documents |
 | Local parsers | `pdfplumber`, `python-docx`, `openpyxl`, `xlrd` | For text-native PDFs, DOCX, and spreadsheets |
+| Knowledge format | Open Knowledge Format (OKF) | Custom Markdown + YAML frontmatter schema for concept storage, cross-linked via relative markdown links, with `index.md` and `log.md` per directory. Full schema in [AGENTS.md](AGENTS.md) and [.agents/skills/okf_writer/SKILL.md](.agents/skills/okf_writer/SKILL.md) |
 | Vector storage | `qdrant-client` | Falls back to local file-based storage (`vigil_qdrant.db`) when no server URL configured |
 | Embeddings | `fastembed` | `BAAI/bge-small-en-v1.5` |
 | Reranking | `flashrank` | For search result reordering |
@@ -108,7 +109,7 @@ flowchart TD
 ### 1. Clone and set environment variables
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/puranikyashaswin/Vigil.git
 cd vigil
 cp .env.example .env
 ```
