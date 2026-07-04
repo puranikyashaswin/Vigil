@@ -1,0 +1,114 @@
+{
+  "entities": [
+    {
+      "name": "P&ID",
+      "type": "concept",
+      "description": "A schematic diagram that shows how equipment and instruments connect to form a functional process system",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "Piping And Instrument Diagram",
+        "process system"
+      ]
+    },
+    {
+      "name": "P&ID Drafting Procedure",
+      "type": "procedure",
+      "description": "A set of guidelines for creating P&IDs, including drawing size, borders, and title blocks",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "P&ID"
+      ],
+      "tags": [
+        "drafting procedure",
+        "P&ID creation"
+      ]
+    },
+    {
+      "name": "P&ID Quality Assurance Matrix",
+      "type": "regulation",
+      "description": "A framework for ensuring the quality and consistency of P&IDs",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "P&ID"
+      ],
+      "tags": [
+        "quality assurance",
+        "P&ID matrix"
+      ]
+    },
+    {
+      "name": "P&ID Completeness Checklist",
+      "type": "regulation",
+      "description": "A list of items to verify for completeness in a P&ID",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "P&ID"
+      ],
+      "tags": [
+        "completeness checklist",
+        "P&ID validation"
+      ]
+    },
+    {
+      "name": "Equipment Title Blocks",
+      "type": "concept",
+      "description": "A standard format for displaying equipment information on a P&ID",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "P&ID"
+      ],
+      "tags": [
+        "equipment information",
+        "title blocks"
+      ]
+    },
+    {
+      "name": "Instrument Loop Elements",
+      "type": "concept",
+      "description": "Components of an instrument loop, including sensors, transmitters, and controllers",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "P&ID"
+      ],
+      "tags": [
+        "instrumentation",
+        "loop elements"
+      ]
+    },
+    {
+      "name": "Pipe Specifications",
+      "type": "concept",
+      "description": "Details about pipe size, material, and other characteristics",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "P&ID"
+      ],
+      "tags": [
+        "pipe specifications",
+        "piping"
+      ]
+    },
+    {
+      "name": "Valve Specification",
+      "type": "concept",
+      "description": "Details about valve type, size, and other characteristics",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "P&ID"
+      ],
+      "tags": [
+        "valve specification",
+        "valves"
+      ]
+    }
+  ]
+}

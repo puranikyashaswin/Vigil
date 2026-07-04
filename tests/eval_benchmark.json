@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What safety procedures apply to pump P-102?",
+    "ground_truth": "Pump P-102 handles process fluids and must comply with process safety management standards under 29 CFR 1910.119 and Clean Air Act Amendments.",
+    "category": "compliance"
+  },
+  {
+    "question": "Is there a calibration schedule conflict for any equipment?",
+    "ground_truth": "No direct scheduling conflicts or timeline overlaps are present in the maintenance logs. However, pump P-102 is overdue for calibration, violating P&ID completeness and quality assurance requirements.",
+    "category": "rca"
+  },
+  {
+    "question": "What does OSHA 1910.119 require for process safety management?",
+    "ground_truth": "OSHA 1910.119 requires process safety management of highly hazardous chemicals to prevent or minimize the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals.",
+    "category": "compliance"
+  },
+  {
+    "question": "Summarize maintenance history for equipment mentioned in the P&ID documents.",
+    "ground_truth": "P-101 was serviced on 2026-06-15 (due 2026-09-15), P-102 was serviced on 2026-01-12 (due 2026-07-12), V-202 was serviced on 2026-05-10 (due 2026-11-10), and T-301 was serviced on 2026-04-20 (due 2026-10-20).",
+    "category": "rca"
+  },
+  {
+    "question": "Are there any unresolved compliance alerts right now?",
+    "ground_truth": "Yes, there is an active contradiction alert between Safety Regulation SR-12 and Process Procedure P-03, where P-03 specifies a bypass setpoint of 120 PSI, directly violating SR-12's maximum limit of 100 PSI for valve V-202.",
+    "category": "compliance"
+  },
+  {
+    "question": "What is the function of control loops in engineering diagrams?",
+    "ground_truth": "Control loops maintain a process condition at a set value by adjusting devices based on feedback from instruments.",
+    "category": "copilot"
+  },
+  {
+    "question": "What standard defines the format for displaying equipment information on a P&ID?",
+    "ground_truth": "Equipment Title Blocks define the standard format for displaying equipment information on a Piping and Instrumentation Diagram.",
+    "category": "copilot"
+  },
+  {
+    "question": "Who serviced the equipment T-301 and when is it next due?",
+    "ground_truth": "T-301 was serviced by technician Marcus Wright on 2026-04-20, and is next due for service on 2026-10-20.",
+    "category": "rca"
+  },
+  {
+    "question": "What is the purpose of the Hazard Communication Standard?",
+    "ground_truth": "The Hazard Communication Standard is a standard for communicating hazards associated with chemicals in the workplace.",
+    "category": "compliance"
+  },
+  {
+    "question": "What does a Piping and Instrumentation Diagram (P&ID) show?",
+    "ground_truth": "Piping and Instrumentation Diagrams (P&IDs) show the piping, instruments, and equipment in a process plant, defining their connections and configurations.",
+    "category": "copilot"
+  }
+]

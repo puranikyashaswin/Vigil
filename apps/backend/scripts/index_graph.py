@@ -1,0 +1,150 @@
+import os
+import sys
+import logging
+from typing import Dict, Any, List
+from dotenv import load_dotenv
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams, PointStruct
+from fastembed import TextEmbedding
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("vigil.index_graph")
+
+COLLECTION_NAME = "vigil_okf"
+
+def get_qdrant_client() -> QdrantClient:
+    url = os.getenv("QDRANT_URL")
+    api_key = os.getenv("QDRANT_API_KEY")
+    
+    if not url or "your_qdrant_url" in url:
+        logger.info("Using local persistent Qdrant database (vigil_qdrant.db) because Qdrant URL is a placeholder.")
+        return QdrantClient(path="vigil_qdrant.db")
+    return QdrantClient(url=url, api_key=api_key)
+
+def load_okf_files(kg_dir: str) -> List[Dict[str, Any]]:
+    """
+    Recursively scans knowledge_graph/ for .md files and returns parsed entities.
+    """
+    documents = []
+    
+    for root, _, files in os.walk(kg_dir):
+        for file in files:
+            if file.endswith(".md") and file != "index.md" and file != "log.md":
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, kg_dir)
+                
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    
+                # Simple markdown frontmatter parser
+                parts = content.split("---")
+                if len(parts) >= 3:
+                    frontmatter_raw = parts[1]
+                    body = "---".join(parts[2:]).strip()
+                    
+                    # Parse basic frontmatter key-values
+                    meta = {}
+                    for line in frontmatter_raw.strip().splitlines():
+                        if ":" in line:
+                            key, val = line.split(":", 1)
+                            key = key.strip()
+                            val = val.strip().strip('"').strip("'")
+                            meta[key] = val
+                            
+                    documents.append({
+                        "file_path": rel_path,
+                        "directory": os.path.dirname(rel_path),
+                        "text": body,
+                        "type": meta.get("type", "concept"),
+                        "title": meta.get("title", file)
+                    })
+                    
+    return documents
+
+def chunk_text(text: str, max_chars: int = 1000, overlap: int = 200) -> List[str]:
+    """
+    Splits text into overlapping chunks.
+    """
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + max_chars
+        chunks.append(text[start:end])
+        start += max_chars - overlap
+    return chunks or [text]
+
+def main():
+    load_dotenv()
+    kg_dir = "knowledge_graph"
+    
+    if not os.path.exists(kg_dir):
+        logger.error(f"Knowledge graph directory not found: {kg_dir}")
+        sys.exit(1)
+        
+    logger.info("Initializing embedding model: BAAI/bge-small-en-v1.5...")
+    # FastEmbed uses cached directories automatically
+    embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+    
+    logger.info("Loading OKF files from knowledge graph...")
+    documents = load_okf_files(kg_dir)
+    logger.info(f"Found {len(documents)} OKF concept files to index.")
+    
+    q_client = get_qdrant_client()
+    
+    # Recreate collection to ensure a clean slate
+    logger.info(f"Re-creating Qdrant collection: {COLLECTION_NAME}...")
+    try:
+        q_client.delete_collection(COLLECTION_NAME)
+    except Exception:
+        pass
+        
+    q_client.create_collection(
+        collection_name=COLLECTION_NAME,
+        vectors_config=VectorParams(size=384, distance=Distance.COSINE) # bge-small-en-v1.5 size is 384
+    )
+    
+    points = []
+    point_id = 1
+    
+    for doc in documents:
+        # Generate chunks for each document
+        chunks = chunk_text(doc["text"])
+        logger.info(f"Splitting '{doc['title']}' into {len(chunks)} chunk(s)")
+        
+        for i, chunk in enumerate(chunks):
+            # Combine frontmatter title/desc with chunk context for better semantic embedding
+            embed_text = f"Title: {doc['title']}\nType: {doc['type']}\nContent: {chunk}"
+            vector = list(next(embedding_model.embed([embed_text])))
+            
+            payload = {
+                "file_path": doc["file_path"],
+                "directory": doc["directory"],
+                "text": chunk,
+                "type": doc["type"],
+                "title": doc["title"]
+            }
+            
+            points.append(
+                PointStruct(
+                    id=point_id,
+                    vector=vector,
+                    payload=payload
+                )
+            )
+            point_id += 1
+            
+    # Batch upsert points
+    logger.info(f"Upserting {len(points)} vector points to Qdrant...")
+    q_client.upsert(
+        collection_name=COLLECTION_NAME,
+        points=points
+    )
+    logger.info("Vector database indexing complete!")
+
+if __name__ == "__main__":
+    main()

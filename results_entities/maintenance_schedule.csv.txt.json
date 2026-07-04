@@ -1,0 +1,60 @@
+{
+  "entities": [
+    {
+      "name": "P-101 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check",
+      "equipment_tags": [
+        "P-101"
+      ],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "maintenance",
+        "pending"
+      ]
+    },
+    {
+      "name": "V-202 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment V-202, last serviced on 2026-05-10, next service due on 2026-11-10, technician John Doe, status completed",
+      "equipment_tags": [
+        "V-202"
+      ],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "maintenance",
+        "completed"
+      ]
+    },
+    {
+      "name": "T-301 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment T-301, last serviced on 2026-04-20, next service due on 2026-10-20, technician Marcus Wright, status completed",
+      "equipment_tags": [
+        "T-301"
+      ],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "maintenance",
+        "completed"
+      ]
+    },
+    {
+      "name": "P-102 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration",
+      "equipment_tags": [
+        "P-102"
+      ],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "maintenance",
+        "overdue"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: langgraph_agent
-description: "Use when defining, modifying, or debugging any LangGraph agent node — Copilot, RCA, Compliance, or Lessons-Learned"
+description: "Use when defining, modifying, or debugging any LangGraph agent node: Copilot, RCA, Compliance, or Lessons-Learned"
 ---
 
 # LangGraph Agent Skill

@@ -1,0 +1,376 @@
+import os
+import sys
+import re
+import logging
+from typing import TypedDict, List, Dict, Any, Optional, Tuple
+from dotenv import load_dotenv
+from openai import OpenAI
+from qdrant_client import QdrantClient
+from fastembed import TextEmbedding
+from langgraph.graph import StateGraph, END
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("vigil.graph")
+
+COLLECTION_NAME = "vigil_okf"
+
+# 1. State Schemas
+class RagasLog(TypedDict):
+    question: str
+    contexts: List[str]
+    answer: str
+
+class Citation(TypedDict):
+    source_file: str
+    excerpt: str
+    score: float
+
+class AgentState(TypedDict):
+    query: str
+    category: str
+    retrieved_contexts: List[str]
+    citations: List[Citation]
+    generated_response: str
+    ragas_log: Optional[RagasLog]
+    metadata: Dict[str, Any]
+
+# 2. Helpers for clients
+def get_qdrant_client() -> QdrantClient:
+    url = os.getenv("QDRANT_URL")
+    api_key = os.getenv("QDRANT_API_KEY")
+    if not url or "your_qdrant_url" in url:
+        return QdrantClient(path="vigil_qdrant.db")
+    return QdrantClient(url=url, api_key=api_key)
+
+def get_client() -> Tuple[OpenAI, str]:
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    portkey_api_key = os.getenv("PORTKEY_API_KEY")
+    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+    
+    is_groq_placeholder = not groq_api_key or "your_" in groq_api_key
+    is_portkey_placeholder = not portkey_api_key or "your_" in portkey_api_key
+    
+    if (is_groq_placeholder or is_portkey_placeholder) and openrouter_api_key and "your_" not in openrouter_api_key:
+        client = OpenAI(
+            api_key=openrouter_api_key,
+            base_url="https://openrouter.ai/api/v1"
+        )
+        return client, "meta-llama/llama-3.3-70b-instruct"
+        
+    client = OpenAI(
+        api_key=groq_api_key,
+        base_url="https://api.portkey.ai/v1",
+        default_headers={
+            "x-portkey-provider": "groq",
+            "x-portkey-api-key": portkey_api_key
+        }
+    )
+    return client, "llama-3.3-70b-versatile"
+
+# 3. Retrieval layer with semantic filtering & rerank
+def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], List[Citation]]:
+    """
+    Performs vector search in Qdrant with optional directory filter.
+    Applies FlashRank reranker for Copilot (no directory filter).
+    """
+    try:
+        q_client = get_qdrant_client()
+        embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+        query_vector = list(next(embedding_model.embed([query])))
+        
+        query_filter = None
+        if dirs:
+            from qdrant_client.http import models
+            query_filter = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="directory",
+                        match=models.MatchAny(any=dirs)
+                    )
+                ]
+            )
+            
+        search_response = q_client.query_points(
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            query_filter=query_filter,
+            limit=10 if not dirs else 5
+        )
+        search_results = search_response.points
+        
+        if not search_results:
+            return [], []
+            
+        # If broad search (Copilot), use FlashRank reranker
+        if not dirs:
+            from flashrank import Ranker, RerankRequest
+            ranker = Ranker()
+            passages = []
+            for hit in search_results:
+                passages.append({
+                    "id": len(passages),
+                    "text": hit.payload["text"],
+                    "meta": {
+                        "file_path": hit.payload["file_path"],
+                        "score": hit.score,
+                        "title": hit.payload["title"]
+                    }
+                })
+            rerank_request = RerankRequest(query=query, passages=passages)
+            rerank_results = ranker.rerank(rerank_request)
+            
+            contexts = []
+            citations = []
+            for r in rerank_results[:5]:
+                contexts.append(r["text"])
+                citations.append({
+                    "source_file": r["meta"]["file_path"],
+                    "excerpt": r["text"][:150] + "...",
+                    "score": float(r["score"])
+                })
+            return contexts, citations
+            
+        # Standard directory query
+        contexts = []
+        citations = []
+        for hit in search_results:
+            contexts.append(hit.payload["text"])
+            citations.append({
+                "source_file": hit.payload["file_path"],
+                "excerpt": hit.payload["text"][:150] + "...",
+                "score": float(hit.score)
+            })
+        return contexts, citations
+        
+    except Exception as e:
+        logger.error(f"Retrieval failed: {str(e)}")
+        return [], []
+
+# 4. Intent Routing Node
+def route_query_intent(state: AgentState) -> Dict[str, Any]:
+    query = state["query"]
+    client, model = get_client()
+    
+    system_prompt = (
+        "You are an intent router for an industrial knowledge base query engine.\n"
+        "Classify the query into one of these 4 categories:\n"
+        "1. 'copilot' - for general technical questions, engineering diagram symbols, explanations, or general QA.\n"
+        "2. 'rca' - for equipment maintenance log checks, equipment status, failure events, and Root Cause Analysis (RCA).\n"
+        "3. 'compliance' - for checking if operational procedures comply with safety regulations (e.g. OSHA standards).\n"
+        "4. 'lessons_learned' - for recurring maintenance logs, alerts, warnings, or design failures to synthesize patterns.\n\n"
+        "Return ONLY one of these four words: copilot, rca, compliance, lessons_learned. Do not output anything else."
+    )
+    
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": query}
+            ],
+            temperature=0.0
+        )
+        category = completion.choices[0].message.content.strip().lower()
+        if category not in ["copilot", "rca", "compliance", "lessons_learned"]:
+            category = "copilot"
+    except Exception as e:
+        logger.error(f"Intent routing failed: {str(e)}. Defaulting to copilot.")
+        category = "copilot"
+        
+    logger.info(f"Routed query intent: '{query}' -> [{category}]")
+    return {"category": category}
+
+# 5. Agent Node Implementations
+def run_expert_copilot(state: AgentState) -> Dict[str, Any]:
+    query = state["query"]
+    contexts, citations = retrieve_contexts(query, dirs=None)
+    
+    if not contexts or max(c["score"] for c in citations) < 0.55:
+        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: equipment/, procedures/, regulations/, maintenance/, alerts/."
+        return {
+            "retrieved_contexts": [],
+            "citations": [],
+            "generated_response": response,
+            "ragas_log": {"question": query, "contexts": [], "answer": response}
+        }
+        
+    client, model = get_client()
+    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
+    system_prompt = (
+        "You are the Vigil Expert Copilot Agent. Answer the user's technical query using the provided context. "
+        "Ground your answer strictly in the sources. Cite specific documents and parameters. Do not hallucinate."
+    )
+    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.0
+    )
+    ans = completion.choices[0].message.content
+    return {
+        "retrieved_contexts": contexts,
+        "citations": citations,
+        "generated_response": ans,
+        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+    }
+
+def run_maintenance_rca(state: AgentState) -> Dict[str, Any]:
+    query = state["query"]
+    dirs = ["equipment", "maintenance"]
+    contexts, citations = retrieve_contexts(query, dirs=dirs)
+    
+    if not contexts or max(c["score"] for c in citations) < 0.55:
+        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: equipment/, maintenance/."
+        return {
+            "retrieved_contexts": [],
+            "citations": [],
+            "generated_response": response,
+            "ragas_log": {"question": query, "contexts": [], "answer": response}
+        }
+        
+    client, model = get_client()
+    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
+    system_prompt = (
+        "You are the Vigil Maintenance & RCA Agent. Analyze the maintenance logs and equipment specs to determine root causes, "
+        "asset conditions, or anomalous events. Ground your analysis strictly in the sources. Do not hallucinate."
+    )
+    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.0
+    )
+    ans = completion.choices[0].message.content
+    return {
+        "retrieved_contexts": contexts,
+        "citations": citations,
+        "generated_response": ans,
+        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+    }
+
+def run_compliance(state: AgentState) -> Dict[str, Any]:
+    query = state["query"]
+    dirs = ["procedures", "regulations", "alerts"]
+    contexts, citations = retrieve_contexts(query, dirs=dirs)
+    
+    if not contexts or max(c["score"] for c in citations) < 0.55:
+        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: procedures/, regulations/, alerts/."
+        return {
+            "retrieved_contexts": [],
+            "citations": [],
+            "generated_response": response,
+            "ragas_log": {"question": query, "contexts": [], "answer": response}
+        }
+        
+    client, model = get_client()
+    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
+    system_prompt = (
+        "You are the Vigil Compliance Agent. Compare active operating procedures against safety/operational regulations. "
+        "Identify violations or discrepancies. Ground your analysis strictly in the sources. Do not hallucinate."
+    )
+    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.0
+    )
+    ans = completion.choices[0].message.content
+    return {
+        "retrieved_contexts": contexts,
+        "citations": citations,
+        "generated_response": ans,
+        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+    }
+
+def run_lessons_learned(state: AgentState) -> Dict[str, Any]:
+    query = state["query"]
+    dirs = ["maintenance", "alerts"]
+    contexts, citations = retrieve_contexts(query, dirs=dirs)
+    
+    if not contexts or max(c["score"] for c in citations) < 0.55:
+        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: maintenance/, alerts/."
+        return {
+            "retrieved_contexts": [],
+            "citations": [],
+            "generated_response": response,
+            "ragas_log": {"question": query, "contexts": [], "answer": response}
+        }
+        
+    client, model = get_client()
+    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
+    system_prompt = (
+        "You are the Vigil Lessons-Learned Engine. Review the maintenance logs, alert histories, and recurring issues. "
+        "Synthesize generalized optimization rules or design lessons. Ground your analysis strictly in the sources."
+    )
+    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.0
+    )
+    ans = completion.choices[0].message.content
+    return {
+        "retrieved_contexts": contexts,
+        "citations": citations,
+        "generated_response": ans,
+        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+    }
+
+# 6. Graph Compilation
+workflow = StateGraph(AgentState)
+
+# Add Nodes
+workflow.add_node("route_intent", route_query_intent)
+workflow.add_node("expert_copilot", run_expert_copilot)
+workflow.add_node("maintenance_rca", run_maintenance_rca)
+workflow.add_node("compliance", run_compliance)
+workflow.add_node("lessons_learned", run_lessons_learned)
+
+# Set Entry
+workflow.set_entry_point("route_intent")
+
+# Routing Logic
+def route_to_agent(state: AgentState) -> str:
+    return state["category"]
+
+# Conditional routing edge
+workflow.add_conditional_edges(
+    "route_intent",
+    route_to_agent,
+    {
+        "copilot": "expert_copilot",
+        "rca": "maintenance_rca",
+        "compliance": "compliance",
+        "lessons_learned": "lessons_learned"
+    }
+)
+
+# Connect nodes to end
+workflow.add_edge("expert_copilot", END)
+workflow.add_edge("maintenance_rca", END)
+workflow.add_edge("compliance", END)
+workflow.add_edge("lessons_learned", END)
+
+# Compile
+app = workflow.compile()

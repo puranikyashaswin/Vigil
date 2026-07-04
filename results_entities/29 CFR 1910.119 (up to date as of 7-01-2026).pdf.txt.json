@@ -1,0 +1,81 @@
+{
+  "entities": [
+    {
+      "name": "29 CFR 1910.119",
+      "type": "regulation",
+      "description": "Process safety management of highly hazardous chemicals",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "29 CFR 1910.119",
+        "29 CFR 1910.1200",
+        "29 CFR 1910.38",
+        "29 CFR 1910.120"
+      ],
+      "linked_concepts": [],
+      "tags": [
+        "process safety management",
+        "highly hazardous chemicals"
+      ]
+    },
+    {
+      "name": "Process Safety Management",
+      "type": "concept",
+      "description": "A systematic approach to evaluating the whole process to prevent unwanted releases of hazardous chemicals",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "29 CFR 1910.119"
+      ],
+      "tags": [
+        "process safety",
+        "hazardous chemicals"
+      ]
+    },
+    {
+      "name": "Occupational Safety and Health Administration (OSHA)",
+      "type": "organization",
+      "description": "A government agency responsible for ensuring workplace safety and health",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "29 CFR 1910.119"
+      ],
+      "tags": [
+        "workplace safety",
+        "health"
+      ]
+    },
+    {
+      "name": "Clean Air Act Amendments",
+      "type": "regulation",
+      "description": "A law that requires employers to implement process safety management programs",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "Clean Air Act Amendments"
+      ],
+      "linked_concepts": [
+        "29 CFR 1910.119"
+      ],
+      "tags": [
+        "environmental regulation",
+        "process safety management"
+      ]
+    },
+    {
+      "name": "Hazard Communication Standard",
+      "type": "regulation",
+      "description": "A standard that requires employers to inform employees about hazardous chemicals in the workplace",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "29 CFR 1910.1200"
+      ],
+      "linked_concepts": [
+        "29 CFR 1910.119"
+      ],
+      "tags": [
+        "hazard communication",
+        "workplace safety"
+      ]
+    }
+  ]
+}

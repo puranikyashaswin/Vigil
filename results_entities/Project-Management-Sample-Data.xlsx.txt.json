@@ -1,0 +1,17 @@
+{
+  "entities": [
+    {
+      "name": "Project Management Data",
+      "type": "concept",
+      "description": "A collection of project management data including project name, task name, assigned personnel, start and end dates, and progress.",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "project management",
+        "task management",
+        "resource allocation"
+      ]
+    }
+  ]
+}

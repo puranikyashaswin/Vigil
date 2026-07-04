@@ -1,0 +1,17 @@
+{
+  "entities": [
+    {
+      "name": "Sheet1",
+      "type": "drawing",
+      "description": "A spreadsheet sheet containing equipment maintenance information",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "maintenance",
+        "equipment",
+        "spreadsheet"
+      ]
+    }
+  ]
+}

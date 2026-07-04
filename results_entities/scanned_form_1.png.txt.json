@@ -1,0 +1,44 @@
+{
+  "entities": [
+    {
+      "name": "Newport Racing Event Survey",
+      "type": "procedure",
+      "description": "A survey of the Newport racing event held at Leguna Seca, Monterey, Ca",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [],
+      "tags": [
+        "event survey",
+        "racing event",
+        "hospitality"
+      ]
+    },
+    {
+      "name": "Leguna Seca Racing Event",
+      "type": "event",
+      "description": "A racing event held at Leguna Seca, Monterey, Ca on September 10, 1995",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Newport Racing Event Survey"
+      ],
+      "tags": [
+        "racing event",
+        "Leguna Seca"
+      ]
+    },
+    {
+      "name": "Newport Hospitality",
+      "type": "concept",
+      "description": "The hospitality services provided by Newport during the racing event",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Newport Racing Event Survey"
+      ],
+      "tags": [
+        "hospitality services"
+      ]
+    }
+  ]
+}

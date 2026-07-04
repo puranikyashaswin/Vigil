@@ -1,0 +1,125 @@
+{
+  "entities": [
+    {
+      "name": "Piping and Instrumentation Diagrams (P&IDs)",
+      "type": "concept",
+      "description": "Drawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "ANSI/ISA 5.1",
+        "IEC 60617",
+        "ISO 10628",
+        "ISO 14617",
+        "ISO 15519",
+        "PIP PIC001"
+      ],
+      "linked_concepts": [
+        "Process Flow Diagrams (PFDs)",
+        "Instrument Schematics",
+        "Wiring Diagrams",
+        "SCADA Network Diagrams",
+        "Logic Diagrams"
+      ],
+      "tags": [
+        "engineering",
+        "diagrams",
+        "piping",
+        "instrumentation",
+        "control systems"
+      ]
+    },
+    {
+      "name": "Process Flow Diagrams (PFDs)",
+      "type": "concept",
+      "description": "Drawings with lines for piping and symbols for major components, used to create P&IDs.",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "ISO 10628"
+      ],
+      "linked_concepts": [
+        "Piping and Instrumentation Diagrams (P&IDs)",
+        "Instrument Schematics"
+      ],
+      "tags": [
+        "engineering",
+        "diagrams",
+        "process flow"
+      ]
+    },
+    {
+      "name": "Instrument Schematics",
+      "type": "concept",
+      "description": "Detailed drawings for particular instruments, showing wiring details and control logic notes.",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Piping and Instrumentation Diagrams (P&IDs)",
+        "Process Flow Diagrams (PFDs)"
+      ],
+      "tags": [
+        "engineering",
+        "diagrams",
+        "instruments"
+      ]
+    },
+    {
+      "name": "Wiring Diagrams",
+      "type": "concept",
+      "description": "Diagrams showing circuit components as simplified shapes with power and signal wiring between devices.",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Piping and Instrumentation Diagrams (P&IDs)"
+      ],
+      "tags": [
+        "engineering",
+        "diagrams",
+        "wiring"
+      ]
+    },
+    {
+      "name": "SCADA Network Diagrams",
+      "type": "concept",
+      "description": "Block diagrams showing the basic SCADA architecture and communication channels between devices, controllers, and computers.",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Piping and Instrumentation Diagrams (P&IDs)"
+      ],
+      "tags": [
+        "engineering",
+        "diagrams",
+        "SCADA"
+      ]
+    },
+    {
+      "name": "Logic Diagrams",
+      "type": "concept",
+      "description": "Diagrams conveying control descriptions pictorially, including ladder logic diagrams, binary logic diagrams, and Boolean logic diagrams.",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Piping and Instrumentation Diagrams (P&IDs)"
+      ],
+      "tags": [
+        "engineering",
+        "diagrams",
+        "logic"
+      ]
+    },
+    {
+      "name": "Control Loops",
+      "type": "concept",
+      "description": "Systems that maintain a process condition at a set value by adjusting devices based on feedback from instruments.",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Piping and Instrumentation Diagrams (P&IDs)"
+      ],
+      "tags": [
+        "engineering",
+        "control systems"
+      ]
+    }
+  ]
+}

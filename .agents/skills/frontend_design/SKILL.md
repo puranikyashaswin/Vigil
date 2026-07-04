@@ -11,28 +11,28 @@ This skill defines the visual identity, styling rules, typography, animation pri
 
 ## 1. Aesthetic Identity & Theme
 
-Vigil must feel like a premium, state-of-the-art enterprise intelligence console. Avoid standard, flat out-of-the-box styling (e.g., default `shadcn` Zinc themes).
+Vigil must feel like a premium, state-of-the-art industrial intelligence console. Avoid standard, rounded layouts or default themes.
 
 ### Color Palette (Custom Dark Mode)
 - **Base / Background**: Deep space charcoal (`#0B0F19`) and rich slate (`#111827`). Never pure black.
-- **Card / Surface**: Glassmorphism surfaces (`rgba(31, 41, 55, 0.45)`) with thin borders (`rgba(255, 255, 255, 0.08)`) and backdrop blur (`12px`).
+- **Card / Surface**: Sharp-edge panels (`rounded-none`) with thin borders (`border-white/10`) and flat translucent backdrops. No rounded-xl corners or soft pill shapes.
 - **Accents**:
   - Primary (Cyan): `#06B6D4` (representing intelligence/activity).
   - Secondary (Indigo/Violet): `#6366F1` (representing linking/graph structure).
   - Success (Emerald): `#10B981`.
-- **Gradients**: Use linear radial gradients combining primary cyan and secondary violet to draw focus to main interactive sections.
+- **Branding**: Monospace subheads, technical indicators, and clean neon borders (e.g. `shadow-[0_0_10px_rgba(6,182,212,0.15)]`).
 
 ### Contrast & Readability
 - All text elements must maintain a minimum contrast ratio of 4.5:1 against the dark backgrounds, conforming to WCAG AA standards.
 - Pay special attention to safety-critical text such as the "low" severity alert gray badges; use high-contrast foreground text colors (e.g., `#E5E7EB` on `#374151` background) to prevent illegibility on dark backgrounds.
 
 ### Typography
-- **Headings**: Geometric Sans (e.g., `Outfit` or `Space Grotesk`), tracking-tight, light or medium font weights.
-- **Body & Code**: Clean Sans (e.g., `Inter` or `Geist`) for body text; `Fira Code` or `JetBrains Mono` for metadata keys, YAML headers, and file paths.
+- **Headings**: Geometric Sans or Monospace (e.g., `Space Grotesk` or `JetBrains Mono`), tracking-tight, light or medium font weights.
+- **Body & Code**: Clean Sans (e.g., `Inter` or `Geist`) for body text; `JetBrains Mono` or `Fira Code` for all metadata keys, file paths, and terminal labels.
 
 ### Spacing Philosophy
-- Use generous, standard layout gaps (`gap-6`, `gap-8`) to prevent cognitive overload.
-- Grid systems must be cleanly aligned, prioritizing an expansive 3D viewport next to responsive detail panels.
+- Use grid structures with zero-border margins, sharp dividers (`border-white/5`), and high-information-density layouts.
+- Spacing gaps must be strict (`gap-4`, `gap-6`), using box borders to compartmentalize views.
 
 ---
 

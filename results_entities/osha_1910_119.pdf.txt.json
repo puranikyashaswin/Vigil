@@ -1,0 +1,75 @@
+{
+  "entities": [
+    {
+      "name": "Process Safety Management",
+      "type": "regulation",
+      "description": "A standard for preventing or minimizing the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "OSHA 3132",
+        "29 CFR 1910.119",
+        "Clean Air Act Amendments of 1990"
+      ],
+      "linked_concepts": [
+        "Hazard Communication Standard",
+        "Occupational Safety and Health Act of 1970"
+      ],
+      "tags": [
+        "process safety",
+        "hazardous chemicals",
+        "regulation"
+      ]
+    },
+    {
+      "name": "Hazard Communication Standard",
+      "type": "regulation",
+      "description": "A standard for communicating hazards associated with chemicals in the workplace",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "29 CFR 1910.1200"
+      ],
+      "linked_concepts": [
+        "Process Safety Management",
+        "Occupational Safety and Health Act of 1970"
+      ],
+      "tags": [
+        "hazard communication",
+        "chemical safety"
+      ]
+    },
+    {
+      "name": "Occupational Safety and Health Act of 1970",
+      "type": "regulation",
+      "description": "A federal law that regulates workplace safety and health",
+      "equipment_tags": [],
+      "regulatory_references": [
+        "29 U.S.C. 653",
+        "29 U.S.C. 655",
+        "29 U.S.C. 657"
+      ],
+      "linked_concepts": [
+        "Process Safety Management",
+        "Hazard Communication Standard"
+      ],
+      "tags": [
+        "occupational safety",
+        "health regulation"
+      ]
+    },
+    {
+      "name": "OSHA",
+      "type": "organization",
+      "description": "The Occupational Safety and Health Administration, responsible for regulating workplace safety and health",
+      "equipment_tags": [],
+      "regulatory_references": [],
+      "linked_concepts": [
+        "Process Safety Management",
+        "Hazard Communication Standard"
+      ],
+      "tags": [
+        "occupational safety",
+        "health regulation"
+      ]
+    }
+  ]
+}

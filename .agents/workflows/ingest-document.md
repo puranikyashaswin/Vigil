@@ -25,8 +25,8 @@ This workflow defines the literal, step-by-step procedure for processing and ing
 - **Local Parser Failure**: If a local parser throws an decoding or layout error, attempt parsing via `unstructured` layout detection as a secondary local method. If that also fails, treat the document as an image and route to the OpenRouter Vision OCR Chain.
 - **OpenRouter Primary Model Failure (HTTP 429/500/Timeout)**:
   - Catch the exception. Log a warning: `[WARNING] Primary vision model failed. Activating Fallback 1.`
-  - **Fallback 1**: Query `google/gemini-2.0-flash:free`.
-  - **Fallback 2 (If Fallback 1 fails)**: Query `meta-llama/llama-3.2-11b-vision-instruct:free`.
+  - **Fallback 1**: Query `google/gemma-4-26b-a4b-it:free`.
+  - **Fallback 2 (If Fallback 1 fails)**: Query `openrouter/free`.
   - **Hard Failure**: If all OCR fallbacks fail, log a critical error: `[CRITICAL] OCR pipeline failed for file: <path>`. Abort execution, clean up temporary file handles, and return an ingestion error status. Never fail silently.
 
 ---
