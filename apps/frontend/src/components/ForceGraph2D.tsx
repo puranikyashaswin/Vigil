@@ -68,10 +68,11 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setDimensions({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height
-        });
+        const w = entry.contentRect.width;
+        const h = entry.contentRect.height;
+        if (w > 50 && h > 50) {
+          setDimensions({ width: w, height: h });
+        }
       }
     });
     observer.observe(containerRef.current);
@@ -86,6 +87,8 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
 
   useEffect(() => {
     if (!fgRef.current || initializedData.nodes.length === 0 || isOrganized) return;
+    if (dimensions.width < 100 || dimensions.height < 100) return;
+
     const chargeForce = fgRef.current.d3Force("charge");
     if (chargeForce) chargeForce.strength(-240).distanceMax(250);
     const centerForce = fgRef.current.d3Force("center");
