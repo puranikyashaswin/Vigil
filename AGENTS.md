@@ -10,7 +10,7 @@ This document serves as the project constitution and styling guidelines for the 
 - **Agent Orchestration**: `langgraph` (v0.1+)
 - **LLM Gateway**: `portkey-ai` (v0.1+) using Groq as the primary engine. The standard primary reasoning model slug is **`groq/llama-3.3-70b-versatile`** (with configured fallbacks).
 - **Vision/OCR Integration**: `openrouter` API for free-tier vision models (primarily `nvidia/nemotron-nano-12b-v2-vl:free` for scanned assets)
-- **Local Document Parsers**: `unstructured`, `pdfplumber`, and `python-docx` (for text-native documents)
+- **Local Document Parsers**: `pymupdf` (primary/faster parser for native PDFs), `pdfplumber` (fallback parser for native PDFs), `unstructured`, and `python-docx` (for text-native documents)
 - **Vector Storage & Embeddings**: `qdrant-client` + `fastembed` (standard embedding model: **`BAAI/bge-small-en-v1.5`**)
 - **Reranking**: `flashrank`
 - **Evaluation**: `ragas`

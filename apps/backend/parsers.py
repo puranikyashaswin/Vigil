@@ -7,6 +7,7 @@ from typing import List, Tuple
 import httpx
 import pypdfium2 as pdfium
 import pdfplumber
+import fitz
 import docx
 import openpyxl
 import xlrd
@@ -66,9 +67,30 @@ def is_pdf_scanned(file_path: str) -> bool:
 
 def parse_pdf_local(file_path: str) -> str:
     """
-    Parses a text-native PDF locally using pdfplumber.
+    Parses a text-native PDF locally using PyMuPDF (fitz) as primary,
+    and falls back to pdfplumber if PyMuPDF fails or returns empty text.
     """
+    # 1. Primary: PyMuPDF (fitz)
     try:
+        logger.info(f"Attempting primary text extraction with PyMuPDF: {file_path}")
+        text_pages = []
+        with fitz.open(file_path) as doc:
+            for page in doc:
+                text_pages.append(page.get_text("text") or "")
+        parsed_text = "\n\n--- Page Break ---\n\n".join(text_pages)
+        
+        # If PyMuPDF returned valid text (at least 10 non-whitespace chars), return it
+        if parsed_text and len(parsed_text.strip()) >= 10:
+            logger.info("Successfully extracted text using PyMuPDF.")
+            return parsed_text
+        else:
+            logger.warning("PyMuPDF returned empty or too short text, falling back to pdfplumber.")
+    except Exception as e:
+        logger.warning(f"PyMuPDF extraction failed: {str(e)}. Falling back to pdfplumber.")
+
+    # 2. Fallback: pdfplumber
+    try:
+        logger.info(f"Attempting fallback text extraction with pdfplumber: {file_path}")
         with pdfplumber.open(file_path) as pdf:
             text_pages = []
             for page in pdf.pages:
