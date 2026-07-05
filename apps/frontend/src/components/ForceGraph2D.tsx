@@ -34,21 +34,21 @@ interface ForceGraph2DProps {
 }
 
 const LIGHT_COLORS: Record<string, string> = {
-  concept:         "#a1a1aa", // zinc-400
-  equipment:       "#a1a1aa", // zinc-400
-  procedure:       "#71717a", // zinc-500
-  regulation:      "#52525b", // zinc-600
-  maintenance_log: "#3f3f46", // zinc-700
-  alert:           "#d97757", // clay
+  concept:         "#6a9bcc", // blue
+  equipment:       "#6a9bcc", // blue
+  procedure:       "#788c5d", // green
+  regulation:      "#d97757", // orange/clay
+  maintenance_log: "#b0aea5", // gray
+  alert:           "#EF4444", // crimson
 };
 
 const DARK_COLORS: Record<string, string> = {
-  concept:         "#71717a", // zinc-500
-  equipment:       "#71717a", // zinc-500
-  procedure:       "#a1a1aa", // zinc-400
-  regulation:      "#d4d4d8", // zinc-300
-  maintenance_log: "#e4e4e7", // zinc-200
-  alert:           "#d97757", // clay (same)
+  concept:         "#6a9bcc", // blue
+  equipment:       "#6a9bcc", // blue
+  procedure:       "#788c5d", // green
+  regulation:      "#d97757", // orange/clay
+  maintenance_log: "#b0aea5", // gray
+  alert:           "#EF4444", // crimson
 };
 
 export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: ForceGraph2DProps) {

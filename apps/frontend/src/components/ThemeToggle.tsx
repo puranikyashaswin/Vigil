@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function ThemeToggle() {
     return <div className="w-9 h-9" />;
   }
 
-  const isDark = theme === "dark";
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button

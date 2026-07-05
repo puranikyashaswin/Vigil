@@ -16,7 +16,8 @@ import {
   Clock,
   ExternalLink,
   ChevronUp,
-  ArrowUp
+  ArrowUp,
+  Layers
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -58,6 +59,13 @@ interface ChatMessage {
   citations?: { source_file: string; excerpt: string; score: number }[];
 }
 
+interface Conversation {
+  id: string;
+  title: string;
+  timestamp: number;
+  messages: ChatMessage[];
+}
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"inspect" | "alerts">("inspect");
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
@@ -70,6 +78,10 @@ export default function Dashboard() {
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [showFloatingResponse, setShowFloatingResponse] = useState(false);
+
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string>("");
 
   const loadData = async () => {
     try {
@@ -91,7 +103,115 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+
+    try {
+      const stored = localStorage.getItem("vigil_conversations");
+      let loadedConvs: Conversation[] = [];
+      if (stored) {
+        loadedConvs = JSON.parse(stored);
+      }
+      
+      if (!Array.isArray(loadedConvs)) {
+        loadedConvs = [];
+      }
+
+      loadedConvs.sort((a, b) => b.timestamp - a.timestamp);
+
+      // Start a fresh new chat session only if the last active conversation is not empty.
+      const mostRecent = loadedConvs[0];
+      if (!mostRecent || mostRecent.messages.length > 0) {
+        const newId = Date.now().toString();
+        const newConv: Conversation = {
+          id: newId,
+          title: "New Conversation",
+          timestamp: Date.now(),
+          messages: []
+        };
+        loadedConvs = [newConv, ...loadedConvs];
+        localStorage.setItem("vigil_conversations", JSON.stringify(loadedConvs));
+      }
+
+      setConversations(loadedConvs);
+      const activeConv = loadedConvs[0];
+      setCurrentConversationId(activeConv.id);
+      setMessages(activeConv.messages);
+    } catch (e) {
+      console.error("Failed to load chat history from localStorage", e);
+    }
   }, []);
+
+  const updateConversationMessages = (convId: string, newMsgs: ChatMessage[]) => {
+    setConversations((prev) => {
+      const updated = prev.map((c) => {
+        if (c.id === convId) {
+          let title = c.title;
+          if (title === "New Conversation" && newMsgs.length > 0) {
+            const firstUserMsg = newMsgs.find(m => m.role === "user");
+            if (firstUserMsg) {
+              title = firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? "..." : "");
+            }
+          }
+          return {
+            ...c,
+            title,
+            timestamp: Date.now(),
+            messages: newMsgs
+          };
+        }
+        return c;
+      });
+      const sorted = [...updated].sort((a, b) => b.timestamp - a.timestamp);
+      localStorage.setItem("vigil_conversations", JSON.stringify(sorted));
+      return sorted;
+    });
+  };
+
+  const handleCreateNewChat = () => {
+    const newId = Date.now().toString();
+    const newConv: Conversation = {
+      id: newId,
+      title: "New Conversation",
+      timestamp: Date.now(),
+      messages: []
+    };
+    setConversations((prev) => {
+      const updated = [newConv, ...prev];
+      localStorage.setItem("vigil_conversations", JSON.stringify(updated));
+      return updated;
+    });
+    setCurrentConversationId(newId);
+    setMessages([]);
+    setShowFloatingResponse(false);
+  };
+
+  const handleDeleteChat = (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConversations((prev) => {
+      const filtered = prev.filter((c) => c.id !== convId);
+      if (currentConversationId === convId) {
+        if (filtered.length > 0) {
+          setCurrentConversationId(filtered[0].id);
+          setMessages(filtered[0].messages);
+        } else {
+          const newId = Date.now().toString();
+          const newConv: Conversation = {
+            id: newId,
+            title: "New Conversation",
+            timestamp: Date.now(),
+            messages: []
+          };
+          const newFiltered = [newConv];
+          localStorage.setItem("vigil_conversations", JSON.stringify(newFiltered));
+          setCurrentConversationId(newId);
+          setMessages([]);
+          setShowFloatingResponse(false);
+          return newFiltered;
+        }
+      }
+      localStorage.setItem("vigil_conversations", JSON.stringify(filtered));
+      return filtered;
+    });
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +219,10 @@ export default function Dashboard() {
 
     const userMsg = inputMessage;
     setInputMessage("");
-    setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+    
+    const updatedMsgsWithUser: ChatMessage[] = [...messages, { role: "user", content: userMsg }];
+    setMessages(updatedMsgsWithUser);
+    updateConversationMessages(currentConversationId, updatedMsgsWithUser);
     setIsTyping(true);
 
     try {
@@ -110,18 +233,27 @@ export default function Dashboard() {
       });
       const data = await res.json();
       
-      setMessages((prev) => [
-        ...prev, 
+      const updatedMsgsWithAssistant: ChatMessage[] = [
+        ...updatedMsgsWithUser, 
         { 
           role: "assistant", 
           content: data.generated_response,
           category: data.category,
           citations: data.citations
         }
-      ]);
+      ];
+      setMessages(updatedMsgsWithAssistant);
+      updateConversationMessages(currentConversationId, updatedMsgsWithAssistant);
+      setShowFloatingResponse(true);
     } catch (err) {
       console.error("Chat error:", err);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Error: Connection to backend query service failed." }]);
+      const updatedMsgsWithError: ChatMessage[] = [
+        ...updatedMsgsWithUser,
+        { role: "assistant", content: "Error: Connection to backend query service failed." }
+      ];
+      setMessages(updatedMsgsWithError);
+      updateConversationMessages(currentConversationId, updatedMsgsWithError);
+      setShowFloatingResponse(true);
     } finally {
       setIsTyping(false);
     }
@@ -210,41 +342,41 @@ export default function Dashboard() {
             return (
           <div className="absolute top-6 right-6 z-10 bg-white dark:bg-zinc-900 shadow-lg dark:shadow-black/30 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 min-w-[200px] select-none">
             <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-2 pb-2 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-clay" />
-              Graph Legend
+              <Layers className="w-4 h-4 text-clay" />
+              Knowledge Schema
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-zinc-400 dark:bg-zinc-500 rounded-full shrink-0" />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#6a9bcc]" />
                   <span className="text-xs text-zinc-600 dark:text-zinc-400">Concept</span>
                 </div>
                 <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["concept"] || 0}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-zinc-500 dark:bg-zinc-400 rounded-full shrink-0" />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#788c5d]" />
                   <span className="text-xs text-zinc-600 dark:text-zinc-400">Procedure</span>
                 </div>
                 <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["procedure"] || 0}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-zinc-600 dark:bg-zinc-300 rounded-full shrink-0" />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#d97757]" />
                   <span className="text-xs text-zinc-600 dark:text-zinc-400">Regulation</span>
                 </div>
                 <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["regulation"] || 0}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-zinc-700 dark:bg-zinc-200 rounded-full shrink-0" />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#b0aea5]" />
                   <span className="text-xs text-zinc-600 dark:text-zinc-400">Maintenance</span>
                 </div>
                 <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["maintenance_log"] || 0}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-clay rounded-full shrink-0" />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#EF4444]" />
                   <span className="text-xs text-zinc-600 dark:text-zinc-400">Alert</span>
                 </div>
                 <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">{counts["alert"] || 0}</span>
@@ -410,7 +542,7 @@ export default function Dashboard() {
 
       {/* Floating Chat Response Overlay - full-screen centered */}
       <AnimatePresence>
-        {lastAssistantMsg && (
+        {showFloatingResponse && lastAssistantMsg && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -423,8 +555,8 @@ export default function Dashboard() {
                   {lastAssistantMsg.category && `Resolved by ${lastAssistantMsg.category} agent`}
                 </span>
                 <button
-                  onClick={() => setMessages((prev) => prev.slice(0, -1))}
-                  className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded transition"
+                  onClick={() => setShowFloatingResponse(false)}
+                  className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded transition cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -449,7 +581,7 @@ export default function Dashboard() {
               {conversationCount > 1 && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="mt-3 text-xs font-medium text-clay hover:text-clay/80 transition flex items-center gap-1"
+                  className="mt-3 text-xs font-medium text-clay hover:text-clay/80 transition flex items-center gap-1 cursor-pointer"
                 >
                   View conversation ({conversationCount} messages)
                   <ChevronUp className="w-3 h-3" />
@@ -473,16 +605,14 @@ export default function Dashboard() {
             placeholder="Ask Vigil about equipment, procedures, or compliance..."
             className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
           />
-          {conversationCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowHistory(!showHistory)}
-              className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="View conversation history"
-            >
-              <MessageSquare className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowHistory(!showHistory)}
+            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+            title="View conversation history"
+          >
+            <MessageSquare className="w-4 h-4" />
+          </button>
           <button 
             type="submit"
             disabled={isTyping || !inputMessage.trim()}
@@ -497,67 +627,184 @@ export default function Dashboard() {
         </div>
       </form>
 
-      {/* Conversation History Drawer */}
+      {/* Full-Screen Chat History Overlay */}
       <AnimatePresence>
         {showHistory && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowHistory(false)}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex bg-zinc-50 dark:bg-zinc-950 font-sans"
           >
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-0 left-0 right-0 max-h-[60vh] bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden"
-            >
-              <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Conversation</h3>
+            {/* Left Sidebar */}
+            <div className="w-[300px] border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full bg-zinc-100 dark:bg-zinc-900 select-none">
+              {/* Sidebar Header */}
+              <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Chat History
+                </span>
                 <button
+                  type="button"
+                  onClick={handleCreateNewChat}
+                  className="px-2.5 py-1 text-xs font-medium text-white bg-clay hover:bg-clay/90 transition flex items-center gap-1 cursor-pointer rounded"
+                >
+                  + New Chat
+                </button>
+              </div>
+
+              {/* Sidebar List */}
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {conversations.map((conv) => {
+                  const isActive = conv.id === currentConversationId;
+                  const dateStr = new Date(conv.timestamp).toLocaleDateString([], {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  });
+                  const lastMsg = conv.messages.filter(m => m.role === 'user').pop();
+                  const previewText = lastMsg ? lastMsg.content : "Empty conversation";
+
+                  return (
+                    <div
+                      key={conv.id}
+                      onClick={() => {
+                        setCurrentConversationId(conv.id);
+                        setMessages(conv.messages);
+                      }}
+                      className={`group flex items-center justify-between p-3 cursor-pointer transition rounded-lg ${
+                        isActive
+                          ? "bg-clay/10 dark:bg-clay/15 text-clay font-medium"
+                          : "hover:bg-zinc-200/50 dark:hover:bg-zinc-800/40 text-zinc-700 dark:text-zinc-300"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="text-sm truncate font-medium">
+                          {conv.title}
+                        </div>
+                        <div className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 flex justify-between">
+                          <span>{dateStr}</span>
+                          <span className="truncate max-w-[120px] ml-2 italic">{previewText}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteChat(conv.id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition cursor-pointer"
+                        title="Delete chat"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Main Panel */}
+            <div className="flex-1 flex flex-col h-full bg-zinc-50 dark:bg-zinc-950 relative">
+              {/* Header */}
+              <div className="h-16 border-b border-zinc-200 dark:border-zinc-800 px-6 flex items-center justify-between shrink-0 bg-white dark:bg-zinc-900">
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-zinc-800 dark:text-zinc-200">
+                    {conversations.find(c => c.id === currentConversationId)?.title || "Active Chat"}
+                  </h3>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    Total messages: {messages.length}
+                  </p>
+                </div>
+                <button
+                  type="button"
                   onClick={() => setShowHistory(false)}
-                  className="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-800"
+                  title="Close history"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {messages.map((msg, index) => (
-                  <div key={index} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                    <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed rounded-2xl ${
-                      msg.role === "user"
-                        ? "bg-clay/10 dark:bg-clay/15 text-zinc-900 dark:text-zinc-100 rounded-br-md"
-                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-bl-md"
-                    }`}>
-                      {msg.content}
-                      {msg.role === "assistant" && msg.category && (
-                        <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-                          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                            via {msg.category} agent
-                          </span>
-                          {msg.citations && msg.citations.length > 0 && (
-                            <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-                              {msg.citations.map((c, i) => (
-                                <span key={i} className="text-clay font-medium">{c.source_file}{i < msg.citations!.length - 1 ? ", " : ""}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
+
+              {/* Message History Area */}
+              <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 max-w-3xl mx-auto w-full bg-zinc-50 dark:bg-zinc-950">
+                {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-400 dark:text-zinc-500 mb-4 border border-zinc-200 dark:border-zinc-800">
+                      <MessageSquare className="w-6 h-6" />
                     </div>
+                    <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                      New Chat Started
+                    </h4>
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 max-w-xs">
+                      Ask a question about equipment, safety regulations, or maintenance logs to begin.
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  messages.map((msg, index) => (
+                    <div key={index} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                      <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed rounded-2xl ${
+                        msg.role === "user"
+                          ? "bg-clay/10 dark:bg-clay/15 text-zinc-900 dark:text-zinc-100 rounded-br-none border border-clay/10 dark:border-clay/20"
+                          : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-800"
+                      }`}>
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        {msg.role === "assistant" && msg.category && (
+                          <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[10px] flex flex-col gap-1.5 text-zinc-500 dark:text-zinc-400">
+                            <span className="font-medium text-zinc-400 dark:text-zinc-500">
+                              Resolved by: <span className="text-clay">{msg.category} agent</span>
+                            </span>
+                            {msg.citations && msg.citations.length > 0 && (
+                              <div className="text-zinc-400 dark:text-zinc-500 mt-1">
+                                <span className="font-semibold text-zinc-500 dark:text-zinc-400">Citations:</span>
+                                <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                                  {msg.citations.map((c, i) => (
+                                    <li key={i}>
+                                      <span className="text-clay/90 font-medium">{c.source_file}</span> (score: {c.score.toFixed(2)})
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
                 {isTyping && (
-                  <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 pl-2">
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-455 pl-2">
                     <RefreshCw className="w-3.5 h-3.5 animate-spin text-clay" />
-                    <span>Thinking...</span>
+                    <span>Vigil core is searching & synthesizing...</span>
                   </div>
                 )}
               </div>
-            </motion.div>
+
+              {/* Chat Input Inside Overlay */}
+              <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 shrink-0 bg-zinc-50 dark:bg-zinc-950">
+                <form 
+                  onSubmit={handleSendMessage}
+                  className="max-w-3xl mx-auto flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-5 py-3 shadow-md dark:shadow-black/20"
+                >
+                  <input 
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Ask Vigil about equipment, procedures, or compliance..."
+                    className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={isTyping || !inputMessage.trim()}
+                    className="p-2 bg-clay hover:bg-clay/90 disabled:opacity-50 text-white rounded-full transition flex items-center justify-center cursor-pointer"
+                  >
+                    {isTyping ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ArrowUp className="w-4 h-4" />
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
