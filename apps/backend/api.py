@@ -6,8 +6,11 @@ from typing import Dict, Any, List
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import zipfile
+import io
 
 # Add current path and apps/backend to sys.path
 sys.path.append(os.path.dirname(__file__))
@@ -226,6 +229,60 @@ def get_alerts() -> List[Dict[str, Any]]:
     # Sort by timestamp descending
     alerts.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
     return alerts
+
+@api.get("/api/compliance/export")
+def export_compliance_package() -> StreamingResponse:
+    """
+    Auto-generates a compliance evidence zip package containing checklist,
+    ingested regulations, active procedures, and contradiction alerts.
+    """
+    logger.info("Generating compliance evidence package...")
+    kg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph"))
+    
+    zip_buffer = io.BytesIO()
+    try:
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            # Generate audit checklist summary markdown
+            checklist_content = (
+                "# Vigil Compliance Audit & Evidence Package\n\n"
+                f"Generated on: {datetime.now().isoformat()}\n"
+                "This package serves as verifiable compliance evidence for audit evaluation.\n\n"
+                "## Summary of Active Concept Indexes:\n"
+            )
+            
+            # Traverse directories and add OKF markdown files
+            if os.path.exists(kg_dir):
+                for root, _, files in os.walk(kg_dir):
+                    for file in files:
+                        if file.endswith(".md") and file not in ["index.md", "log.md"]:
+                            file_path = os.path.join(root, file)
+                            rel_path = os.path.relpath(file_path, kg_dir)
+                            zip_file.write(file_path, arcname=f"evidence/{rel_path}")
+                            
+                            # Parse title/description for checklist index
+                            try:
+                                with open(file_path, "r", encoding="utf-8") as f:
+                                    content = f.read()
+                                meta = parse_frontmatter(content)
+                                checklist_content += f"- **[{meta.get('type', 'concept').upper()}]** {meta.get('title', file)} (`{rel_path}`)\n"
+                                if meta.get('description'):
+                                    checklist_content += f"  - *Description*: {meta.get('description')}\n"
+                            except Exception as parse_err:
+                                logger.warning(f"Could not parse frontmatter for {file}: {str(parse_err)}")
+                                checklist_content += f"- `{rel_path}`\n"
+            
+            # Write checklist file to zip
+            zip_file.writestr("evidence_checklist.md", checklist_content)
+    except Exception as e:
+        logger.error(f"Failed to compile compliance evidence ZIP: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate audit package: {str(e)}")
+        
+    zip_buffer.seek(0)
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/x-zip-compressed",
+        headers={"Content-Disposition": "attachment; filename=vigil_compliance_evidence.zip"}
+    )
 
 if __name__ == "__main__":
     import uvicorn

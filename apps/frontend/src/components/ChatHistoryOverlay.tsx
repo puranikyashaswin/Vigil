@@ -4,6 +4,7 @@ import React from "react";
 import { X, MessageSquare, RefreshCw, ArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage, Conversation } from "@/types";
+import { renderMarkdown } from "@/utils/markdown";
 
 interface ChatHistoryOverlayProps {
   show: boolean;
@@ -12,6 +13,7 @@ interface ChatHistoryOverlayProps {
   messages: ChatMessage[];
   inputMessage: string;
   isTyping: boolean;
+  pipelineStep: number;
   onClose: () => void;
   onCreateNewChat: () => void;
   onSelectConversation: (conv: Conversation) => void;
@@ -27,6 +29,7 @@ export default function ChatHistoryOverlay({
   messages,
   inputMessage,
   isTyping,
+  pipelineStep,
   onClose,
   onCreateNewChat,
   onSelectConversation,
@@ -226,12 +229,32 @@ export default function ChatHistoryOverlay({
                         ? "bg-clay/10 dark:bg-clay/15 text-zinc-900 dark:text-zinc-100 rounded-br-none border border-clay/10 dark:border-clay/20"
                         : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-800"
                     }`}>
-                      <div className={`whitespace-pre-wrap ${msg.role === "assistant" ? "font-serif text-zinc-800 dark:text-zinc-200 text-sm" : ""}`}>{msg.content}</div>
+                      {msg.role === "assistant" ? (
+                        <div 
+                          className="font-serif text-zinc-800 dark:text-zinc-200 text-sm [&_ul]:list-disc [&_ul]:pl-5 [&_p]:mb-2 [&_li]:mb-1"
+                          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                        />
+                      ) : (
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                      )}
                       {msg.role === "assistant" && msg.category && (
                         <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[10px] flex flex-col gap-1.5 text-zinc-500 dark:text-zinc-400">
                           <span className="font-medium text-zinc-400 dark:text-zinc-500">
                             Resolved by: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.category} agent</span>
                           </span>
+                          {msg.metadata?.trace && (
+                            <div className="flex items-center gap-1 flex-wrap mt-1">
+                              <span className="font-semibold text-zinc-500 dark:text-zinc-400">Trace:</span>
+                              {msg.metadata.trace.map((node: string, idx: number) => (
+                                <React.Fragment key={idx}>
+                                  {idx > 0 && <span className="text-zinc-400">→</span>}
+                                  <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-1.5 py-0.5 rounded border border-zinc-200/50 dark:border-zinc-700/50 font-mono text-[8px] font-semibold">
+                                    {node}
+                                  </span>
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          )}
                           {msg.citations && msg.citations.length > 0 && (
                             <div className="text-zinc-400 dark:text-zinc-500 mt-1">
                               <span className="font-semibold text-zinc-500 dark:text-zinc-400">Citations:</span>
@@ -251,9 +274,22 @@ export default function ChatHistoryOverlay({
                 ))
               )}
               {isTyping && (
-                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 pl-2">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-clay" />
-                  <span>Vigil core is searching and synthesizing...</span>
+                <div className="flex flex-col gap-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 font-mono text-[10px] uppercase tracking-wider w-full">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-clay">Agent Graph Pipeline Running</span>
+                    <span className="text-zinc-500">{pipelineStep}/6</span>
+                  </div>
+                  <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1">
+                    <div className="bg-clay h-1 rounded-full transition-all duration-500" style={{ width: `${(pipelineStep / 6) * 100}%` }} />
+                  </div>
+                  <div className="text-zinc-500 dark:text-zinc-400">
+                    {pipelineStep === 1 && "▶ [1/6] INTENT ROUTER: Classifying query intent..."}
+                    {pipelineStep === 2 && "▶ [2/6] VECTOR RETRIEVAL: Querying Qdrant points..."}
+                    {pipelineStep === 3 && "▶ [3/6] FLASH-RANK: Reranking matching contexts..."}
+                    {pipelineStep === 4 && "▶ [4/6] CORE AGENT: Synthesizing response..."}
+                    {pipelineStep === 5 && "▶ [5/6] CONTRADICTION GUARD: Evaluating safety and conflicts..."}
+                    {pipelineStep === 6 && "▶ [6/6] TELEMETRY PIPELINE: Logging RAGAS metrics..."}
+                  </div>
                 </div>
               )}
             </div>

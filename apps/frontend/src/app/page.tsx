@@ -48,6 +48,7 @@ function Logo({ className }: { className?: string }) {
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"inspect" | "alerts">("inspect");
+  const [pipelineStep, setPipelineStep] = useState<number>(0);
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -207,19 +208,27 @@ export default function Dashboard() {
     setMessages(updated);
     updateConversationMessages(currentConversationId, updated);
     setIsTyping(true);
+    setPipelineStep(1);
+
+    const stepInterval = setInterval(() => {
+      setPipelineStep(prev => (prev < 6 ? prev + 1 : prev));
+    }, 900);
 
     if (isDemoMode) {
       setTimeout(() => {
         const next = [...updated, { 
           role: "assistant", 
           content: "⚠️ **Live Chat Notice**: The live multi-agent chat feature is disabled on this static web preview. To query the Expert Copilot, RCA, Compliance, or Lessons-Learned agents, please clone the repository and run the API server locally on your machine after adding your Portkey or Groq API key to your environment.", 
-          category: "Expert Copilot" 
+          category: "Expert Copilot",
+          metadata: { trace: ["route_intent", "expert_copilot"] }
         } as ChatMessage];
         setMessages(next);
         updateConversationMessages(currentConversationId, next);
         setShowFloatingResponse(true);
         setIsTyping(false);
-      }, 800);
+        setPipelineStep(0);
+        clearInterval(stepInterval);
+      }, 3500);
       return;
     }
 
@@ -230,7 +239,13 @@ export default function Dashboard() {
         body: JSON.stringify({ query: userMsg })
       });
       const data = await res.json();
-      const next = [...updated, { role: "assistant", content: data.generated_response, category: data.category, citations: data.citations } as ChatMessage];
+      const next = [...updated, { 
+        role: "assistant", 
+        content: data.generated_response, 
+        category: data.category, 
+        citations: data.citations,
+        metadata: data.metadata
+      } as ChatMessage];
       setMessages(next);
       updateConversationMessages(currentConversationId, next);
       setShowFloatingResponse(true);
@@ -242,6 +257,8 @@ export default function Dashboard() {
       setShowFloatingResponse(true);
     } finally {
       setIsTyping(false);
+      setPipelineStep(0);
+      clearInterval(stepInterval);
     }
   };
 
@@ -259,17 +276,17 @@ export default function Dashboard() {
               <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 tracking-wide ml-2 hidden sm:inline">Industrial Intel Console</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+          <div className="flex flex-wrap items-center gap-2 max-w-full overflow-x-auto">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Nodes: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">12,034</strong></span>
             </div>
-            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Edges: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">42,081</strong></span>
             </div>
-            <div className="hidden lg:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Compliance: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">97.4%</strong></span>
             </div>
-            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Alerts: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{alerts.length}</strong></span>
             </div>
             <button 
@@ -283,6 +300,16 @@ export default function Dashboard() {
             <button onClick={loadData} className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition flex items-center gap-2 cursor-pointer rounded-lg">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
+            </button>
+            <button 
+              onClick={() => {
+                window.open(`${API_BASE_URL}/api/compliance/export`, '_blank');
+              }}
+              className="px-4 py-2 bg-clay text-[#faf9f5] hover:bg-clay/90 text-sm font-medium transition flex items-center gap-2 cursor-pointer rounded-lg shadow-sm font-sans select-none"
+              title="Download compliance evidence package zip"
+            >
+              <Database className="w-4 h-4" />
+              Export Audit Package
             </button>
             <ThemeToggle />
           </div>
@@ -487,7 +514,41 @@ export default function Dashboard() {
       {!isFullScreen && !isMobile && (
         <>
           <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4 pointer-events-none">
-            <div className="pointer-events-auto">
+            <div className="pointer-events-auto flex flex-col gap-2">
+              {isTyping && (
+                <div className="bg-zinc-900/90 text-zinc-100 border border-zinc-700/50 backdrop-blur-md rounded-xl p-3 shadow-xl font-mono text-[10px] uppercase tracking-wider flex flex-col gap-1.5 transition-all">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-clay">Agent Graph Pipeline Running</span>
+                    <span className="text-zinc-500">{pipelineStep}/6</span>
+                  </div>
+                  <div className="w-full bg-zinc-800 rounded-full h-1">
+                    <div className="bg-clay h-1 rounded-full transition-all duration-500" style={{ width: `${(pipelineStep / 6) * 100}%` }} />
+                  </div>
+                  <div className="text-zinc-400">
+                    {pipelineStep === 1 && "▶ [1/6] INTENT ROUTER: Classifying query intent..."}
+                    {pipelineStep === 2 && "▶ [2/6] VECTOR RETRIEVAL: Querying Qdrant points..."}
+                    {pipelineStep === 3 && "▶ [3/6] FLASH-RANK: Reranking matching contexts..."}
+                    {pipelineStep === 4 && "▶ [4/6] CORE AGENT: Synthesizing response..."}
+                    {pipelineStep === 5 && "▶ [5/6] CONTRADICTION GUARD: Evaluating safety and conflicts..."}
+                    {pipelineStep === 6 && "▶ [6/6] TELEMETRY PIPELINE: Logging RAGAS metrics..."}
+                  </div>
+                </div>
+              )}
+              {!isTyping && lastAssistantMsg?.metadata?.trace && (
+                <div className="bg-zinc-100 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800 backdrop-blur-sm rounded-xl p-2.5 shadow-md font-mono text-[9px] uppercase tracking-wider flex items-center gap-2 select-none">
+                  <span className="text-zinc-500 dark:text-zinc-400">Trace:</span>
+                  <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
+                    {lastAssistantMsg.metadata.trace.map((node: string, idx: number) => (
+                      <React.Fragment key={idx}>
+                        {idx > 0 && <span className="text-zinc-400">→</span>}
+                        <span className="bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-1.5 py-0.5 rounded">
+                          {node}
+                        </span>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
               <FloatingResponse show={showFloatingResponse} lastAssistantMsg={lastAssistantMsg} conversationCount={messages.length} onClose={() => setShowFloatingResponse(false)} onViewHistory={() => setShowHistory(true)} />
             </div>
           </div>
@@ -498,7 +559,7 @@ export default function Dashboard() {
           </div>
         </>
       )}
-      <ChatHistoryOverlay show={showHistory} conversations={conversations} currentConversationId={currentConversationId} messages={messages} inputMessage={inputMessage} isTyping={isTyping} onClose={() => setShowHistory(false)} onCreateNewChat={handleCreateNewChat} onSelectConversation={(c) => { setCurrentConversationId(c.id); setMessages(c.messages); }} onDeleteChat={handleDeleteChat} onSendMessage={handleSendMessage} onInputChange={setInputMessage} />
+      <ChatHistoryOverlay show={showHistory} conversations={conversations} currentConversationId={currentConversationId} messages={messages} inputMessage={inputMessage} isTyping={isTyping} pipelineStep={pipelineStep} onClose={() => setShowHistory(false)} onCreateNewChat={handleCreateNewChat} onSelectConversation={(c) => { setCurrentConversationId(c.id); setMessages(c.messages); }} onDeleteChat={handleDeleteChat} onSendMessage={handleSendMessage} onInputChange={setInputMessage} />
       <AlertDetailModal selectedAlert={selectedAlert} onClose={() => setSelectedAlert(null)} />
       <AnimatePresence>
         {showPipelineVisualizer && (

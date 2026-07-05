@@ -163,7 +163,7 @@ export default function SplashScreen() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-black overflow-hidden"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#141413] overflow-hidden"
           exit={{ opacity: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >

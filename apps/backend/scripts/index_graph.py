@@ -88,22 +88,33 @@ def main():
         logger.error(f"Knowledge graph directory not found: {kg_dir}")
         sys.exit(1)
         
-    logger.info("Initializing embedding model: BAAI/bge-small-en-v1.5...")
-    # FastEmbed uses cached directories automatically
-    embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-    
+    try:
+        logger.info("Initializing embedding model: BAAI/bge-small-en-v1.5...")
+        embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+    except Exception as e:
+        logger.error(f"Failed to initialize embedding model: {str(e)}")
+        sys.exit(1)
+        
     logger.info("Loading OKF files from knowledge graph...")
-    documents = load_okf_files(kg_dir)
-    logger.info(f"Found {len(documents)} OKF concept files to index.")
-    
-    q_client = get_qdrant_client()
-    
+    try:
+        documents = load_okf_files(kg_dir)
+        logger.info(f"Found {len(documents)} OKF concept files to index.")
+    except Exception as e:
+        logger.error(f"Failed to load OKF files: {str(e)}")
+        sys.exit(1)
+        
+    try:
+        q_client = get_qdrant_client()
+    except Exception as e:
+        logger.error(f"Failed to connect to Qdrant client: {str(e)}")
+        sys.exit(1)
+        
     # Recreate collection to ensure a clean slate
     logger.info(f"Re-creating Qdrant collection: {COLLECTION_NAME}...")
     try:
         q_client.delete_collection(COLLECTION_NAME)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Could not delete collection (might not exist): {str(e)}")
         
     try:
         q_client.create_collection(
@@ -118,46 +129,53 @@ def main():
     point_id = 1
     
     for doc in documents:
-        # Generate chunks for each document
-        chunks = chunk_text(doc["text"])
-        logger.info(f"Splitting '{doc['title']}' into {len(chunks)} chunk(s)")
-        
-        for i, chunk in enumerate(chunks):
-            # Combine frontmatter title/desc with chunk context for better semantic embedding
-            embed_text = f"Title: {doc['title']}\nType: {doc['type']}\nContent: {chunk}"
-            vector = list(next(embedding_model.embed([embed_text])))
+        try:
+            # Generate chunks for each document
+            chunks = chunk_text(doc["text"])
+            logger.info(f"Splitting '{doc['title']}' into {len(chunks)} chunk(s)")
             
-            payload = {
-                "file_path": doc["file_path"],
-                "directory": doc["directory"],
-                "text": chunk,
-                "type": doc["type"],
-                "title": doc["title"]
-            }
-            
-            points.append(
-                PointStruct(
-                    id=point_id,
-                    vector=vector,
-                    payload=payload
+            for i, chunk in enumerate(chunks):
+                # Combine frontmatter title/desc with chunk context for better semantic embedding
+                embed_text = f"Title: {doc['title']}\nType: {doc['type']}\nContent: {chunk}"
+                vector = list(next(embedding_model.embed([embed_text])))
+                
+                payload = {
+                    "file_path": doc["file_path"],
+                    "directory": doc["directory"],
+                    "text": chunk,
+                    "type": doc["type"],
+                    "title": doc["title"]
+                }
+                
+                points.append(
+                    PointStruct(
+                        id=point_id,
+                        vector=vector,
+                        payload=payload
+                    )
                 )
-            )
-            point_id += 1
+                point_id += 1
+        except Exception as e:
+            logger.error(f"Failed to process or embed document '{doc['title']}': {str(e)}")
             
     # Batch upsert points in pages of 500 to avoid memory issues
     BATCH_SIZE = 500
-    logger.info(f"Upserting {len(points)} vector points to Qdrant in batches of {BATCH_SIZE}...")
-    for i in range(0, len(points), BATCH_SIZE):
-        batch = points[i:i + BATCH_SIZE]
-        try:
-            q_client.upsert(
-                collection_name=COLLECTION_NAME,
-                points=batch
-            )
-            logger.info(f"  Upserted batch {i // BATCH_SIZE + 1}/{(len(points) + BATCH_SIZE - 1) // BATCH_SIZE}")
-        except Exception as e:
-            logger.error(f"Qdrant connection failure or batch upsert error on batch {i // BATCH_SIZE + 1}: {str(e)}")
-            sys.exit(1)
+    if points:
+        logger.info(f"Upserting {len(points)} vector points to Qdrant in batches of {BATCH_SIZE}...")
+        for i in range(0, len(points), BATCH_SIZE):
+            batch = points[i:i + BATCH_SIZE]
+            try:
+                q_client.upsert(
+                    collection_name=COLLECTION_NAME,
+                    points=batch
+                )
+                logger.info(f"  Upserted batch {i // BATCH_SIZE + 1}/{(len(points) + BATCH_SIZE - 1) // BATCH_SIZE}")
+            except Exception as e:
+                logger.error(f"Qdrant connection failure or batch upsert error on batch {i // BATCH_SIZE + 1}: {str(e)}")
+                sys.exit(1)
+    else:
+        logger.warning("No vector points generated to upsert.")
+        
     logger.info("Vector database indexing complete!")
 
 if __name__ == "__main__":

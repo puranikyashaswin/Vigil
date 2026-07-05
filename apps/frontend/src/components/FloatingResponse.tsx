@@ -3,6 +3,7 @@
 import { X, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage } from "@/types";
+import { renderMarkdown } from "@/utils/markdown";
 
 interface FloatingResponseProps {
   show: boolean;
@@ -40,9 +41,10 @@ export default function FloatingResponse({
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4 font-serif">
-              {lastAssistantMsg.content}
-            </p>
+            <div 
+              className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4 font-serif [&_ul]:list-disc [&_ul]:pl-5 [&_p]:mb-2 [&_li]:mb-1"
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(lastAssistantMsg.content) }}
+            />
             {lastAssistantMsg.citations && lastAssistantMsg.citations.length > 0 && (
               <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">

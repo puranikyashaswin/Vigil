@@ -32,6 +32,7 @@ export interface ChatMessage {
   content: string;
   category?: string;
   citations?: { source_file: string; excerpt: string; score: number }[];
+  metadata?: { trace?: string[] };
 }
 
 export interface Conversation {

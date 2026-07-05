@@ -154,7 +154,7 @@ def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], Li
         logger.error(f"Retrieval failed: {str(e)}")
         return [], []
 
-# 4. Intent Routing Node
+# 4. Node 1: Intent Routing Node
 def route_query_intent(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
     client, model = get_client()
@@ -186,70 +186,204 @@ def route_query_intent(state: AgentState) -> Dict[str, Any]:
         category = "copilot"
         
     logger.info(f"Routed query intent: '{query}' -> [{category}]")
-    return {"category": category}
-
-# 5. Agent Node Implementations
-def run_expert_copilot(state: AgentState) -> Dict[str, Any]:
-    query = state["query"]
-    client, model = get_client()
-    contexts, citations = retrieve_contexts(query, dirs=None)
-
-    if not contexts or max(c["score"] for c in citations) < 0.55:
-        greeting_prompt = (
-            "You are the Vigil Expert Copilot Agent, a conversational AI assistant for an industrial knowledge intelligence platform. "
-            "The user's query did not match any documents in the local knowledge base (no relevant equipment specs, procedures, regulations, "
-            "or maintenance logs were found). Respond conversationally to the user's message. If they asked a general question or greeted you, "
-            "reply helpfully and let them know they can ask about equipment, maintenance, compliance, or safety topics when ready. "
-            "If they asked a technical question, politely explain that the knowledge base does not currently contain information on that topic "
-            "and suggest ingesting relevant documents. Be concise and friendly."
-        )
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": greeting_prompt},
-                {"role": "user", "content": query}
-            ],
-            temperature=0.7
-        )
-        ans = completion.choices[0].message.content
-        return {
-            "retrieved_contexts": [],
-            "citations": [],
-            "generated_response": ans,
-            "ragas_log": {"question": query, "contexts": [], "answer": ans}
-        }
-
-    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
-    system_prompt = (
-        "You are the Vigil Expert Copilot Agent. Answer the user's technical query using the provided context. "
-        "Ground your answer strictly in the sources. Cite specific documents and parameters. Do not hallucinate."
-    )
-    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
-
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=0.0
-    )
-    ans = completion.choices[0].message.content
+    
+    metadata = state.get("metadata") or {}
+    trace = ["route_intent"]
+    
     return {
-        "retrieved_contexts": contexts,
+        "category": category,
+        "metadata": {**metadata, "trace": trace}
+    }
+
+# Node 2: Retrieve Context Node
+def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
+    query = state["query"]
+    category = state["category"]
+    
+    # Map category to directories
+    dirs = None
+    if category == "rca":
+        dirs = ["equipment", "maintenance"]
+    elif category == "compliance":
+        dirs = ["procedures", "regulations", "alerts"]
+    elif category == "lessons_learned":
+        dirs = ["maintenance", "alerts"]
+        
+    try:
+        q_client = get_qdrant_client()
+        embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+        query_vector = list(next(embedding_model.embed([query])))
+        
+        query_filter = None
+        if dirs:
+            from qdrant_client.http import models
+            query_filter = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="directory",
+                        match=models.MatchAny(any=dirs)
+                    )
+                ]
+            )
+            
+        search_response = q_client.query_points(
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            query_filter=query_filter,
+            limit=10 if not dirs else 5
+        )
+        search_results = search_response.points
+        
+        raw_hits = []
+        for hit in search_results:
+            raw_hits.append({
+                "text": hit.payload["text"],
+                "file_path": hit.payload["file_path"],
+                "score": float(hit.score),
+                "title": hit.payload["title"]
+            })
+    except Exception as e:
+        logger.error(f"Vector search failed: {str(e)}")
+        raw_hits = []
+        
+    metadata = state.get("metadata") or {}
+    trace = metadata.get("trace", []) + ["retrieve_context"]
+    new_metadata = {**metadata, "trace": trace, "raw_hits": raw_hits}
+    
+    return {
+        "metadata": new_metadata,
+        "retrieved_contexts": [h["text"] for h in raw_hits]
+    }
+
+# Node 3: Rerank Context Node
+def rerank_context_node(state: AgentState) -> Dict[str, Any]:
+    query = state["query"]
+    category = state["category"]
+    metadata = state.get("metadata") or {}
+    raw_hits = metadata.get("raw_hits", [])
+    
+    contexts = []
+    citations = []
+    
+    if not raw_hits:
+        trace = metadata.get("trace", []) + ["rerank_context"]
+        return {
+            "citations": [],
+            "retrieved_contexts": [],
+            "metadata": {**metadata, "trace": trace, "confidence_score": 0.0}
+        }
+        
+    if category == "copilot":
+        try:
+            from flashrank import Ranker, RerankRequest
+            ranker = Ranker()
+            passages = []
+            for idx, hit in enumerate(raw_hits):
+                passages.append({
+                    "id": idx,
+                    "text": hit["text"],
+                    "meta": {
+                        "file_path": hit["file_path"],
+                        "score": hit["score"],
+                        "title": hit["title"]
+                    }
+                })
+            rerank_request = RerankRequest(query=query, passages=passages)
+            rerank_results = ranker.rerank(rerank_request)
+            
+            for r in rerank_results[:5]:
+                contexts.append(r["text"])
+                citations.append({
+                    "source_file": r["meta"]["file_path"],
+                    "excerpt": r["text"][:150] + "...",
+                    "score": float(r["score"])
+                })
+        except Exception as e:
+            logger.error(f"FlashRank reranking failed: {str(e)}")
+            for hit in raw_hits[:5]:
+                contexts.append(hit["text"])
+                citations.append({
+                    "source_file": hit["file_path"],
+                    "excerpt": hit["text"][:150] + "...",
+                    "score": hit["score"]
+                })
+    else:
+        for hit in raw_hits:
+            contexts.append(hit["text"])
+            citations.append({
+                "source_file": hit["file_path"],
+                "excerpt": hit["text"][:150] + "...",
+                "score": hit["score"]
+            })
+            
+    if citations:
+        avg_score = sum(c["score"] for c in citations) / len(citations)
+        high_scores = sum(1 for c in citations if c["score"] > 0.6)
+        consensus = min(1.0, 0.5 + 0.5 * (high_scores / len(citations)))
+        confidence_score = float(avg_score * consensus)
+    else:
+        confidence_score = 0.0
+        
+    trace = metadata.get("trace", []) + ["rerank_context"]
+    new_metadata = {**metadata, "trace": trace, "confidence_score": confidence_score}
+    
+    return {
         "citations": citations,
-        "generated_response": ans,
-        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+        "retrieved_contexts": contexts,
+        "metadata": new_metadata
     }
 
 def get_mock_telemetry_data(tag: str) -> str:
     """
-    Generates simulated in-memory telemetry readings for the last 6 hours for specific tags.
+    Queries simulated live telemetry from mock server on port 8001.
+    Falls back to local generation if telemetry server is unreachable.
     """
     tag = tag.upper().strip()
+    import httpx
+    from datetime import datetime
+    
+    try:
+        response = httpx.get(f"http://127.0.0.1:8001/api/telemetry/{tag}", timeout=1.0)
+        if response.status_code == 200:
+            data = response.json()
+            points = data[-6:]
+            
+            table = f"\n### Real-time Telemetry (Last 6 Hours) from IoT Mock Server for {tag}:\n"
+            table += "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
+            table += "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
+            
+            for pt in points:
+                dt_str = pt["timestamp"]
+                try:
+                    dt = datetime.fromisoformat(dt_str)
+                    time_label = dt.strftime("%H:%M")
+                except Exception:
+                    time_label = dt_str[:16].replace("T", " ")
+                    
+                temp = pt["temperature_celsius"]
+                press = pt["pressure_bar"]
+                vib = pt["vibration_mm_s"]
+                rpm = pt["motor_rpm"]
+                
+                status = "Normal"
+                if tag == "P-101" and press > 45.0:
+                    status = "ANOMALY: Exceeds Safe Pressure of 45 bar"
+                elif vib > 3.0:
+                    status = "High Vibration & Pressure"
+                elif vib > 1.8:
+                    status = "Elevated Vibration"
+                    
+                table += f"| {time_label} | {temp:.2f} | {press:.2f} | {vib:.2f} | {rpm:.1f} | {status} |\n"
+                
+            logger.info(f"RCA Agent: Successfully fetched live telemetry for {tag} from mock server.")
+            return table
+    except Exception as e:
+        logger.warning(f"Mock telemetry server unreachable ({str(e)}). Falling back to in-memory generation.")
+        
+    # Local fallback
     if tag == "P-101":
         return (
-            f"\n### Real-time Telemetry (Last 6 Hours) for {tag}:\n"
+            f"\n### Real-time Telemetry (Last 6 Hours) [LOCAL FALLBACK] for {tag}:\n"
             "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
             "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
             "| 09:00 | 44.80 | 29.80 | 1.35 | 1450.5 | Normal |\n"
@@ -261,7 +395,7 @@ def get_mock_telemetry_data(tag: str) -> str:
         )
     elif tag == "P-102":
         return (
-            f"\n### Real-time Telemetry (Last 6 Hours) for {tag}:\n"
+            f"\n### Real-time Telemetry (Last 6 Hours) [LOCAL FALLBACK] for {tag}:\n"
             "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
             "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
             "| 09:00 | 43.20 | 28.50 | 1.22 | 1448.0 | Normal |\n"
@@ -273,42 +407,76 @@ def get_mock_telemetry_data(tag: str) -> str:
         )
     return f"Real-time sensor telemetry for {tag} shows all metrics are operating within nominal baseline parameters."
 
-def run_maintenance_rca(state: AgentState) -> Dict[str, Any]:
+# Node 4: Synthesize Agent Response Node
+def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
-    dirs = ["equipment", "maintenance"]
-    contexts, citations = retrieve_contexts(query, dirs=dirs)
+    category = state["category"]
+    contexts = state["retrieved_contexts"]
+    citations = state["citations"]
+    metadata = state.get("metadata") or {}
     
-    if not contexts or max(c["score"] for c in citations) < 0.55:
-        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: equipment/, maintenance/."
+    client, model = get_client()
+    
+    if not contexts or (citations and max(c["score"] for c in citations) < 0.55):
+        greeting_prompt = (
+            "You are the Vigil Expert Agent. Explain that no relevant equipment specs, "
+            "procedures, regulations, or maintenance logs were found in the knowledge base. "
+            "Politely decline to hallucinate and advise the user to ingest relevant source documents."
+        )
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": greeting_prompt},
+                {"role": "user", "content": query}
+            ],
+            temperature=0.7
+        )
+        ans = completion.choices[0].message.content
+        trace = metadata.get("trace", []) + ["synthesize_response"]
         return {
-            "retrieved_contexts": [],
-            "citations": [],
-            "generated_response": response,
-            "ragas_log": {"question": query, "contexts": [], "answer": response}
+            "generated_response": ans,
+            "metadata": {**metadata, "trace": trace}
         }
         
-    # Check for equipment tag in user query to bind mock telemetry
-    tag_match = re.search(r"\b[PVT]-[0-9]{3}\b", query.upper())
     telemetry_block = ""
-    if tag_match:
-        tag = tag_match.group(0)
-        telemetry_block = get_mock_telemetry_data(tag)
-        logger.info(f"RCA Agent: Fused in-memory live telemetry for tag {tag}")
+    if category == "rca":
+        tag_match = re.search(r"\b[PVT]-[0-9]{3}\b", query.upper())
+        if tag_match:
+            tag = tag_match.group(0)
+            telemetry_block = get_mock_telemetry_data(tag)
+            logger.info(f"RCA Agent: Fused in-memory live telemetry for tag {tag}")
+            
+    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(citations))])
+    
+    if category == "copilot":
+        system_prompt = (
+            "You are the Vigil Expert Copilot Agent. Answer the user's technical query using the provided context. "
+            "Ground your answer strictly in the sources. Cite specific documents and parameters. Do not hallucinate."
+        )
+        user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    elif category == "rca":
+        system_prompt = (
+            "You are the Vigil Maintenance & RCA Agent. Analyze the maintenance logs, specifications, and "
+            "any real-time IoT sensor telemetry data provided to determine root causes, asset conditions, or anomalous events. "
+            "Ground your analysis strictly in the sources (both static logs and live sensor telemetry tables). Do not hallucinate."
+        )
+        user_prompt = f"Historical Context:\n{context_block}\n\n"
+        if telemetry_block:
+            user_prompt += f"Real-Time Telemetry:\n{telemetry_block}\n\n"
+        user_prompt += f"Query: {query}"
+    elif category == "compliance":
+        system_prompt = (
+            "You are the Vigil Compliance Agent. Compare active operating procedures against safety/operational regulations. "
+            "Identify violations or discrepancies. Ground your analysis strictly in the sources. Do not hallucinate."
+        )
+        user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    else:
+        system_prompt = (
+            "You are the Vigil Lessons-Learned Engine. Review the maintenance logs, alert histories, and recurring issues. "
+            "Synthesize generalized optimization rules or design lessons. Ground your analysis strictly in the sources."
+        )
+        user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
         
-    client, model = get_client()
-    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
-    
-    system_prompt = (
-        "You are the Vigil Maintenance & RCA Agent. Analyze the maintenance logs, specifications, and "
-        "any real-time IoT sensor telemetry data provided to determine root causes, asset conditions, or anomalous events. "
-        "Ground your analysis strictly in the sources (both static logs and live sensor telemetry tables). Do not hallucinate."
-    )
-    
-    user_prompt = f"Historical Context:\n{context_block}\n\n"
-    if telemetry_block:
-        user_prompt += f"Real-Time Telemetry:\n{telemetry_block}\n\n"
-    user_prompt += f"Query: {query}"
-    
     completion = client.chat.completions.create(
         model=model,
         messages=[
@@ -319,89 +487,91 @@ def run_maintenance_rca(state: AgentState) -> Dict[str, Any]:
     )
     ans = completion.choices[0].message.content
     
-    # Save fused contexts to state log
-    returned_contexts = contexts + [telemetry_block] if telemetry_block else contexts
+    final_contexts = contexts + [telemetry_block] if telemetry_block else contexts
+    trace = metadata.get("trace", []) + ["synthesize_response"]
+    
     return {
-        "retrieved_contexts": returned_contexts,
-        "citations": citations,
         "generated_response": ans,
-        "ragas_log": {"question": query, "contexts": returned_contexts, "answer": ans}
+        "retrieved_contexts": final_contexts,
+        "metadata": {**metadata, "trace": trace}
     }
 
-def run_compliance(state: AgentState) -> Dict[str, Any]:
-    query = state["query"]
-    dirs = ["procedures", "regulations", "alerts"]
-    contexts, citations = retrieve_contexts(query, dirs=dirs)
+# Node 5: Contradiction Guard Node
+def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
+    generated_response = state["generated_response"]
+    contexts = state["retrieved_contexts"]
+    metadata = state.get("metadata") or {}
     
-    if not contexts or max(c["score"] for c in citations) < 0.55:
-        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: procedures/, regulations/, alerts/."
+    if not contexts or "no relevant equipment" in generated_response.lower() or "insufficient" in generated_response.lower():
+        trace = metadata.get("trace", []) + ["contradiction_guard"]
         return {
-            "retrieved_contexts": [],
-            "citations": [],
-            "generated_response": response,
-            "ragas_log": {"question": query, "contexts": [], "answer": response}
+            "metadata": {**metadata, "trace": trace}
         }
         
     client, model = get_client()
-    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
-    system_prompt = (
-        "You are the Vigil Compliance Agent. Compare active operating procedures against safety/operational regulations. "
-        "Identify violations or discrepancies. Ground your analysis strictly in the sources. Do not hallucinate."
-    )
-    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    context_block = "\n\n".join([f"Document Chunk: {c}" for c in contexts[:3]])
     
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=0.0
+    system_prompt = (
+        "You are the Vigil Contradiction Guard. Compare the generated AI answer against the source document chunks "
+        "and determine if the generated answer introduces any direct facts, specifications, or setpoints that contradict "
+        "the source files. If the answer is fully aligned, output 'SAFE'. If there is a contradiction, output a brief explanation "
+        "of the conflict. Be extremely concise. Keep it under 2 sentences."
     )
-    ans = completion.choices[0].message.content
+    
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"AI Answer:\n{generated_response}\n\nSource Documents:\n{context_block}"}
+            ],
+            temperature=0.0
+        )
+        guard_output = completion.choices[0].message.content.strip()
+        if "SAFE" not in guard_output.upper():
+            logger.warning(f"Contradiction Guard Flagged Conflict: {guard_output}")
+            generated_response = f"⚠️ [SAFETY WARNING: Potential Contradiction Detected]\n{guard_output}\n\n{generated_response}"
+    except Exception as e:
+        logger.error(f"Contradiction Guard check failed: {str(e)}")
+        
+    trace = metadata.get("trace", []) + ["contradiction_guard"]
     return {
-        "retrieved_contexts": contexts,
-        "citations": citations,
-        "generated_response": ans,
-        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+        "generated_response": generated_response,
+        "metadata": {**metadata, "trace": trace}
     }
 
-def run_lessons_learned(state: AgentState) -> Dict[str, Any]:
+# Node 6: Log Ragas Metrics Node
+def log_ragas_metrics_node(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
-    dirs = ["maintenance", "alerts"]
-    contexts, citations = retrieve_contexts(query, dirs=dirs)
+    contexts = state["retrieved_contexts"]
+    generated_response = state["generated_response"]
+    metadata = state.get("metadata") or {}
     
-    if not contexts or max(c["score"] for c in citations) < 0.55:
-        response = "Error: Insufficient traceable context found in the local knowledge base to answer this query. Checked directories: maintenance/, alerts/."
-        return {
-            "retrieved_contexts": [],
-            "citations": [],
-            "generated_response": response,
-            "ragas_log": {"question": query, "contexts": [], "answer": response}
-        }
+    ragas_log = {
+        "question": query,
+        "contexts": contexts if contexts else [""],
+        "answer": generated_response
+    }
+    
+    trace = metadata.get("trace", []) + ["log_metrics"]
+    new_metadata = {**metadata, "trace": trace}
+    
+    try:
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        log_dir = os.path.join(project_root, "logs", "ragas")
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, "interactions.jsonl")
         
-    client, model = get_client()
-    context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
-    system_prompt = (
-        "You are the Vigil Lessons-Learned Engine. Review the maintenance logs, alert histories, and recurring issues. "
-        "Synthesize generalized optimization rules or design lessons. Ground your analysis strictly in the sources."
-    )
-    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
-    
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=0.0
-    )
-    ans = completion.choices[0].message.content
+        from datetime import datetime
+        import json
+        with open(log_path, "a", encoding="utf-8") as lf:
+            lf.write(json.dumps({**ragas_log, "timestamp": datetime.now().isoformat()}) + "\n")
+    except Exception as e:
+        logger.error(f"Failed to log Ragas metrics to disk: {str(e)}")
+        
     return {
-        "retrieved_contexts": contexts,
-        "citations": citations,
-        "generated_response": ans,
-        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+        "ragas_log": ragas_log,
+        "metadata": new_metadata
     }
 
 # 6. Graph Compilation
@@ -409,35 +579,22 @@ workflow = StateGraph(AgentState)
 
 # Add Nodes
 workflow.add_node("route_intent", route_query_intent)
-workflow.add_node("expert_copilot", run_expert_copilot)
-workflow.add_node("maintenance_rca", run_maintenance_rca)
-workflow.add_node("compliance", run_compliance)
-workflow.add_node("lessons_learned", run_lessons_learned)
+workflow.add_node("retrieve_context", retrieve_context_node)
+workflow.add_node("rerank_context", rerank_context_node)
+workflow.add_node("synthesize_response", synthesize_response_node)
+workflow.add_node("contradiction_guard", contradiction_guard_node)
+workflow.add_node("log_metrics", log_ragas_metrics_node)
 
-# Set Entry
+# Connect Entry
 workflow.set_entry_point("route_intent")
 
-# Routing Logic
-def route_to_agent(state: AgentState) -> str:
-    return state["category"]
-
-# Conditional routing edge
-workflow.add_conditional_edges(
-    "route_intent",
-    route_to_agent,
-    {
-        "copilot": "expert_copilot",
-        "rca": "maintenance_rca",
-        "compliance": "compliance",
-        "lessons_learned": "lessons_learned"
-    }
-)
-
-# Connect nodes to end
-workflow.add_edge("expert_copilot", END)
-workflow.add_edge("maintenance_rca", END)
-workflow.add_edge("compliance", END)
-workflow.add_edge("lessons_learned", END)
+# Chaining Sequentially
+workflow.add_edge("route_intent", "retrieve_context")
+workflow.add_edge("retrieve_context", "rerank_context")
+workflow.add_edge("rerank_context", "synthesize_response")
+workflow.add_edge("synthesize_response", "contradiction_guard")
+workflow.add_edge("contradiction_guard", "log_metrics")
+workflow.add_edge("log_metrics", END)
 
 # Compile
 app = workflow.compile()
