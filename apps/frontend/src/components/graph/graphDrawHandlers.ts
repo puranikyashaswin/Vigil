@@ -41,11 +41,10 @@ export function drawNode(
   ctx.save();
   ctx.globalAlpha = isHighlighted ? 1.0 : 0.15;
 
-  // Selected outer ring decoration
   if (isSelected) {
     ctx.beginPath();
     ctx.arc(x, y, size * 2.2, 0, 2 * Math.PI);
-    ctx.strokeStyle = "#d97757";
+    ctx.strokeStyle = isDark ? "#faf9f5" : "#141413";
     ctx.lineWidth = 1.8;
     ctx.stroke();
   }
@@ -187,9 +186,11 @@ export function drawLink(
     defaultAlpha = 0.35;
   }
 
-  // Hovered state gets accent clay color, otherwise uses relation colors
+  // Hovered state gets accent color (white in dark mode, black in light mode), otherwise uses relation colors
   const isHovered = isHighlighted && highlightLinks.size > 0;
-  ctx.strokeStyle = isHovered ? "#d97757" : strokeColor;
+  const isDark = linkDefault === "#b0aea5";
+  const hoverColor = isDark ? "#faf9f5" : "#141413";
+  ctx.strokeStyle = isHovered ? hoverColor : strokeColor;
   ctx.lineWidth = isHovered ? 1.4 : 0.6;
   ctx.globalAlpha = isHighlighted ? 0.85 : defaultAlpha;
   

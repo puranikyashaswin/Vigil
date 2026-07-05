@@ -16,9 +16,10 @@ interface ForceGraph2DProps {
   data: GraphData;
   onNodeClick: (node: Node) => void;
   selectedNodeId?: string | null;
+  isOrganized?: boolean;
 }
 
-export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: ForceGraph2DProps) {
+export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrganized = false }: ForceGraph2DProps) {
   const { resolvedTheme } = useTheme();
   const fgRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
@@ -65,14 +66,16 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const handleResize = () => {
-      if (containerRef.current) {
-        setDimensions({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight });
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        });
       }
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, []);
 
   const hasZoomedRef = useRef(false);
@@ -82,23 +85,23 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
   }, [initializedData.nodes.length]);
 
   useEffect(() => {
-    if (!fgRef.current || initializedData.nodes.length === 0) return;
+    if (!fgRef.current || initializedData.nodes.length === 0 || isOrganized) return;
     const chargeForce = fgRef.current.d3Force("charge");
-    if (chargeForce) chargeForce.strength(-180).distanceMax(250);
+    if (chargeForce) chargeForce.strength(-240).distanceMax(250);
     const centerForce = fgRef.current.d3Force("center");
     if (centerForce) centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
     const linkForce = fgRef.current.d3Force("link");
-    if (linkForce) linkForce.distance(90).strength(0.8);
+    if (linkForce) linkForce.distance(95).strength(0.8);
     const collisionForce = fgRef.current.d3Force("collision");
-    if (collisionForce) collisionForce.radius(24).strength(0.7);
+    if (collisionForce) collisionForce.radius(36).strength(0.7);
     fgRef.current.d3ReheatSimulation();
     setTimeout(() => {
-      if (fgRef.current && !hasZoomedRef.current) {
+      if (fgRef.current && !hasZoomedRef.current && !isOrganized) {
         fgRef.current.zoomToFit(600, 60);
         hasZoomedRef.current = true;
       }
     }, 1500);
-  }, [initializedData.nodes.length, dimensions.width, dimensions.height]);
+  }, [initializedData.nodes.length, dimensions.width, dimensions.height, isOrganized]);
 
   useEffect(() => {
     if (selectedNodeId && fgRef.current && initializedData.nodes) {
@@ -109,6 +112,78 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
       }
     }
   }, [selectedNodeId, initializedData.nodes]);
+
+  useEffect(() => {
+    if (initializedData.nodes.length === 0) return;
+    
+    if (isOrganized) {
+      const N = initializedData.nodes.length;
+      const C_x = dimensions.width / 2;
+      const C_y = dimensions.height / 2;
+      const R = Math.min(dimensions.width, dimensions.height) * 0.35;
+      
+      const startPositions = initializedData.nodes.map((n) => ({
+        id: n.id,
+        x: n.x ?? C_x,
+        y: n.y ?? C_y
+      }));
+      
+      const targets = initializedData.nodes.map((n, idx) => {
+        const theta = (idx / N) * 2 * Math.PI;
+        return {
+          id: n.id,
+          x: C_x + R * Math.cos(theta),
+          y: C_y + R * Math.sin(theta)
+        };
+      });
+      
+      const duration = 600;
+      const startTime = performance.now();
+      
+      let animFrameId: number;
+      
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        
+        const ease = progress < 0.5 
+          ? 4 * progress * progress * progress 
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+          
+        initializedData.nodes.forEach((node) => {
+          const start = startPositions.find((p) => p.id === node.id);
+          const target = targets.find((t) => t.id === node.id);
+          if (start && target) {
+            node.fx = start.x + (target.x - start.x) * ease;
+            node.fy = start.y + (target.y - start.y) * ease;
+          }
+        });
+        
+        if (progress < 1) {
+          animFrameId = requestAnimationFrame(animate);
+        } else {
+          initializedData.nodes.forEach((node) => {
+            const target = targets.find((t) => t.id === node.id);
+            if (target) {
+              node.fx = target.x;
+              node.fy = target.y;
+            }
+          });
+        }
+      };
+      
+      animFrameId = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animFrameId);
+    } else {
+      initializedData.nodes.forEach((node) => {
+        node.fx = undefined;
+        node.fy = undefined;
+      });
+      if (fgRef.current) {
+        fgRef.current.d3ReheatSimulation();
+      }
+    }
+  }, [isOrganized, initializedData.nodes, dimensions.width, dimensions.height]);
 
   const handleNodeHover = useCallback((node: GraphNode | null) => {
     const hNodes = new Set<string>();

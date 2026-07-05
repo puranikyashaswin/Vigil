@@ -142,11 +142,11 @@ export default function ChatHistoryOverlay({
                         ? "bg-clay/10 dark:bg-clay/15 text-zinc-900 dark:text-zinc-100 rounded-br-none border border-clay/10 dark:border-clay/20"
                         : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-800"
                     }`}>
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                      <div className={`whitespace-pre-wrap ${msg.role === "assistant" ? "font-serif text-zinc-800 dark:text-zinc-200 text-sm" : ""}`}>{msg.content}</div>
                       {msg.role === "assistant" && msg.category && (
                         <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[10px] flex flex-col gap-1.5 text-zinc-500 dark:text-zinc-400">
                           <span className="font-medium text-zinc-400 dark:text-zinc-500">
-                            Resolved by: <span className="text-clay">{msg.category} agent</span>
+                            Resolved by: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.category} agent</span>
                           </span>
                           {msg.citations && msg.citations.length > 0 && (
                             <div className="text-zinc-400 dark:text-zinc-500 mt-1">
@@ -154,7 +154,7 @@ export default function ChatHistoryOverlay({
                               <ul className="list-disc pl-4 mt-1 space-y-0.5">
                                 {msg.citations.map((c, i) => (
                                   <li key={i}>
-                                    <span className="text-clay/90 font-medium">{c.source_file}</span> (score: {c.score.toFixed(2)})
+                                    <span className="text-zinc-900 dark:text-zinc-100 font-semibold underline">{c.source_file}</span> (score: {c.score.toFixed(2)})
                                   </li>
                                 ))}
                               </ul>

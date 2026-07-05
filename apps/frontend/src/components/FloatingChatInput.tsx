@@ -38,7 +38,7 @@ export default function FloatingChatInput({
         <button 
           type="submit"
           disabled={isTyping || !inputMessage.trim()}
-          className="p-2 bg-clay hover:bg-clay/85 disabled:opacity-50 text-white rounded-full transition flex items-center justify-center cursor-pointer"
+          className="p-2 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 text-zinc-100 dark:text-zinc-900 rounded-full transition flex items-center justify-center cursor-pointer"
         >
           {isTyping ? (
             <RefreshCw className="w-4 h-4 animate-spin" />

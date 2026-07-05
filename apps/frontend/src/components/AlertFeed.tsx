@@ -50,7 +50,7 @@ export default function AlertFeed({ alerts, onSelectAlert }: AlertFeedProps) {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-clay" />
+                  <AlertTriangle className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                   {alert.title}
                 </h3>
                 <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed truncate">

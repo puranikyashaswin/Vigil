@@ -2,10 +2,18 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { Moon, Sun } from "lucide-react";
 
-export default function ThemeToggle() {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+interface ThemeToggleProps {
+  className?: string;
+}
+
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
+export default function ThemeToggle({ className }: ThemeToggleProps) {
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -13,25 +21,76 @@ export default function ThemeToggle() {
   }, []);
 
   if (!mounted) {
-    return <div className="w-9 h-9" />;
+    return <div className="w-16 h-8" />;
   }
 
   const isDark = resolvedTheme === "dark";
 
   return (
-    <button
+    <div
+      className={cn(
+        "flex w-16 h-8 p-1 rounded-full cursor-pointer transition-all duration-300 select-none",
+        isDark 
+          ? "bg-zinc-950 border border-zinc-800" 
+          : "bg-white border border-zinc-200",
+        className
+      )}
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="w-9 h-9 flex items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer"
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      role="button"
+      tabIndex={0}
     >
-      <Image
-        src={isDark ? "/whitemode.png" : "/blackmode.png"}
-        alt={isDark ? "Light mode" : "Dark mode"}
-        width={20}
-        height={20}
-        className="w-5 h-5"
-        priority
-      />
-    </button>
+      <div className="flex justify-between items-center w-full">
+        <div
+          className={cn(
+            "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
+            isDark 
+              ? "transform translate-x-0 bg-zinc-800" 
+              : "transform translate-x-8 bg-zinc-200"
+          )}
+        >
+          {isDark ? (
+            <Moon 
+              className="w-4 h-4 text-white" 
+              strokeWidth={1.5}
+            />
+          ) : (
+            <Sun 
+              className="w-4 h-4 text-gray-700" 
+              strokeWidth={1.5}
+            />
+          )}
+        </div>
+        <div
+          className={cn(
+            "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
+            isDark 
+              ? "bg-transparent" 
+              : "transform -translate-x-8"
+          )}
+        >
+          {isDark ? (
+            <Sun 
+              className="w-4 h-4 text-gray-500" 
+              strokeWidth={1.5}
+            />
+          ) : (
+            <Moon 
+              className="w-4 h-4 text-black" 
+              strokeWidth={1.5}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function DefaultToggle() {
+  return (
+    <div className="space-y-2 text-center">
+      <div className="flex justify-center">
+        <ThemeToggle />
+      </div>
+    </div>
   );
 }

@@ -1,15 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Poppins:ital,wght@0,300..900;1,300..900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-clay: #d97757;
+  --color-clay: var(--clay-color);
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Lora', Georgia, serif;
+}
+
+:root {
+  --clay-color: #141413;
+}
+
+.dark {
+  --clay-color: #faf9f5;
 }
 
 body {
   background-color: var(--color-zinc-50);
   color: var(--color-zinc-900);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   overflow-x: hidden;
 }
 

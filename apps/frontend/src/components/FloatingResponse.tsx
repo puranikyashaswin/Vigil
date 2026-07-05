@@ -40,7 +40,7 @@ export default function FloatingResponse({
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4">
+            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4 font-serif">
               {lastAssistantMsg.content}
             </p>
             {lastAssistantMsg.citations && lastAssistantMsg.citations.length > 0 && (
@@ -48,9 +48,9 @@ export default function FloatingResponse({
                 <div className="text-xs text-zinc-500 dark:text-zinc-400">
                   Citations:
                   <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                    {lastAssistantMsg.citations.slice(0, 3).map((c, i) => (
+                     {lastAssistantMsg.citations.slice(0, 3).map((c, i) => (
                       <li key={i}>
-                        <span className="text-clay font-medium">{c.source_file}</span> (score: {c.score.toFixed(2)})
+                        <span className="text-zinc-900 dark:text-zinc-100 font-semibold underline">{c.source_file}</span> (score: {c.score.toFixed(2)})
                       </li>
                     ))}
                   </ul>
@@ -60,7 +60,7 @@ export default function FloatingResponse({
             {conversationCount > 1 && (
               <button
                 onClick={onViewHistory}
-                className="mt-3 text-xs font-medium text-clay hover:text-clay/80 transition flex items-center gap-1 cursor-pointer"
+                className="mt-3 text-xs font-semibold text-zinc-900 dark:text-zinc-100 hover:text-zinc-700 dark:hover:text-zinc-300 transition flex items-center gap-1 cursor-pointer underline"
               >
                 View conversation ({conversationCount} messages)
                 <ChevronUp className="w-3.5 h-3.5" />
