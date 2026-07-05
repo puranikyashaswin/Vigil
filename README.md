@@ -228,21 +228,20 @@ Vigil was evaluated against a 10-question benchmark spanning compliance, RCA, an
 
 ## Enterprise Scalability Path
 
-Vigil's core architecture (LangGraph multi-agent routing, OKF knowledge format, contradiction detection pipeline, Qdrant vector retrieval) is designed to scale from hackathon demo to production deployment without rebuilding. The transition points are infrastructure-tier swaps, not rewrites:
+Vigil is architected to scale from a prototype to an enterprise-grade production environment without rewriting the core application logic. 
 
-| Component | Current (Hackathon) | Production Upgrade |
-|:---|:---|:---|
-| LLM routing | OpenRouter free tier (`meta-llama/llama-3.3-70b-instruct`) | Portkey gateway with Groq (`llama-3.3-70b-versatile`) + paid fallback chain |
-| OCR | OpenRouter free vision models | Dedicated vision models via Portkey with higher rate limits |
-| Vector DB | Local file-based Qdrant (`vigil_qdrant.db`) | Qdrant Cloud cluster with replication |
-| Reverse link scanning | Brute-force regex over all `.md` files | Qdrant metadata query on `linked_concepts` payload field, or in-memory graph index |
-| Embedding model | `BAAI/bge-small-en-v1.5` | `BAAI/bge-large-en-v1.5` or fine-tuned domain-specific model |
-| Ingestion pipeline | Single-process scripts | Async task queue (Celery/Argo) with retry, scheduling, and webhook triggers |
-| Observability | LangSmith (optional) | Full LangSmith dashboard with alerting on eval degradation |
-| Auth & RBAC | None | Role-based access per agent/directory scope |
-| OKF storage | Local filesystem | Git-backed or object storage with versioned audit trail |
+For a comprehensive, step-by-step engineering breakdown of component upgrades, bottleneck metrics, failure timelines, and cloud sizing estimates, refer to the [Production Scaling Guide](file:///Users/yashaswinsharma/Documents/github/vigil/docs/SCALING.md).
 
-The OKF format itself is plain Markdown with YAML frontmatter and relative links, making it inherently portable across storage backends. The LangGraph agent definitions and `AgentState` schema are typed and modular, so adding a 5th agent (e.g. Safety Officer) follows the same pattern as the existing four.
+### Summary of Scaling Swaps
+
+| Component | Current (Prototype) | Production Upgrade | Primary Bottleneck |
+|:---|:---|:---|:---|
+| **LLM Inference** | OpenRouter free tier | Dedicated Portkey Gateway + Paid API | Rate limits (10 to 20 req/min) |
+| **OCR Processing** | OpenRouter free vision | Cloud document API or local GPU | Processing speed and quotas |
+| **Vector Index** | SQLite-backed Qdrant | Clustered Qdrant Cloud deployment | Concurrent query latency |
+| **Reverse Scanning** | Brute-force local regex scan | Qdrant metadata filter payload query | Disk I/O bottlenecks |
+| **Pipeline Runner** | Sequential CLI script | Asynchronous queue (Celery / Temporal) | Unhandled crash recovery |
+| **Storage Layer** | Local flat directories | Versioned Object Storage (S3 / Git) | File system directory limits |
 
 ---
 

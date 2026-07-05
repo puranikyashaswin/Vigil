@@ -132,3 +132,8 @@ All commits must follow the **Conventional Commits** specification:
 - `perf`: A code change that improves performance
 - `test`: Adding missing tests or correcting existing tests
 - `chore`: Updates to build processes, auxiliary tools, or library dependencies
+
+---
+
+## 7. Production Scaling
+For engineering guidelines on scaling Vigil's system infrastructure from prototype to production (100,000+ documents), refer to the [Production Scaling Guide](file:///Users/yashaswinsharma/Documents/github/vigil/docs/SCALING.md).
