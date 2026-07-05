@@ -278,13 +278,13 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-wrap items-center gap-2 max-w-full overflow-x-auto">
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <span>Nodes: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">12,034</strong></span>
+              <span>Nodes: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.nodes.length}</strong></span>
             </div>
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <span>Edges: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">42,081</strong></span>
+              <span>Edges: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.links.length}</strong></span>
             </div>
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <span>Compliance: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">97.4%</strong></span>
+              <span>Compliance: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.nodes.length > 0 ? (Math.max(0, 100 - (alerts.length * 12.5))).toFixed(1) : "100.0"}%</strong></span>
             </div>
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Alerts: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{alerts.length}</strong></span>
