@@ -284,8 +284,7 @@ export default function Dashboard() {
               </button>
             )}
             {!isFullScreen && (
-              <div className="flex items-center justify-between mb-4 shrink-0">
-                <GraphLegend graphData={graphData} />
+              <div className="flex items-center justify-end mb-4 shrink-0">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setIsOrganized(!isOrganized)}
@@ -309,6 +308,7 @@ export default function Dashboard() {
               </div>
             )}
             <div className="flex-1 w-full min-h-0 relative">
+              <GraphLegend graphData={graphData} />
               <ForceGraph2D data={graphData} onNodeClick={(node) => { setSelectedNode(node); if (!isMobile) setActiveTab("inspect"); }} selectedNodeId={selectedNode?.id} isOrganized={isOrganized} />
             </div>
           </section>
