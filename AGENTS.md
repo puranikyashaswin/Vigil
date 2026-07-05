@@ -14,7 +14,7 @@ This document serves as the project constitution and styling guidelines for the 
 - **Vector Storage & Embeddings**: `qdrant-client` + `fastembed` (standard embedding model: **`BAAI/bge-small-en-v1.5`**)
 - **Reranking**: `flashrank`
 - **Evaluation**: `ragas`
-- **Observability**: `langsmith`
+- **Observability**: `langsmith` (configured and actively tracing)
 
 ### Knowledge Storage (OKF Bundle)
 - **Format**: Open Knowledge Format (OKF v0.1)

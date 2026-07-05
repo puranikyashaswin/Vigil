@@ -106,7 +106,7 @@ flowchart TD
 | Reranking | `flashrank` | For search result reordering |
 | Evaluation | `ragas` | Faithfulness, context precision/recall, answer relevancy |
 | API server | `fastapi` + `uvicorn` | REST API on port 8000 |
-| Observability | `langsmith` | Tracing (when API key configured) |
+| Observability | `langsmith` | Configured and actively tracing |
 
 ### Frontend (Next.js)
 | Layer | Technology | Details |

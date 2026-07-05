@@ -78,7 +78,7 @@ def parse_frontmatter(content: str) -> Dict[str, Any]:
 @api.get("/api/graph")
 def get_graph_data():
     """
-    Scans the knowledge_graph/ and outputs a nodes/links structure for react-force-graph-3d.
+    Scans the knowledge_graph/ and outputs a nodes/links structure for react-force-graph-2d.
     """
     kg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph"))
     if not os.path.exists(kg_dir):
