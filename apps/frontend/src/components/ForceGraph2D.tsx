@@ -69,7 +69,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
   const nodeBorderSelected = isDark ? "#fafafa" : "#18181b";
   const linkDefault = isDark ? "#52525b" : "#d4d4d8";
 
-  const degrees = useMemo(() => {
+  const initializedData = useMemo(() => {
     const degs: Record<string, number> = {};
     data.nodes.forEach((n) => {
       degs[n.id] = 0;
@@ -80,22 +80,22 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
       if (degs[sourceId] !== undefined) degs[sourceId]++;
       if (degs[targetId] !== undefined) degs[targetId]++;
     });
-    return degs;
-  }, [data]);
 
-  const initializedData = useMemo(() => {
     const nodes = data.nodes.map((n, idx) => {
-      if (n.x !== undefined && n.y !== undefined) {
-        return { ...n };
-      }
+      const degree = degs[n.id] || 0;
+      const size = Math.max(3.5, 3.5 + degree * 0.9);
+      
       const angle = (idx / (data.nodes.length || 1)) * 2 * Math.PI;
       const radius = 120 + Math.random() * 40;
       const centerX = dimensions.width / 2;
       const centerY = dimensions.height / 2;
+      
       return {
         ...n,
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius,
+        x: n.x !== undefined ? n.x : centerX + Math.cos(angle) * radius,
+        y: n.y !== undefined ? n.y : centerY + Math.sin(angle) * radius,
+        degree,
+        size
       };
     });
 
@@ -209,7 +209,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
           nodeRelSize={1}
           nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
             const label = node.label || node.id;
-            const size = Math.max(3.5, 3.5 + (degrees[node.id] || 0) * 0.9);
+            const size = node.size || 3.5;
             
             const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
             const isSelected = selectedNodeId === node.id;
@@ -264,6 +264,12 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
             
             ctx.stroke();
             ctx.restore();
+          }}
+          nodeVal={(node: any) => {
+            const size = node.size || 3.5;
+            // Provide a minimum hover/click hit area radius of 6px (diameter 12px) for ease of interaction on high-res monitors
+            const hitSize = Math.max(6, size);
+            return hitSize * hitSize;
           }}
           d3AlphaDecay={0.012}
           d3VelocityDecay={0.35}
