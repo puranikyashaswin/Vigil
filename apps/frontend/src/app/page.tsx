@@ -305,7 +305,7 @@ export default function Dashboard() {
               onClick={() => {
                 window.open(`${API_BASE_URL}/api/compliance/export`, '_blank');
               }}
-              className="px-4 py-2 bg-clay text-[#faf9f5] hover:bg-clay/90 text-sm font-medium transition flex items-center gap-2 cursor-pointer rounded-lg shadow-sm font-sans select-none"
+              className="px-4 py-2 bg-clay text-[#faf9f5] dark:text-[#141413] hover:bg-clay/90 text-sm font-medium transition flex items-center gap-2 cursor-pointer rounded-lg shadow-sm font-sans select-none"
               title="Download compliance evidence package zip"
             >
               <Database className="w-4 h-4" />

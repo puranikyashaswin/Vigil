@@ -306,7 +306,7 @@ export default function ChatHistoryOverlay({
                 <button
                   type="submit"
                   disabled={isTyping || !inputMessage.trim()}
-                  className="p-2 bg-clay hover:bg-clay/90 disabled:opacity-50 text-white rounded-full transition flex items-center justify-center cursor-pointer"
+                  className="p-2 bg-clay hover:bg-clay/90 disabled:opacity-50 text-[#faf9f5] dark:text-[#141413] rounded-full transition flex items-center justify-center cursor-pointer"
                 >
                   {isTyping ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
                 </button>
