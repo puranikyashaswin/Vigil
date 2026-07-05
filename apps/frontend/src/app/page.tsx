@@ -210,118 +210,16 @@ export default function Dashboard() {
 
     if (isDemoMode) {
       setTimeout(() => {
-        const queryLower = userMsg.toLowerCase();
-        let content = "";
-        let category = "Expert Copilot";
-        let citations: any[] = [];
-
-        if (queryLower.includes("fail") || queryLower.includes("vibrat") || queryLower.includes("impeller") || queryLower.includes("p-101") || queryLower.includes("rca") || queryLower.includes("c-102")) {
-          category = "Maintenance & RCA";
-          citations = [
-            { source_file: "maintenance/p-101-maintenance-log.md", score: 0.96 },
-            { source_file: "procedures/p-03.md", score: 0.88 }
-          ];
-          content = `[1] Planner Agent ➔ Identified asset P-101. Triggered maintenance history search.
-[2] Knowledge Graph Retriever ➔ Loaded 4 incident logs and 2 regulation standards.
-[3] RCA Agent ➔ Correlated IoT vibration telemetry peaks (5.2 mm/s casing limits).
-[4] Compliance Agent ➔ Checked clause constraints for Standard OISD-119.
-[5] Final Synthesis ➔ Diagnostic trace compiled.
-
-=== ROOT CAUSE DIAGNOSTIC REPORT ===
-
-Observed Symptoms:
-• Severe structural casing vibration (5.2 mm/s limit exceeded).
-• Pipeline flow seal pressure anomalies (spiked to 48 bar).
-
-Evidence Chronology:
-• 2025-06-15: Impeller seal replaced (Sarah Connor technician, impeller check pending).
-• 2026-07-04: Startup line pressure exceeded default operating parameters.
-
-Root Cause:
-Operating procedure P-03 directed setting the bypass pressure of Valve V-202 to 120 PSI, which directly contradicts safety regulation SR-12 (limiting pressure to 100 PSI). The resulting 20 PSI overload led to impeller casing cavitation and structural seal failure.
-
-Confidence Score: 94%
-
-Recommended Remediation:
-• Bleed downstream line immediately and inspect Valve V-202 pressure calibration.
-• Replace impeller casing seal using repair log standard procedures.
-• Route flow to standby Pump P-102.`;
-        } else if (queryLower.includes("comply") || queryLower.includes("compliance") || queryLower.includes("standard") || queryLower.includes("rule") || queryLower.includes("sop") || queryLower.includes("audit") || queryLower.includes("factory")) {
-          category = "Compliance";
-          citations = [
-            { source_file: "regulations/sr-12.md", score: 0.98 },
-            { source_file: "procedures/p-03.md", score: 0.91 }
-          ];
-          content = `[1] Planner Agent ➔ Scanning document layout for active compliance policies.
-[2] Policy Retriever ➔ Ingested Factory Safety Act and OISD Standard guidelines.
-[3] Compliance Agent ➔ Running pairwise clause parameter validation.
-[4] Final Synthesis ➔ Compliance audit complete.
-
-=== REGULATORY COMPLIANCE AUDIT ===
-
-Source Document: bypass_regulation_conflict.pdf
-Compliance Rating: 87%
-
-Audited Clauses:
-✔ Factory Safety Act Section 7: PPE requirements and safety gear lockouts. (Passed)
-✔ OISD Standard 119 Section 4: Casing pressure limits verification. (Passed)
-❌ Regulation SR-12: Maximum pressure bypass limit. (FAILED - 120 PSI setpoint exceeds 100 PSI limit)
-❌ Factory Safety Act Section 12: Missing emergency valve calibration logs. (FAILED)
-
-Recommended Remediation:
-• Update Procedure P-03 to limit pressure setpoints to 100 PSI maximum.
-• Append emergency bypass lockout check manual checklist to bypass_regulation_conflict.pdf.`;
-        } else if (queryLower.includes("shutdown") || queryLower.includes("downtime") || queryLower.includes("p-201") || queryLower.includes("maintenance") || queryLower.includes("safe") || queryLower.includes("can we")) {
-          category = "Expert Copilot";
-          citations = [
-            { source_file: "procedures/p-03.md", score: 0.94 },
-            { source_file: "regulations/sr-12.md", score: 0.89 }
-          ];
-          content = `[1] Planner Agent ➔ Initializing safety decision analysis node.
-[2] Dependency Tracker ➔ Scanning graph topology paths downstream.
-[3] Calendar Checker ➔ Inspecting active maintenance calendar overlaps.
-[4] Final Synthesis ➔ Safety policy evaluated.
-
-=== INDUSTRIAL AI SHUTDOWN ASSESSMENT ===
-
-Shutdown Target: Pump P-101 Maintenance Lockout
-Safety Assessment: NOT RECOMMENDED (HIGH RISK)
-
-Risk Checklist:
-• Downstream Feed: Interruption to Reactor-2 feed (Reactor is active).
-• Scheduling: Overlaps with annual pressure calibration of Valve V-202 tomorrow.
-• Safety Standards: Violates OISD Rule 14 safety margins without backup bypass.
-
-Confidence Score: 96%
-Estimated Downtime: 2.4 Hours
-
-Alternative Remediation:
-• Postpone shutdown to Tomorrow at 2:00 PM (Valve calibration completed).
-• Isolate line segment via bypass valve prior to maintenance check.`;
-        } else {
-          content = `[1] Planner Agent ➔ Searching knowledge schema nodes.
-[2] Expert Copilot Agent ➔ Synthesizing GraphRAG retrieval results.
-
-I have checked the active knowledge schema references for your query. 
-
-Demo Mode Guide:
-• Ask "Why did Pump P-101 fail?" to view Root Cause Analysis (RCA) agent workflows.
-• Ask "Is Pump P-101 safe to shutdown today?" to view the Safety Decision Engine.
-• Ask "Run a compliance scan on SOP" to view the Regulatory Compliance Auditor.
-• Or click the "Pipeline: ONLINE" button in the header to run live ingestion console simulations.`;
-        }
-
         const next = [...updated, { 
           role: "assistant", 
-          content,
-          category,
-          citations
+          content: "⚠️ **Live Chat Notice**: The live multi-agent chat feature is disabled on this static web preview. To query the Expert Copilot, RCA, Compliance, or Lessons-Learned agents, please clone the repository and run the API server locally on your machine after adding your Portkey or Groq API key to your environment.", 
+          category: "Expert Copilot" 
         } as ChatMessage];
         setMessages(next);
         updateConversationMessages(currentConversationId, next);
         setShowFloatingResponse(true);
         setIsTyping(false);
-      }, 1000);
+      }, 800);
       return;
     }
 

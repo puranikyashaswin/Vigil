@@ -124,7 +124,7 @@ export default function ChatHistoryOverlay({
                   onCreateNewChat();
                   if (isMobile) setShowSidebarMobile(false);
                 }}
-                className="px-2.5 py-1 text-xs font-medium text-white bg-clay hover:bg-clay/90 transition flex items-center gap-1 cursor-pointer rounded"
+                className="px-2.5 py-1 text-xs font-medium text-white bg-[#d97757] hover:bg-[#c26243] transition flex items-center gap-1 cursor-pointer rounded"
               >
                 + New Chat
               </button>
