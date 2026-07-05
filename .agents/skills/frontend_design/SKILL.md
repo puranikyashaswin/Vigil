@@ -11,22 +11,21 @@ This skill defines the visual identity, styling rules, typography, animation pri
 
 ## 1. Aesthetic Identity & Theme
 
-Vigil uses a warm ivory/editorial theme derived from the Anthropic brand guidelines. Avoid dark-mode or aggressive neon palettes.
+Vigil uses a modern Zinc-based light/dark theme managed via a `next-themes` toggle. The layout adjusts between light mode (ivory base with zinc accents) and dark mode (dark charcoal canvas).
 
-### Color Palette (Warm Ivory / Editorial)
-- **Background**: Warm ivory (`#faf9f5`). The page, cards, and panels all use this base.
-- **Borders / Chrome**: Light gray (`#e8e6dc`) for primary borders and dividers; mid gray (`#b0aea5`) for secondary chrome and inactive text.
-- **Text**: Dark charcoal (`#141413`) for primary text. Secondary/muted text uses `#575653` or `#b0aea5`.
+### Color Palette (Zinc System)
+- **Background**: Zinc light (`bg-zinc-50`) and Zinc dark (`bg-zinc-950`). 
+- **Borders / Chrome**: Light borders (`border-zinc-200`) and dark borders (`border-zinc-800`).
+- **Text**: Zinc dark text (`text-zinc-900` / `text-zinc-800`) and zinc light text (`text-zinc-100` / `text-zinc-200`). Muted text uses `text-zinc-500` or `text-zinc-400`.
 - **Accents**:
-  - Orange / Clay (`#d97757`): Primary accent for active tabs, selected borders, interactive highlights.
-  - Blue (`#6a9bcc`): Secondary accent for concept/equipment nodes and metadata links.
-  - Green (`#788c5d`): Tertiary accent for procedure nodes.
-  - Crimson (`#EF4444`): Alert-specific accent (compliance alerts, critical badges).
-- **Branding**: Monospace subheads, uppercase tracking-wide labels, and no rounded corners (`rounded-none` throughout). Shadows are minimal and muted.
+  - Orange / Clay (`#d97757`): Accent for active selections, borders, and main buttons.
+  - Blue (`#6a9bcc`): Accent for concept/equipment nodes and metadata links.
+  - Green (`#788c5d`): Accent for procedure nodes.
+  - Crimson (`#EF4444`): Alert-specific accent (critical badges, warning borders).
+- **Branding**: Standard clean rounding (`rounded-lg` for panels/buttons, `rounded-full` for the chat input capsule).
 
 ### Contrast & Readability
-- All text elements must maintain a minimum contrast ratio of 4.5:1 against `#faf9f5`, conforming to WCAG AA standards.
-- Low-severity alert badges must use high-contrast text (`#faf9f5` on `#b0aea5`) to remain legible.
+- All text elements must maintain a minimum contrast ratio of 4.5:1 against the active background theme, conforming to WCAG AA standards.
 
 ### Typography
 - **Headings**: Monospace (`font-mono`), bold, uppercase, tracking-tight or tracking-wide.
@@ -34,8 +33,7 @@ Vigil uses a warm ivory/editorial theme derived from the Anthropic brand guideli
 - **Font Sizes**: Use `text-[10px]` to `text-xs` for chrome and metadata; `text-sm` for body; `text-lg` to `text-xl` for headings.
 
 ### Spacing Philosophy
-- Grid-based strict spacing (`gap-4`, `gap-6`). Panels use border dividers (`border-[#e8e6dc]`).
-- High-information-density layouts. No rounded corners, no pill shapes, no soft shadows.
+- Grid-based strict spacing (`gap-4`, `gap-6`). Panels use border dividers (`border-zinc-200` / `border-zinc-800`).
 
 ---
 
@@ -44,8 +42,9 @@ Vigil uses a warm ivory/editorial theme derived from the Anthropic brand guideli
 The interactive 2D knowledge graph visualizes the cross-linked OKF concept network using an Obsidian-style force layout. It is built with `react-force-graph-2d` (NOT 3D).
 
 ### Layout Integration
-- **Split-Screen View**: The 2D canvas occupies the left 60% of the viewport (40% on the right for the inspector/chat/alerts panel).
+- **Split-Screen View**: The 2D canvas occupies the left 60% of the viewport (40% on the right for the inspector/alerts panel).
 - **Canvas Container**: The `ForceGraph2D` component fills its parent container, using a `useEffect` resize observer to match container dimensions.
+- **Chat Input Bar**: Relocated from the right panel to a floating, centered input bar positioned at the bottom of the graph panel (left 60%). Clicking the history button in this bar triggers a full-screen chat overlay.
 
 ### Node Rendering
 - **Node Style**: Solid circles with a thin border. Rendered via `nodeCanvasObject` on an HTML5 canvas.
@@ -59,7 +58,7 @@ The interactive 2D knowledge graph visualizes the cross-linked OKF concept netwo
 - **Label Rendering**: Node labels are drawn below each node using monospace font. Font size scales inversely with camera zoom: `Math.max(2.4, 9 / globalScale)`. Label visibility is tied to highlight state and zoom level (low-opacity at zoomed-out distances, full-opacity when zoomed in or selected).
 
 ### Link Rendering
-- **Default State**: Links render as thin, low-opacity lines in light gray (`#e8e6dc`) at `0.6px` width and `0.22` alpha.
+- **Default State**: Links render as thin, low-opacity lines in light gray (`#e8e6dc` / `#52525b`) at `0.6px` width and `0.22` alpha.
 - **Hover Highlighted State**: Links connected to the hovered node render in orange/clay (`#d97757`) at `1.4px` width and `0.85` alpha.
 
 ### Hover Highlight Behavior (Obsidian-Style)
@@ -73,8 +72,8 @@ The interactive 2D knowledge graph visualizes the cross-linked OKF concept netwo
 - The canvas auto-centers and zooms to the selected node (`centerAt` + `zoom(2.0, 800)` over 800ms).
 
 ### D3 Force Configuration
-- **Charge Force**: Repulsion strength `-240` with `distanceMax` of `400`. This pushes nodes apart to reduce label overlap.
-- **Link Force**: Distance `115`, strength `0.65`. Longer link distance (vs default) spreads connected nodes further apart, creating room for labels.
+- **Charge Force**: Repulsion strength `-100` with `distanceMax` of `250`. This pushes nodes apart to reduce label overlap.
+- **Link Force**: Distance `60`, strength `0.8`. Spreads connected nodes and maintains structural layout density.
 - **Alpha Decay**: `0.012` (slower cooling for a more settled layout).
 - **Velocity Decay**: `0.35` (dampened motion).
 - **Initial Layout**: Nodes are arranged in a circle (angle-distributed) around the canvas center before the simulation starts. After 1 second, `zoomToFit(400, 100)` is called to frame all nodes.

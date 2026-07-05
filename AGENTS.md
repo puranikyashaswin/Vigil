@@ -8,7 +8,6 @@ This document serves as the project constitution and styling guidelines for the 
 
 ### Backend (Python)
 - **Agent Orchestration**: `langgraph` (v0.1+)
-- **Input/Output Safety**: `nemo-guardrails` (v0.4+)
 - **LLM Gateway**: `portkey-ai` (v0.1+) using Groq as the primary engine. The standard primary reasoning model slug is **`groq/llama-3.3-70b-versatile`** (with configured fallbacks).
 - **Vision/OCR Integration**: `openrouter` API for free-tier vision models (primarily `nvidia/nemotron-nano-12b-v2-vl:free` for scanned assets)
 - **Local Document Parsers**: `unstructured`, `pdfplumber`, and `python-docx` (for text-native documents)
@@ -24,7 +23,7 @@ This document serves as the project constitution and styling guidelines for the 
 
 ### Frontend (Next.js)
 - **Framework**: Next.js (App Router)
-- **Styling**: Tailwind CSS & `shadcn/ui` (custom premium aesthetic themes, avoiding generic/default shadcn styling)
+- **Theme & Styling**: Tailwind CSS with `next-themes` (for light/dark toggling)
 - **Animations**: `framer-motion`
 - **Data Visualization**: `react-force-graph-2d` (for live 2D knowledge graph interactions, Obsidian-style force layout)
 
