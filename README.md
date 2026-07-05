@@ -115,6 +115,7 @@ flowchart TD
 | Styling | Tailwind CSS 4 | Warm editorial visual identity inspired by Anthropic's design language (ivory surfaces, clay accent, serif/sans pairing). See [.agents/skills/frontend_design/SKILL.md](.agents/skills/frontend_design/SKILL.md) for the full color palette and typography specification. |
 | Animations | `framer-motion` | Tab transitions, modal enter/exit |
 | Graph | `react-force-graph-2d` | Obsidian-style 2D force layout |
+| Mobile View | Field Technician View | Responsive layout with bottom navigation, slide-up drag-to-dismiss chat sheet, inspector drawers, and sunlight-readable alerts |
 | Icons | `lucide-react` | |
 
 ---
@@ -178,7 +179,16 @@ npm install
 
 ### 4. Build the knowledge graph and index
 
-Place your source documents in `test_documents/`, then run:
+Place your source documents in `test_documents/`. 
+
+If you have P&ID diagram images and want to visually extract their physical connectivity (topology):
+
+```bash
+# Extract tag nodes and flow edges from P&ID image
+python p&ID_topology_extractor.py --input test_documents/your_diagram.png
+```
+
+Then compile and index the knowledge graph:
 
 ```bash
 # Parse documents, extract entities, write OKF files, detect contradictions
@@ -225,7 +235,18 @@ python test_agents.py
 
 ## RAGAS Evaluation Results
 
-Vigil was evaluated against a 10-question benchmark spanning compliance, RCA, and copilot queries. Full results are in `docs/ragas_results.md` and `docs/ragas_eval_results.csv`.
+Vigil can be evaluated against a 10-question benchmark spanning compliance, RCA, and copilot queries.
+
+To execute the performance evaluation suite against the live running FastAPI server:
+
+```bash
+# Make sure your FastAPI backend is running (e.g., python apps/backend/api.py)
+python evaluate_rag_performance.py
+```
+
+This will query the live endpoints, calculate metrics (Faithfulness, Relevancy, Precision), and compile a report `RAGAS_EVALUATION_REPORT.md` at the workspace root.
+
+Full pre-run results are in `docs/ragas_results.md` and `docs/ragas_eval_results.csv`.
 
 | Metric | Score |
 |:---|---|
@@ -272,6 +293,8 @@ vigil/
   AGENTS.md                 # Project constitution (tech stack, rules, conventions)
   .env / .env.example       # Environment variables
   test_agents.py            # CLI test harness for query agents
+  p&ID_topology_extractor.py # P&ID vision visual topology extractor
+  evaluate_rag_performance.py # RAGAS performance evaluation suite (HTTP live API)
   apps/
     backend/
       api.py                # FastAPI server (REST endpoints)

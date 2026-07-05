@@ -242,6 +242,37 @@ def run_expert_copilot(state: AgentState) -> Dict[str, Any]:
         "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
     }
 
+def get_mock_telemetry_data(tag: str) -> str:
+    """
+    Generates simulated in-memory telemetry readings for the last 6 hours for specific tags.
+    """
+    tag = tag.upper().strip()
+    if tag == "P-101":
+        return (
+            f"\n### Real-time Telemetry (Last 6 Hours) for {tag}:\n"
+            "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
+            "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
+            "| 09:00 | 44.80 | 29.80 | 1.35 | 1450.5 | Normal |\n"
+            "| 10:00 | 45.20 | 30.10 | 1.45 | 1451.2 | Normal |\n"
+            "| 11:00 | 48.70 | 34.50 | 1.82 | 1445.0 | Normal |\n"
+            "| 12:00 | 53.10 | 39.80 | 2.65 | 1438.1 | Elevated Vibration |\n"
+            "| 13:00 | 59.40 | 43.20 | 3.90 | 1430.5 | High Vibration & Pressure |\n"
+            "| 14:00 | 66.80 | 47.90 | 5.24 | 1421.0 | ANOMALY: Exceeds Safe Pressure of 45 bar |\n"
+        )
+    elif tag == "P-102":
+        return (
+            f"\n### Real-time Telemetry (Last 6 Hours) for {tag}:\n"
+            "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
+            "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
+            "| 09:00 | 43.20 | 28.50 | 1.22 | 1448.0 | Normal |\n"
+            "| 10:00 | 43.50 | 28.80 | 1.25 | 1449.1 | Normal |\n"
+            "| 11:00 | 43.80 | 28.90 | 1.24 | 1448.5 | Normal |\n"
+            "| 12:00 | 44.10 | 29.20 | 1.28 | 1450.2 | Normal |\n"
+            "| 13:00 | 44.30 | 29.50 | 1.31 | 1449.8 | Normal |\n"
+            "| 14:00 | 44.50 | 29.70 | 1.33 | 1450.4 | Normal |\n"
+        )
+    return f"Real-time sensor telemetry for {tag} shows all metrics are operating within nominal baseline parameters."
+
 def run_maintenance_rca(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
     dirs = ["equipment", "maintenance"]
@@ -256,13 +287,27 @@ def run_maintenance_rca(state: AgentState) -> Dict[str, Any]:
             "ragas_log": {"question": query, "contexts": [], "answer": response}
         }
         
+    # Check for equipment tag in user query to bind mock telemetry
+    tag_match = re.search(r"\b[PVT]-[0-9]{3}\b", query.upper())
+    telemetry_block = ""
+    if tag_match:
+        tag = tag_match.group(0)
+        telemetry_block = get_mock_telemetry_data(tag)
+        logger.info(f"RCA Agent: Fused in-memory live telemetry for tag {tag}")
+        
     client, model = get_client()
     context_block = "\n\n".join([f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(contexts))])
+    
     system_prompt = (
-        "You are the Vigil Maintenance & RCA Agent. Analyze the maintenance logs and equipment specs to determine root causes, "
-        "asset conditions, or anomalous events. Ground your analysis strictly in the sources. Do not hallucinate."
+        "You are the Vigil Maintenance & RCA Agent. Analyze the maintenance logs, specifications, and "
+        "any real-time IoT sensor telemetry data provided to determine root causes, asset conditions, or anomalous events. "
+        "Ground your analysis strictly in the sources (both static logs and live sensor telemetry tables). Do not hallucinate."
     )
-    user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
+    
+    user_prompt = f"Historical Context:\n{context_block}\n\n"
+    if telemetry_block:
+        user_prompt += f"Real-Time Telemetry:\n{telemetry_block}\n\n"
+    user_prompt += f"Query: {query}"
     
     completion = client.chat.completions.create(
         model=model,
@@ -273,11 +318,14 @@ def run_maintenance_rca(state: AgentState) -> Dict[str, Any]:
         temperature=0.0
     )
     ans = completion.choices[0].message.content
+    
+    # Save fused contexts to state log
+    returned_contexts = contexts + [telemetry_block] if telemetry_block else contexts
     return {
-        "retrieved_contexts": contexts,
+        "retrieved_contexts": returned_contexts,
         "citations": citations,
         "generated_response": ans,
-        "ragas_log": {"question": query, "contexts": contexts, "answer": ans}
+        "ragas_log": {"question": query, "contexts": returned_contexts, "answer": ans}
     }
 
 def run_compliance(state: AgentState) -> Dict[str, Any]:
