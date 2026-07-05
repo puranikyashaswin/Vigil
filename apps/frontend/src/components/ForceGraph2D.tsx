@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { useTheme } from "next-themes";
-import ForceGraph2DClient from "react-force-graph-2d";
+import ForceGraph2DClient, { ForceGraphMethods } from "react-force-graph-2d";
 import { LIGHT_COLORS, DARK_COLORS } from "./graph/graphColors";
 import { drawNode, drawLink, GraphNode, GraphLink } from "./graph/graphDrawHandlers";
 import { Node } from "@/types";
@@ -18,17 +18,9 @@ interface ForceGraph2DProps {
   selectedNodeId?: string | null;
 }
 
-interface ForceGraphInstance {
-  d3Force: (name: string) => any;
-  d3ReheatSimulation: () => void;
-  zoomToFit: (duration: number, padding: number) => void;
-  centerAt: (x: number, y: number, duration: number) => void;
-  zoom: (level: number, duration: number) => void;
-}
-
 export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: ForceGraph2DProps) {
   const { resolvedTheme } = useTheme();
-  const fgRef = useRef<ForceGraphInstance | null>(null);
+  const fgRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
@@ -36,10 +28,10 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
 
   const isDark = resolvedTheme === "dark";
   const TYPE_COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
-  const canvasBg = isDark ? "#09090b" : "#fafafa";
-  const nodeBorderLight = isDark ? "#18181b" : "#fafafa";
-  const nodeBorderSelected = isDark ? "#fafafa" : "#18181b";
-  const linkDefault = isDark ? "#52525b" : "#d4d4d8";
+  const canvasBg = isDark ? "#141413" : "#faf9f5";
+  const nodeBorderLight = isDark ? "#b0aea5" : "#e8e6dc";
+  const nodeBorderSelected = isDark ? "#faf9f5" : "#141413";
+  const linkDefault = isDark ? "#b0aea5" : "#e8e6dc";
 
   const initializedData = useMemo(() => {
     const degs: Record<string, number> = {};
@@ -57,8 +49,8 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
       const radius = 120 + Math.random() * 40;
       const centerX = dimensions.width / 2;
       const centerY = dimensions.height / 2;
-      const nx = (n as any).x;
-      const ny = (n as any).y;
+      const nx = (n as Partial<GraphNode>).x;
+      const ny = (n as Partial<GraphNode>).y;
       return {
         ...n,
         x: nx !== undefined ? nx : centerX + Math.cos(angle) * radius,
@@ -163,7 +155,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
       ) : (
         <ForceGraph2DClient
           key={isDark ? "dark" : "light"}
-          ref={fgRef as any}
+          ref={fgRef as unknown as React.MutableRefObject<ForceGraphMethods<GraphNode, GraphLink> | undefined>}
           width={dimensions.width}
           height={dimensions.height}
           graphData={initializedData}
@@ -175,7 +167,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
           d3AlphaDecay={0.012}
           d3VelocityDecay={0.35}
           onNodeHover={handleNodeHover}
-          onNodeClick={(node: any) => onNodeClick(node as Node)}
+          onNodeClick={(node) => onNodeClick(node as unknown as Node)}
           enableNodeDrag={true}
           onEngineStop={() => {
             if (fgRef.current && !hasZoomedRef.current) {

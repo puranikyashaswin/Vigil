@@ -83,12 +83,12 @@ function FlapCard({ target, cardSize }: { target: string; cardSize: { w: number;
     >
       {/* Center line */}
       <div className="absolute inset-0 flex items-center z-10 pointer-events-none">
-        <div className="w-full border-t border-[#3a3a3a]" style={{ borderTopWidth: 2 }} />
+        <div className="w-full border-t border-[#b0aea5]" style={{ borderTopWidth: 2 }} />
       </div>
 
       {/* Top half (static, always shows current) */}
       <div
-        className="w-full flex items-end justify-center overflow-hidden bg-[#111]"
+        className="w-full flex items-end justify-center overflow-hidden bg-[#141413]"
         style={{ height: hw, borderTopLeftRadius: 4, borderTopRightRadius: 4 }}
       >
         <span
@@ -101,7 +101,7 @@ function FlapCard({ target, cardSize }: { target: string; cardSize: { w: number;
 
       {/* Bottom half */}
       <div
-        className="w-full relative bg-[#111]"
+        className="w-full relative bg-[#141413]"
         style={{
           height: hw,
           borderBottomLeftRadius: 4,
@@ -127,7 +127,7 @@ function FlapCard({ target, cardSize }: { target: string; cardSize: { w: number;
           <motion.div
             className="absolute inset-0 flex items-start justify-center overflow-hidden"
             style={{
-              backgroundColor: "#111",
+              backgroundColor: "#141413",
               borderBottomLeftRadius: 4,
               borderBottomRightRadius: 4,
               backfaceVisibility: "hidden",

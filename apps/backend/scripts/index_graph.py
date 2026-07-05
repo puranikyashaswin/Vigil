@@ -105,10 +105,14 @@ def main():
     except Exception:
         pass
         
-    q_client.create_collection(
-        collection_name=COLLECTION_NAME,
-        vectors_config=VectorParams(size=384, distance=Distance.COSINE) # bge-small-en-v1.5 size is 384
-    )
+    try:
+        q_client.create_collection(
+            collection_name=COLLECTION_NAME,
+            vectors_config=VectorParams(size=384, distance=Distance.COSINE) # bge-small-en-v1.5 size is 384
+        )
+    except Exception as e:
+        logger.error(f"Failed to initialize Qdrant collection structure: {str(e)}")
+        sys.exit(1)
     
     points = []
     point_id = 1
@@ -145,11 +149,15 @@ def main():
     logger.info(f"Upserting {len(points)} vector points to Qdrant in batches of {BATCH_SIZE}...")
     for i in range(0, len(points), BATCH_SIZE):
         batch = points[i:i + BATCH_SIZE]
-        q_client.upsert(
-            collection_name=COLLECTION_NAME,
-            points=batch
-        )
-        logger.info(f"  Upserted batch {i // BATCH_SIZE + 1}/{(len(points) + BATCH_SIZE - 1) // BATCH_SIZE}")
+        try:
+            q_client.upsert(
+                collection_name=COLLECTION_NAME,
+                points=batch
+            )
+            logger.info(f"  Upserted batch {i // BATCH_SIZE + 1}/{(len(points) + BATCH_SIZE - 1) // BATCH_SIZE}")
+        except Exception as e:
+            logger.error(f"Qdrant connection failure or batch upsert error on batch {i // BATCH_SIZE + 1}: {str(e)}")
+            sys.exit(1)
     logger.info("Vector database indexing complete!")
 
 if __name__ == "__main__":

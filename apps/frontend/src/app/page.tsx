@@ -167,14 +167,22 @@ export default function Dashboard() {
               <span className="text-sm font-medium text-clay tracking-wide ml-2 hidden sm:inline">Industrial Intel Console</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-lg">
-              <Database className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-              <span>Nodes: <strong className="text-zinc-900 dark:text-zinc-100 font-semibold">{graphData.nodes.length}</strong></span>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+              <Database className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+              <span>Nodes: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.nodes.length}</strong></span>
             </div>
-            <div className="hidden md:flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-lg">
-              <ShieldAlert className="w-4 h-4 text-clay" />
-              <span>Alerts: <strong className="text-zinc-900 dark:text-zinc-100 font-semibold">{alerts.length}</strong></span>
+            <div className="hidden md:flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+              <ShieldAlert className="w-3.5 h-3.5 text-clay" />
+              <span>Alerts: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{alerts.length}</strong></span>
+            </div>
+            <div className="hidden lg:flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+              <Database className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 rotate-90" />
+              <span>Edges: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.links.length}</strong></span>
+            </div>
+            <div className="hidden lg:flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+              <RefreshCw className="w-3.5 h-3.5 text-[#788c5d]" />
+              <span>Pipeline: <strong className="text-[#788c5d] font-bold">ONLINE</strong></span>
             </div>
             <button onClick={loadData} className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition flex items-center gap-2 cursor-pointer rounded-lg">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

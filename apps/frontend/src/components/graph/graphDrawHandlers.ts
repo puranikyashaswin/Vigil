@@ -36,7 +36,7 @@ export function drawNode(
   const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
   const isSelected = selectedNodeId === node.id;
   const typeLower = (node.type || "concept").toLowerCase().trim();
-  const color = typeColors[typeLower] || typeColors[node.type] || "#a1a1aa";
+  const color = typeColors[typeLower] || typeColors[node.type] || "#b0aea5";
 
   ctx.save();
   ctx.globalAlpha = isHighlighted ? 1.0 : 0.15;
@@ -70,7 +70,7 @@ export function drawNode(
     // Inner mono-spaced equipment tag text
     const monoText = node.label.split(" ")[0] || node.label;
     ctx.font = "bold 8px monospace";
-    ctx.fillStyle = isDark ? "#ffffff" : "#000000";
+    ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(monoText, x, y);
@@ -143,7 +143,7 @@ export function drawNode(
       ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = isDark ? "#f4f4f5" : "#18181b";
+      ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
       
       const isTextHighlighted = isHighlighted ? (globalScale > 1.1 || isSelected ? 0.95 : 0.45) : 0.08;
       ctx.globalAlpha = isTextHighlighted;
@@ -183,7 +183,7 @@ export function drawLink(
     strokeColor = "#EF4444"; // Red for violations
     defaultAlpha = 0.45;     // Extra visibility for violations
   } else if (link.type === "COMPLIES_WITH") {
-    strokeColor = "#10B981"; // Green for compliance links
+    strokeColor = "#788c5d"; // Green for compliance links
     defaultAlpha = 0.35;
   }
 

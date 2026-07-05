@@ -47,9 +47,13 @@ The interactive 2D knowledge graph visualizes the cross-linked OKF concept netwo
 - **Chat Input Bar**: Relocated from the right panel to a floating, centered input bar positioned at the bottom of the graph panel (left 60%). Clicking the history button in this bar triggers a full-screen chat overlay.
 
 ### Node Rendering
-- **Node Style**: Solid circles with a thin border. Rendered via `nodeCanvasObject` on an HTML5 canvas.
+- **Node Style & Shapes**: Rendered via `nodeCanvasObject` on an HTML5 canvas based on type classifications:
+  - **Equipment / Concept / Drawing / Event / Organization**: Solid rectangles with inner mono-spaced tag text.
+  - **Regulation**: Hexagon outlines (with low-opacity faint fill).
+  - **Procedure / Maintenance**: File-tab shapes (representing documents).
+  - **Alert (Fallback)**: Solid circles.
 - **Color Coding by Concept Type**:
-  - `concept` / `equipment`: Blue (`#6a9bcc`)
+  - `concept` / `equipment` / `drawing` / `event` / `organization`: Blue (`#6a9bcc`)
   - `procedure`: Green (`#788c5d`)
   - `regulation`: Orange / Clay (`#d97757`)
   - `maintenance_log`: Mid Gray (`#b0aea5`)

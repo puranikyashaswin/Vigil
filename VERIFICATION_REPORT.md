@@ -4,7 +4,7 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
 
 ---
 
-## 1. Design System Compliance (PILLAR 4A/4B/4C)
+## 1. Design System Compliance
 
 ### [PASS] Equipment nodes render as rectangles with mono-text tag labels (not circles/spheres)
 - **Citations**: [graphDrawHandlers.ts:L52-70](file:///Users/yashaswinsharma/Documents/github/vigil/apps/frontend/src/components/graph/graphDrawHandlers.ts#L52-L70)
@@ -101,7 +101,7 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
   ```
   The logic is directly driven by the Link object's relationship type payload (`link.type`), not hover or selection status.
 
-### [FAIL] No hex color anywhere in the frontend deviates from the exact token list in PILLAR 4A (grep for hardcoded hex values outside the token file and list every offender)
+### [FAIL] No hex color anywhere in the frontend deviates from the exact token list in the brand guidelines (grep for hardcoded hex values outside the token file and list every offender)
 - **Citations**:
   - [ForceGraph2D.tsx](file:///Users/yashaswinsharma/Documents/github/vigil/apps/frontend/src/components/ForceGraph2D.tsx)
   - [graphDrawHandlers.ts](file:///Users/yashaswinsharma/Documents/github/vigil/apps/frontend/src/components/graph/graphDrawHandlers.ts)
