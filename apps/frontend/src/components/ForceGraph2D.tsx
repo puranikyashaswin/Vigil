@@ -17,9 +17,10 @@ interface ForceGraph2DProps {
   onNodeClick: (node: Node) => void;
   selectedNodeId?: string | null;
   isOrganized?: boolean;
+  externalHighlightNodeIds?: Set<string>;
 }
 
-export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrganized = false }: ForceGraph2DProps) {
+export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrganized = false, externalHighlightNodeIds }: ForceGraph2DProps) {
   const { resolvedTheme } = useTheme();
   const fgRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
@@ -205,12 +206,22 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   }, [initializedData.links]);
 
   const nodeCanvasObject = useCallback((node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    drawNode(node, ctx, globalScale, TYPE_COLORS, highlightNodes, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected);
-  }, [TYPE_COLORS, highlightNodes, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected]);
+    const activeHighlights = externalHighlightNodeIds && externalHighlightNodeIds.size > 0 
+      ? externalHighlightNodeIds 
+      : highlightNodes;
+    drawNode(node, ctx, globalScale, TYPE_COLORS, activeHighlights, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected);
+  }, [TYPE_COLORS, highlightNodes, externalHighlightNodeIds, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected]);
 
   const linkCanvasObject = useCallback((link: GraphLink, ctx: CanvasRenderingContext2D) => {
-    drawLink(link, ctx, highlightLinks, linkDefault);
-  }, [highlightLinks, linkDefault]);
+    const activeHighlightLinks = externalHighlightNodeIds && externalHighlightNodeIds.size > 0
+      ? new Set(initializedData.links.filter((l) => {
+          const s = typeof l.source === "object" ? l.source.id : l.source;
+          const t = typeof l.target === "object" ? l.target.id : l.target;
+          return externalHighlightNodeIds.has(s) && externalHighlightNodeIds.has(t);
+        }))
+      : highlightLinks;
+    drawLink(link, ctx, activeHighlightLinks, linkDefault);
+  }, [highlightLinks, externalHighlightNodeIds, initializedData.links, linkDefault]);
 
   const nodeVal = useCallback((node: GraphNode) => {
     const size = node.size || 3.5;
