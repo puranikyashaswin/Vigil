@@ -14,6 +14,7 @@ import AlertDetailModal from "@/components/AlertDetailModal";
 import FloatingChatInput from "@/components/FloatingChatInput";
 import FloatingResponse from "@/components/FloatingResponse";
 import ChatHistoryOverlay from "@/components/ChatHistoryOverlay";
+import PipelineVisualizer from "@/components/PipelineVisualizer";
 import { Node, GraphData, Alert, ChatMessage, Conversation } from "@/types";
 
 const ForceGraph2D = dynamic(() => import("@/components/ForceGraph2D"), { ssr: false });
@@ -56,6 +57,7 @@ export default function Dashboard() {
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showPipelineVisualizer, setShowPipelineVisualizer] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showFloatingResponse, setShowFloatingResponse] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -254,10 +256,14 @@ export default function Dashboard() {
               <Database className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 rotate-90" />
               <span>Edges: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.links.length}</strong></span>
             </div>
-            <div className="hidden lg:flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <RefreshCw className="w-3.5 h-3.5 text-[#788c5d]" />
+            <button 
+              onClick={() => setShowPipelineVisualizer(true)}
+              className="hidden lg:flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 py-2 rounded-lg font-mono cursor-pointer transition select-none border border-zinc-200/20 dark:border-zinc-700/20"
+              title="Open Ingestion Pipeline Console"
+            >
+              <Activity className="w-3.5 h-3.5 text-[#788c5d]" />
               <span>Pipeline: <strong className="text-[#788c5d] font-bold">ONLINE</strong></span>
-            </div>
+            </button>
             <button onClick={loadData} className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition flex items-center gap-2 cursor-pointer rounded-lg">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -452,7 +458,7 @@ export default function Dashboard() {
             <div className="relative">
               <ShieldAlert className="w-5 h-5" />
               {alerts.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse">
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                   {alerts.length}
                 </span>
               )}
@@ -478,6 +484,14 @@ export default function Dashboard() {
       )}
       <ChatHistoryOverlay show={showHistory} conversations={conversations} currentConversationId={currentConversationId} messages={messages} inputMessage={inputMessage} isTyping={isTyping} onClose={() => setShowHistory(false)} onCreateNewChat={handleCreateNewChat} onSelectConversation={(c) => { setCurrentConversationId(c.id); setMessages(c.messages); }} onDeleteChat={handleDeleteChat} onSendMessage={handleSendMessage} onInputChange={setInputMessage} />
       <AlertDetailModal selectedAlert={selectedAlert} onClose={() => setSelectedAlert(null)} />
+      <AnimatePresence>
+        {showPipelineVisualizer && (
+          <PipelineVisualizer 
+            onClose={() => setShowPipelineVisualizer(false)} 
+            onComplete={loadData}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
