@@ -140,12 +140,16 @@ def main():
             )
             point_id += 1
             
-    # Batch upsert points
-    logger.info(f"Upserting {len(points)} vector points to Qdrant...")
-    q_client.upsert(
-        collection_name=COLLECTION_NAME,
-        points=points
-    )
+    # Batch upsert points in pages of 500 to avoid memory issues
+    BATCH_SIZE = 500
+    logger.info(f"Upserting {len(points)} vector points to Qdrant in batches of {BATCH_SIZE}...")
+    for i in range(0, len(points), BATCH_SIZE):
+        batch = points[i:i + BATCH_SIZE]
+        q_client.upsert(
+            collection_name=COLLECTION_NAME,
+            points=batch
+        )
+        logger.info(f"  Upserted batch {i // BATCH_SIZE + 1}/{(len(points) + BATCH_SIZE - 1) // BATCH_SIZE}")
     logger.info("Vector database indexing complete!")
 
 if __name__ == "__main__":

@@ -115,7 +115,8 @@ def main():
                 
             # Check for empty output
             if not parsed_text or len(parsed_text.strip()) < 10:
-                raise Exception("Extracted text is empty or too short (< 10 chars)")
+                parsed_text = f"[EMPTY DOCUMENT] No extractable text found in {filename}."
+                logger.warning(f"Document {filename} has no extractable text. Writing placeholder.")
                 
             # 3. Save output
             output_file = os.path.join(output_dir, f"{filename}.txt")

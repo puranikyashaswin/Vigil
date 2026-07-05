@@ -14,3 +14,12 @@ Record of ingest, link, and modification actions:
 
 ### 2026-07-04
 **INGEST**: Ingested entity Process Procedure P-03 from system start manual (2026-07-04T14:46:00)
+
+### 2026-07-05
+**INGEST**: Ingested entity P&ID Drafting Procedure from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-07-05T10:14:21.161927)
+
+### 2026-07-05
+**INGEST**: Ingested entity QwikPDF Browser Generator from source test_documents/sample-100kb.pdf (2026-07-05T10:14:21.165035)
+
+### 2026-07-05
+**INGEST**: Ingested entity Newport Racing Event Survey from source test_documents/scanned_form_1.png (2026-07-05T10:14:21.165873)

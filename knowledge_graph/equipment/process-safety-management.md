@@ -4,7 +4,7 @@ title: "Process Safety Management"
 description: "A systematic approach to evaluating the whole process to prevent unwanted releases of hazardous chemicals"
 resource: "test_documents/29 CFR 1910.119 (up to date as of 7-01-2026).pdf"
 tags: ['process safety', 'hazardous chemicals']
-timestamp: 2026-07-04T10:37:14.311070
+timestamp: 2026-07-05T10:14:21.156913
 ---
 
 # Process Safety Management

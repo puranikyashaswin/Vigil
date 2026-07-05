@@ -1,8 +1,9 @@
 import os
 import sys
+import json
 import logging
-import re
 from typing import Dict, Any, List
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -24,23 +25,32 @@ load_dotenv()
 api = FastAPI(title="Vigil Backend API")
 
 # Enable CORS for Next.js development
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 api.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# In-memory graph cache
+_graph_cache: Dict[str, Any] = {}
+_graph_cache_valid: bool = False
+
+RAGAS_LOG_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "logs", "ragas"))
+
 class QueryRequest(BaseModel):
     query: str
 
 @api.get("/api/health")
-def health_check():
-    return {"status": "ok"}
+def health_check() -> Dict[str, str]:
+    qdrant_url = os.getenv("QDRANT_URL", "")
+    qdrant_mode = "cloud" if qdrant_url and "your_" not in qdrant_url else "local_sqlite"
+    return {"status": "ok", "qdrant_mode": qdrant_mode}
 
 @api.post("/api/query")
-def run_query(request: QueryRequest):
+def run_query(request: QueryRequest) -> Dict[str, Any]:
     """
     Executes the query through the multi-agent LangGraph.
     """
@@ -57,6 +67,15 @@ def run_query(request: QueryRequest):
     
     try:
         final_state = graph_app.invoke(initial_state)
+
+        # RAGAS structured logging
+        ragas_entry = final_state.get("ragas_log")
+        if ragas_entry:
+            os.makedirs(RAGAS_LOG_DIR, exist_ok=True)
+            log_path = os.path.join(RAGAS_LOG_DIR, "interactions.jsonl")
+            with open(log_path, "a", encoding="utf-8") as lf:
+                lf.write(json.dumps({**ragas_entry, "timestamp": datetime.now().isoformat()}) + "\n")
+
         return final_state
     except Exception as e:
         logger.error(f"Error executing agent query: {str(e)}")
@@ -75,18 +94,25 @@ def parse_frontmatter(content: str) -> Dict[str, Any]:
                 meta[key] = val
     return meta
 
+import re
+
 @api.get("/api/graph")
-def get_graph_data():
+def get_graph_data() -> Dict[str, list]:
     """
     Scans the knowledge_graph/ and outputs a nodes/links structure for react-force-graph-2d.
+    Uses an in-memory cache to avoid repeated filesystem walks.
     """
+    global _graph_cache, _graph_cache_valid
+    if _graph_cache_valid and _graph_cache:
+        return _graph_cache
+
     kg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph"))
     if not os.path.exists(kg_dir):
         return {"nodes": [], "links": []}
         
-    nodes = []
-    links = []
-    node_set = set()
+    nodes: List[Dict[str, Any]] = []
+    links: List[Dict[str, str]] = []
+    node_set: set = set()
     
     # Traverse directories to build nodes
     for root, _, files in os.walk(kg_dir):
@@ -108,7 +134,7 @@ def get_graph_data():
                     "label": title,
                     "type": ent_type,
                     "description": meta.get("description", ""),
-                    "val": 1  # basic weight
+                    "val": 1
                 })
                 node_set.add(node_id)
                 
@@ -122,40 +148,49 @@ def get_graph_data():
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
                     
-                # Search for relative links in markdown body: e.g. [Link Text](../equipment/xyz.md)
+                # Search for relative links in markdown body
                 matches = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
                 for label, target in matches:
                     if target.startswith(".") or target.startswith(".."):
-                        # Resolve target path relative to source file
                         source_dir = os.path.dirname(source_id)
                         target_path = os.path.normpath(os.path.join(source_dir, target)).replace("\\", "/")
                         
                         if target_path in node_set:
-                            # Avoid duplicate links
                             link_exists = any(
                                 (l["source"] == source_id and l["target"] == target_path) or
                                 (l["source"] == target_path and l["target"] == source_id)
                                 for l in links
                             )
                             if not link_exists:
+                                rel_type = "REFERENCES"
+                                if source_id.startswith("alerts/") or target_path.startswith("alerts/"):
+                                    rel_type = "VIOLATES"
+                                elif (source_id.startswith("regulations/") and (target_path.startswith("procedures/") or target_path.startswith("maintenance/"))) or \
+                                     (target_path.startswith("regulations/") and (source_id.startswith("procedures/") or source_id.startswith("maintenance/"))):
+                                    rel_type = "COMPLIES_WITH"
+                                
                                 links.append({
                                     "source": source_id,
-                                    "target": target_path
+                                    "target": target_path,
+                                    "type": rel_type
                                 })
                                 
     # Calculate degree of each node to scale node size
-    degrees = {n["id"]: 0 for n in nodes}
+    degrees: Dict[str, int] = {n["id"]: 0 for n in nodes}
     for l in links:
         degrees[l["source"]] = degrees.get(l["source"], 0) + 1
         degrees[l["target"]] = degrees.get(l["target"], 0) + 1
         
     for n in nodes:
         n["val"] = 2 + degrees[n["id"]] * 1.5
-        
-    return {"nodes": nodes, "links": links}
+
+    result = {"nodes": nodes, "links": links}
+    _graph_cache = result
+    _graph_cache_valid = True
+    return result
 
 @api.get("/api/alerts")
-def get_alerts():
+def get_alerts() -> List[Dict[str, Any]]:
     """
     Parses and returns all active safety/compliance alerts.
     """
@@ -165,7 +200,7 @@ def get_alerts():
     if not os.path.exists(alerts_dir):
         return []
         
-    alerts = []
+    alerts: List[Dict[str, Any]] = []
     for file in os.listdir(alerts_dir):
         if file.endswith(".md") and file not in ["index.md", "log.md"]:
             file_path = os.path.join(alerts_dir, file)

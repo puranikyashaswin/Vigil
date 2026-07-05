@@ -4,7 +4,7 @@ title: "Wiring Diagrams"
 description: "Diagrams showing circuit components as simplified shapes with power and signal wiring between devices."
 resource: "test_documents/462-Piping-and-Instrumentation-Diagrams.pdf"
 tags: ['engineering', 'diagrams', 'wiring']
-timestamp: 2026-07-04T10:37:14.312491
+timestamp: 2026-07-05T10:14:21.158541
 ---
 
 # Wiring Diagrams

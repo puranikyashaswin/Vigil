@@ -4,7 +4,7 @@ title: "Pipe Specifications"
 description: "Details about pipe size, material, and other characteristics"
 resource: "test_documents/artofthepid-aiche-rbt11-15-19.pdf"
 tags: ['pipe specifications', 'piping']
-timestamp: 2026-07-04T10:37:14.315035
+timestamp: 2026-07-05T10:14:21.162795
 ---
 
 # Pipe Specifications

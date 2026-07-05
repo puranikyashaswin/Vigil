@@ -4,7 +4,7 @@ title: "Occupational Safety and Health Administration (OSHA)"
 description: "A government agency responsible for ensuring workplace safety and health"
 resource: "test_documents/29 CFR 1910.119 (up to date as of 7-01-2026).pdf"
 tags: ['workplace safety', 'health']
-timestamp: 2026-07-04T10:37:14.311322
+timestamp: 2026-07-05T10:14:21.157359
 ---
 
 # Occupational Safety and Health Administration (OSHA)

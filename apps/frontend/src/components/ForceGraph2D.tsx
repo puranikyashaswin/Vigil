@@ -1,30 +1,15 @@
 "use client";
 
-import React, { useRef, useEffect, useState, useMemo } from "react";
+import React, { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { useTheme } from "next-themes";
 import ForceGraph2DClient from "react-force-graph-2d";
-
-interface Node {
-  id: string;
-  label: string;
-  type: string;
-  description?: string;
-  val?: number;
-  x?: number;
-  y?: number;
-  fx?: number | null;
-  fy?: number | null;
-}
-
-interface Link {
-  source: any;
-  target: any;
-  index?: number;
-}
+import { LIGHT_COLORS, DARK_COLORS } from "./graph/graphColors";
+import { drawNode, drawLink, GraphNode, GraphLink } from "./graph/graphDrawHandlers";
+import { Node } from "@/types";
 
 interface GraphData {
   nodes: Node[];
-  links: Link[];
+  links: { source: string | GraphNode; target: string | GraphNode; index?: number }[];
 }
 
 interface ForceGraph2DProps {
@@ -33,88 +18,66 @@ interface ForceGraph2DProps {
   selectedNodeId?: string | null;
 }
 
-const LIGHT_COLORS: Record<string, string> = {
-  concept:         "#6a9bcc", // blue
-  equipment:       "#6a9bcc", // blue
-  procedure:       "#788c5d", // green
-  regulation:      "#d97757", // orange/clay
-  maintenance_log: "#b0aea5", // gray
-  alert:           "#EF4444", // crimson
-};
-
-const DARK_COLORS: Record<string, string> = {
-  concept:         "#6a9bcc", // blue
-  equipment:       "#6a9bcc", // blue
-  procedure:       "#788c5d", // green
-  regulation:      "#d97757", // orange/clay
-  maintenance_log: "#b0aea5", // gray
-  alert:           "#EF4444", // crimson
-};
+interface ForceGraphInstance {
+  d3Force: (name: string) => any;
+  d3ReheatSimulation: () => void;
+  zoomToFit: (duration: number, padding: number) => void;
+  centerAt: (x: number, y: number, duration: number) => void;
+  zoom: (level: number, duration: number) => void;
+}
 
 export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: ForceGraph2DProps) {
   const { resolvedTheme } = useTheme();
-  const fgRef = useRef<any>(null);
+  const fgRef = useRef<ForceGraphInstance | null>(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const [hoverNode, setHoverNode] = useState<any>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
-  const [highlightLinks, setHighlightLinks] = useState<Set<any>>(new Set());
+  const [highlightLinks, setHighlightLinks] = useState<Set<GraphLink>>(new Set());
 
   const isDark = resolvedTheme === "dark";
   const TYPE_COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
   const canvasBg = isDark ? "#09090b" : "#fafafa";
-  const canvasBorder = isDark ? "#3f3f46" : "#d4d4d8";
   const nodeBorderLight = isDark ? "#18181b" : "#fafafa";
   const nodeBorderSelected = isDark ? "#fafafa" : "#18181b";
   const linkDefault = isDark ? "#52525b" : "#d4d4d8";
 
   const initializedData = useMemo(() => {
     const degs: Record<string, number> = {};
-    data.nodes.forEach((n) => {
-      degs[n.id] = 0;
-    });
+    data.nodes.forEach((n) => { degs[n.id] = 0; });
     data.links.forEach((l) => {
       const sourceId = typeof l.source === "object" ? l.source.id : l.source;
       const targetId = typeof l.target === "object" ? l.target.id : l.target;
       if (degs[sourceId] !== undefined) degs[sourceId]++;
       if (degs[targetId] !== undefined) degs[targetId]++;
     });
-
-    const nodes = data.nodes.map((n, idx) => {
+    const nodes: GraphNode[] = data.nodes.map((n, idx) => {
       const degree = degs[n.id] || 0;
       const size = Math.max(3.5, 3.5 + degree * 0.9);
-      
       const angle = (idx / (data.nodes.length || 1)) * 2 * Math.PI;
       const radius = 120 + Math.random() * 40;
       const centerX = dimensions.width / 2;
       const centerY = dimensions.height / 2;
-      
+      const nx = (n as any).x;
+      const ny = (n as any).y;
       return {
         ...n,
-        x: n.x !== undefined ? n.x : centerX + Math.cos(angle) * radius,
-        y: n.y !== undefined ? n.y : centerY + Math.sin(angle) * radius,
+        x: nx !== undefined ? nx : centerX + Math.cos(angle) * radius,
+        y: ny !== undefined ? ny : centerY + Math.sin(angle) * radius,
         degree,
         size
       };
     });
-
-    const links = data.links.map((l) => ({ ...l }));
+    const links: GraphLink[] = data.links.map((l) => ({ ...l }) as GraphLink);
     return { nodes, links };
   }, [data, dimensions.width, dimensions.height]);
 
   useEffect(() => {
     if (!containerRef.current) return;
-
     const handleResize = () => {
       if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight,
-        });
+        setDimensions({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight });
       }
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -122,34 +85,18 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
 
   useEffect(() => {
     if (!fgRef.current || initializedData.nodes.length === 0) return;
-
     const chargeForce = fgRef.current.d3Force("charge");
-    if (chargeForce) {
-      chargeForce.strength(-100).distanceMax(250);
-    }
-
+    if (chargeForce) chargeForce.strength(-100).distanceMax(250);
     const centerForce = fgRef.current.d3Force("center");
-    if (centerForce) {
-      centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
-    }
-
+    if (centerForce) centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
     const linkForce = fgRef.current.d3Force("link");
-    if (linkForce) {
-      linkForce.distance(60).strength(0.8);
-    }
-
+    if (linkForce) linkForce.distance(60).strength(0.8);
     const collisionForce = fgRef.current.d3Force("collision");
-    if (collisionForce) {
-      collisionForce.radius(18).strength(0.7);
-    }
-
+    if (collisionForce) collisionForce.radius(18).strength(0.7);
     fgRef.current.d3ReheatSimulation();
-
     setTimeout(() => {
-      if (fgRef.current) {
-        fgRef.current.zoomToFit(300, 60);
-      }
-    }, 1200);
+      if (fgRef.current) fgRef.current.zoomToFit(400, 100);
+    }, 1000);
   }, [initializedData.nodes.length, dimensions.width, dimensions.height]);
 
   useEffect(() => {
@@ -162,29 +109,35 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
     }
   }, [selectedNodeId, initializedData.nodes]);
 
-  const handleNodeHover = (node: any) => {
-    setHoverNode(node);
+  const handleNodeHover = useCallback((node: GraphNode | null) => {
     const hNodes = new Set<string>();
-    const hLinks = new Set<any>();
-
+    const hLinks = new Set<GraphLink>();
     if (node) {
       hNodes.add(node.id);
       initializedData.links.forEach((l) => {
         const sourceId = typeof l.source === "object" ? l.source.id : l.source;
         const targetId = typeof l.target === "object" ? l.target.id : l.target;
-        if (sourceId === node.id) {
-          hNodes.add(targetId);
-          hLinks.add(l);
-        } else if (targetId === node.id) {
-          hNodes.add(sourceId);
-          hLinks.add(l);
-        }
+        if (sourceId === node.id) { hNodes.add(targetId as string); hLinks.add(l); }
+        else if (targetId === node.id) { hNodes.add(sourceId as string); hLinks.add(l); }
       });
     }
-
     setHighlightNodes(hNodes);
     setHighlightLinks(hLinks);
-  };
+  }, [initializedData.links]);
+
+  const nodeCanvasObject = useCallback((node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    drawNode(node, ctx, globalScale, TYPE_COLORS, highlightNodes, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected);
+  }, [TYPE_COLORS, highlightNodes, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected]);
+
+  const linkCanvasObject = useCallback((link: GraphLink, ctx: CanvasRenderingContext2D) => {
+    drawLink(link, ctx, highlightLinks, linkDefault);
+  }, [highlightLinks, linkDefault]);
+
+  const nodeVal = useCallback((node: GraphNode) => {
+    const size = node.size || 3.5;
+    const hitSize = Math.max(6, size);
+    return hitSize * hitSize;
+  }, []);
 
   return (
     <div ref={containerRef} className="w-full h-full relative overflow-hidden bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
@@ -201,76 +154,15 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
       ) : (
         <ForceGraph2DClient
           key={isDark ? "dark" : "light"}
-          ref={fgRef}
+          ref={fgRef as any}
           width={dimensions.width}
           height={dimensions.height}
           graphData={initializedData}
           backgroundColor={canvasBg}
           nodeRelSize={1}
-          nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-            const label = node.label || node.id;
-            const size = node.size || 3.5;
-            
-            const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
-            const isSelected = selectedNodeId === node.id;
-            
-            ctx.save();
-            
-            if (isSelected) {
-              ctx.beginPath();
-              ctx.arc(node.x, node.y, size + 3.5, 0, 2 * Math.PI, false);
-              ctx.strokeStyle = "#d97757";
-              ctx.lineWidth = 1.8;
-              ctx.stroke();
-            }
-
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
-            
-            ctx.fillStyle = TYPE_COLORS[node.type] || "#a1a1aa";
-            ctx.globalAlpha = isHighlighted ? 1.0 : 0.12;
-            ctx.fill();
-
-            ctx.strokeStyle = isSelected ? nodeBorderSelected : nodeBorderLight;
-            ctx.lineWidth = 0.6;
-            ctx.stroke();
-
-            const fontSize = Math.max(2.4, 9 / globalScale);
-            ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = isDark ? "#f4f4f5" : "#18181b";
-            ctx.globalAlpha = isHighlighted ? (globalScale > 1.1 || isSelected ? 0.95 : 0.35) : 0.08;
-            
-            ctx.fillText(label, node.x, node.y + size + fontSize + 1.2);
-            
-            ctx.restore();
-          }}
-          linkCanvasObject={(link: any, ctx: CanvasRenderingContext2D) => {
-            const isHighlighted = highlightLinks.size === 0 || highlightLinks.has(link);
-            const source = link.source;
-            const target = link.target;
-            
-            if (typeof source !== "object" || typeof target !== "object") return;
-            
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(source.x, source.y);
-            ctx.lineTo(target.x, target.y);
-            
-            ctx.strokeStyle = isHighlighted ? "#d97757" : linkDefault;
-            ctx.lineWidth = isHighlighted ? 1.4 : 0.6;
-            ctx.globalAlpha = isHighlighted ? 0.85 : 0.22;
-            
-            ctx.stroke();
-            ctx.restore();
-          }}
-          nodeVal={(node: any) => {
-            const size = node.size || 3.5;
-            // Provide a minimum hover/click hit area radius of 6px (diameter 12px) for ease of interaction on high-res monitors
-            const hitSize = Math.max(6, size);
-            return hitSize * hitSize;
-          }}
+          nodeCanvasObject={nodeCanvasObject}
+          linkCanvasObject={linkCanvasObject}
+          nodeVal={nodeVal}
           d3AlphaDecay={0.012}
           d3VelocityDecay={0.35}
           onNodeHover={handleNodeHover}

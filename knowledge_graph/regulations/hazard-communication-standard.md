@@ -4,7 +4,7 @@ title: "Hazard Communication Standard"
 description: "A standard for communicating hazards associated with chemicals in the workplace"
 resource: "test_documents/osha_1910_119.pdf"
 tags: ['hazard communication', 'chemical safety']
-timestamp: 2026-07-04T10:37:14.316913
+timestamp: 2026-07-05T10:14:21.164294
 ---
 
 # Hazard Communication Standard

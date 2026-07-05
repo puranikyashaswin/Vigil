@@ -45,6 +45,8 @@ def get_qdrant_client() -> QdrantClient:
     api_key = os.getenv("QDRANT_API_KEY")
     if not url or "your_qdrant_url" in url:
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        logger.warning("QDRANT_URL is not configured. Using local SQLite-backed Qdrant DB. "
+                        "This will degrade under concurrent load. See docs/SCALING.md for production setup.")
         return QdrantClient(path=os.path.join(project_root, "vigil_qdrant.db"))
     return QdrantClient(url=url, api_key=api_key)
 

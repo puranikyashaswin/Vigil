@@ -25,12 +25,14 @@ function useCardSize() {
 }
 
 function FlapCard({ target, cardSize }: { target: string; cardSize: { w: number; h: number; fontSize: string } }) {
-  const [char, setChar] = useState(() => CHARS[Math.floor(Math.random() * CHARS.length)]);
+  const [char, setChar] = useState(" ");
   const [prevChar, setPrevChar] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(true);
 
   useEffect(() => {
-    const startChar = char;
+    const startChar = CHARS[Math.floor(Math.random() * CHARS.length)];
+    setChar(startChar);
+    
     let index = CHARS.indexOf(startChar);
     const tIndex = target === " " ? 0 : CHARS.indexOf(target);
     if (tIndex === -1) {
@@ -45,12 +47,14 @@ function FlapCard({ target, cardSize }: { target: string; cardSize: { w: number;
     }
 
     let step = 0;
+    let currentVal = startChar;
     const timer = setInterval(() => {
       step++;
       const nextIdx = (index + step) % CHARS.length;
       const nextChar = CHARS[nextIdx];
-      setPrevChar(char);
+      setPrevChar(currentVal);
       setChar(nextChar);
+      currentVal = nextChar;
 
       if (step >= steps) {
         clearInterval(timer);

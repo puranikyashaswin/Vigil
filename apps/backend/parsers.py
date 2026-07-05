@@ -1,6 +1,6 @@
 import os
-import time
 import base64
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import mimetypes
 import logging
 from typing import List, Tuple
@@ -24,11 +24,17 @@ OCR_MODEL_FALLBACKS = [
     "openrouter/free"
 ]
 
+MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
+
 def detect_document_type(file_path: str) -> Tuple[str, str]:
     """
     Detects document category (text-native vs scanned/image) and extension.
     Returns (category, extension).
     """
+    file_size = os.path.getsize(file_path)
+    if file_size > MAX_FILE_SIZE_BYTES:
+        raise ValueError(f"File exceeds maximum allowed size of {MAX_FILE_SIZE_BYTES // (1024*1024)}MB: {file_path} ({file_size} bytes)")
+    
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
     
@@ -252,7 +258,10 @@ def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
     # 1. Convert Scanned PDFs to images
     base64_images: List[str] = []
     if ext == ".pdf":
-        doc = pdfium.PdfDocument(file_path)
+        try:
+            doc = pdfium.PdfDocument(file_path)
+        except Exception as e:
+            raise Exception(f"Failed to open scanned PDF for OCR: {str(e)}")
         for i, page in enumerate(doc):
             bitmap = page.render(scale=2)  # Scale=2 for clear OCR
             pil_img = bitmap.to_pil()
@@ -289,9 +298,15 @@ def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
             
     raise Exception(f"All OCR fallback models failed. Last error: {str(last_error)}")
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=2, min=2, max=16),
+    retry=retry_if_exception_type(Exception),
+    reraise=True
+)
 def run_api_ocr_request(base64_image: str, model_slug: str, api_key: str) -> str:
     """
-    Dispatches the base64 encoded image to OpenRouter with rate-limit exponential backoff.
+    Dispatches the base64 encoded image to OpenRouter with automatic exponential backoff retry.
     """
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -317,30 +332,17 @@ def run_api_ocr_request(base64_image: str, model_slug: str, api_key: str) -> str
             }
         ]
     }
-    
-    # 3 attempts with backoff
-    for attempt in range(3):
-        try:
-            with httpx.Client(timeout=90.0) as client:
-                response = client.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers=headers,
-                    json=payload
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    return data["choices"][0]["message"]["content"]
-                elif response.status_code == 429:
-                    wait_time = (2 ** attempt) * 2
-                    logger.warning(f"Rate limited (429). Retrying in {wait_time}s...")
-                    time.sleep(wait_time)
-                else:
-                    raise Exception(f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            if attempt == 2:
-                raise e
-            wait_time = (2 ** attempt) * 2
-            logger.warning(f"Request failed: {str(e)}. Retrying in {wait_time}s...")
-            time.sleep(wait_time)
-            
-    raise Exception("Max OCR API retries exceeded.")
+    with httpx.Client(timeout=90.0) as client:
+        response = client.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+        elif response.status_code == 429:
+            raise Exception("Rate limited (429). Will retry...")
+        else:
+            raise Exception(f"HTTP {response.status_code}: {response.text}")
+
