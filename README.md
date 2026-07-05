@@ -17,6 +17,26 @@ If a contradiction exceeds a 0.7 confidence threshold, Vigil automatically gener
 
 This means an operator updating a maintenance bypass procedure that violates an OSHA pressure limit is stopped at ingestion time, not during an inspection.
 
+## Document Parsing Performance
+
+| File Type | Method Used | Approach | Notes |
+|:---|:---|:---|:---|
+| PDF (native/text) | PyMuPDF (primary), pdfplumber (fallback) | Direct text-layer extraction, no LLM call | Benchmarked 50-94% faster than pdfplumber alone across our test corpus |
+| PDF (scanned/image) | OpenRouter vision model | AI-powered OCR with layout understanding | Handles messy real-world scans (tested on a 1995 handwritten survey form with full accuracy) |
+| DOCX | python-docx | Direct XML structure parsing, no LLM call | Preserves headings and paragraph structure for citation accuracy |
+| XLSX / XLS | openpyxl / xlrd | Direct spreadsheet structure parsing, no LLM call | Automatically handles legacy .xls files misencoded as modern .xlsx |
+| CSV | Python csv module | Direct structured parsing, no LLM call | Zero-dependency, deterministic |
+
+These benchmark times are real, measured results from running the test script [test_parsing.py](apps/backend/scripts/test_parsing.py) against our own local [test_documents/](test_documents/) corpus, rather than synthetic or third-party benchmarks.
+
+| Document | Previous (pdfplumber) | Current (PyMuPDF) | Improvement |
+|:---|:---:|:---:|:---:|
+| 29 CFR 1910.119 (OSHA regulation, 316KB) | 1.61s | 0.26s | 83.8% faster |
+| P&ID Reference Manual (7MB, largest test doc) | 3.44s | 0.20s | 94.2% faster |
+| Piping & Instrumentation Diagrams | 0.80s | 0.15s | 81.2% faster |
+| OSHA 1910.119 (alternate source) | 1.50s | 0.17s | 88.6% faster |
+| Sample document (100KB) | 0.04s | 0.02s | 50.0% faster |
+
 ---
 
 ## Architecture Overview
@@ -96,28 +116,6 @@ flowchart TD
 | Animations | `framer-motion` | Tab transitions, modal enter/exit |
 | Graph | `react-force-graph-2d` | Obsidian-style 2D force layout |
 | Icons | `lucide-react` | |
-
----
-
-## Document Parsing Performance
-
-| File Type | Method Used | Approach | Notes |
-|:---|:---|:---|:---|
-| PDF (native/text) | PyMuPDF (primary), pdfplumber (fallback) | Direct text-layer extraction, no LLM call | Benchmarked 50-94% faster than pdfplumber alone across our test corpus |
-| PDF (scanned/image) | OpenRouter vision model | AI-powered OCR with layout understanding | Handles messy real-world scans (tested on a 1995 handwritten survey form with full accuracy) |
-| DOCX | python-docx | Direct XML structure parsing, no LLM call | Preserves headings and paragraph structure for citation accuracy |
-| XLSX / XLS | openpyxl / xlrd | Direct spreadsheet structure parsing, no LLM call | Automatically handles legacy .xls files misencoded as modern .xlsx |
-| CSV | Python csv module | Direct structured parsing, no LLM call | Zero-dependency, deterministic |
-
-These benchmark times are real, measured results from running the test script [test_parsing.py](apps/backend/scripts/test_parsing.py) against our own local [test_documents/](test_documents/) corpus, rather than synthetic or third-party benchmarks.
-
-| Document | Previous (pdfplumber) | Current (PyMuPDF) | Improvement |
-|:---|:---:|:---:|:---:|
-| 29 CFR 1910.119 (OSHA regulation, 316KB) | 1.61s | 0.26s | 83.8% faster |
-| P&ID Reference Manual (7MB, largest test doc) | 3.44s | 0.20s | 94.2% faster |
-| Piping & Instrumentation Diagrams | 0.80s | 0.15s | 81.2% faster |
-| OSHA 1910.119 (alternate source) | 1.50s | 0.17s | 88.6% faster |
-| Sample document (100KB) | 0.04s | 0.02s | 50.0% faster |
 
 ---
 
