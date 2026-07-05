@@ -1,0 +1,423 @@
+{
+  "nodes": [
+    {
+      "id": "procedures/p-03.md",
+      "label": "Process Procedure P-03: System Start",
+      "type": "procedure",
+      "description": "Start sequence manual instructions for technicians. Directs setting V-202 bypass pressure to 120 PSI.",
+      "val": 3.5
+    },
+    {
+      "id": "procedures/newport-racing-event-survey.md",
+      "label": "Newport Racing Event Survey",
+      "type": "procedure",
+      "description": "A survey of the Newport racing event held at Leguna Seca, Monterey, Ca",
+      "val": 5.0
+    },
+    {
+      "id": "procedures/qwikpdf-browser-generator.md",
+      "label": "QwikPDF Browser Generator",
+      "type": "procedure",
+      "description": "A tool used to generate PDF files",
+      "val": 2.0
+    },
+    {
+      "id": "procedures/p-id-drafting-procedure.md",
+      "label": "P&ID Drafting Procedure",
+      "type": "procedure",
+      "description": "A set of guidelines for creating P&IDs, including drawing size, borders, and title blocks",
+      "val": 3.5
+    },
+    {
+      "id": "alerts/conflict-mock.md",
+      "label": "Conflict: Safety Valve V-202 Setpoint Mismatch",
+      "type": "alert",
+      "description": "Process Procedure P-03 requires setting the bypass valve to 120 PSI, but Safety Regulation SR-12 strictly limits pressure to 100 PSI.",
+      "val": 5.0
+    },
+    {
+      "id": "maintenance/v-202-maintenance-log.md",
+      "label": "V-202 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment V-202, last serviced on 2026-05-10, next service due on 2026-11-10, technician John Doe, status completed",
+      "val": 2.0
+    },
+    {
+      "id": "maintenance/t-301-maintenance-log.md",
+      "label": "T-301 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment T-301, last serviced on 2026-04-20, next service due on 2026-10-20, technician Marcus Wright, status completed",
+      "val": 2.0
+    },
+    {
+      "id": "maintenance/p-102-maintenance-log.md",
+      "label": "P-102 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration",
+      "val": 2.0
+    },
+    {
+      "id": "maintenance/p-101-maintenance-log.md",
+      "label": "P-101 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Maintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check",
+      "val": 2.0
+    },
+    {
+      "id": "regulations/hazard-communication-standard.md",
+      "label": "Hazard Communication Standard",
+      "type": "regulation",
+      "description": "A standard for communicating hazards associated with chemicals in the workplace",
+      "val": 6.5
+    },
+    {
+      "id": "regulations/pdf-1-7.md",
+      "label": "PDF 1.7",
+      "type": "regulation",
+      "description": "A version of the PDF file format",
+      "val": 2.0
+    },
+    {
+      "id": "regulations/clean-air-act-amendments.md",
+      "label": "Clean Air Act Amendments",
+      "type": "regulation",
+      "description": "A law that requires employers to implement process safety management programs",
+      "val": 3.5
+    },
+    {
+      "id": "regulations/p-id-completeness-checklist.md",
+      "label": "P&ID Completeness Checklist",
+      "type": "regulation",
+      "description": "A list of items to verify for completeness in a P&ID",
+      "val": 3.5
+    },
+    {
+      "id": "regulations/p-id-quality-assurance-matrix.md",
+      "label": "P&ID Quality Assurance Matrix",
+      "type": "regulation",
+      "description": "A framework for ensuring the quality and consistency of P&IDs",
+      "val": 3.5
+    },
+    {
+      "id": "regulations/sr-12.md",
+      "label": "Safety Regulation SR-12: Valve Operations",
+      "type": "regulation",
+      "description": "Establishes safety limits for pressure bypass operations on safety valves. Limits V-202 maximum pressure to 100 PSI.",
+      "val": 3.5
+    },
+    {
+      "id": "regulations/occupational-safety-and-health-act-of-1970.md",
+      "label": "Occupational Safety and Health Act of 1970",
+      "type": "regulation",
+      "description": "A federal law that regulates workplace safety and health",
+      "val": 5.0
+    },
+    {
+      "id": "regulations/process-safety-management.md",
+      "label": "Process Safety Management",
+      "type": "regulation",
+      "description": "A standard for preventing or minimizing the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals",
+      "val": 6.5
+    },
+    {
+      "id": "regulations/29-cfr-1910-119.md",
+      "label": "29 CFR 1910.119",
+      "type": "regulation",
+      "description": "Process safety management of highly hazardous chemicals",
+      "val": 6.5
+    },
+    {
+      "id": "equipment/logic-diagrams.md",
+      "label": "Logic Diagrams",
+      "type": "concept",
+      "description": "Diagrams conveying control descriptions pictorially, including ladder logic diagrams, binary logic diagrams, and Boolean logic diagrams.",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/piping-and-instrumentation-diagrams-p-ids.md",
+      "label": "Piping and Instrumentation Diagrams (P&IDs)",
+      "type": "concept",
+      "description": "Drawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.",
+      "val": 11.0
+    },
+    {
+      "id": "equipment/process-flow-diagrams-pfds.md",
+      "label": "Process Flow Diagrams (PFDs)",
+      "type": "concept",
+      "description": "Drawings with lines for piping and symbols for major components, used to create P&IDs.",
+      "val": 5.0
+    },
+    {
+      "id": "equipment/equipment-title-blocks.md",
+      "label": "Equipment Title Blocks",
+      "type": "concept",
+      "description": "A standard format for displaying equipment information on a P&ID",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/project-management-data.md",
+      "label": "Project Management Data",
+      "type": "concept",
+      "description": "A collection of project management data including project name, task name, assigned personnel, start and end dates, and progress.",
+      "val": 2.0
+    },
+    {
+      "id": "equipment/sheet1.md",
+      "label": "Sheet1",
+      "type": "drawing",
+      "description": "A spreadsheet sheet containing equipment maintenance information",
+      "val": 2.0
+    },
+    {
+      "id": "equipment/occupational-safety-and-health-administration-osha.md",
+      "label": "Occupational Safety and Health Administration (OSHA)",
+      "type": "organization",
+      "description": "A government agency responsible for ensuring workplace safety and health",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/sample-100kb-pdf.md",
+      "label": "sample-100kb.pdf",
+      "type": "drawing",
+      "description": "A sample PDF file containing text and embedded PNG images",
+      "val": 2.0
+    },
+    {
+      "id": "equipment/control-loops.md",
+      "label": "Control Loops",
+      "type": "concept",
+      "description": "Systems that maintain a process condition at a set value by adjusting devices based on feedback from instruments.",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/instrument-loop-elements.md",
+      "label": "Instrument Loop Elements",
+      "type": "concept",
+      "description": "Components of an instrument loop, including sensors, transmitters, and controllers",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/osha.md",
+      "label": "OSHA",
+      "type": "organization",
+      "description": "The Occupational Safety and Health Administration, responsible for regulating workplace safety and health",
+      "val": 5.0
+    },
+    {
+      "id": "equipment/scada-network-diagrams.md",
+      "label": "SCADA Network Diagrams",
+      "type": "concept",
+      "description": "Block diagrams showing the basic SCADA architecture and communication channels between devices, controllers, and computers.",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/pomponius.md",
+      "label": "Pomponius",
+      "type": "concept",
+      "description": "Reference to a person, possibly a philosopher or writer",
+      "val": 2.0
+    },
+    {
+      "id": "equipment/valve-specification.md",
+      "label": "Valve Specification",
+      "type": "concept",
+      "description": "Details about valve type, size, and other characteristics",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/instrument-schematics.md",
+      "label": "Instrument Schematics",
+      "type": "concept",
+      "description": "Detailed drawings for particular instruments, showing wiring details and control logic notes.",
+      "val": 5.0
+    },
+    {
+      "id": "equipment/process-safety-management.md",
+      "label": "Process Safety Management",
+      "type": "concept",
+      "description": "A systematic approach to evaluating the whole process to prevent unwanted releases of hazardous chemicals",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/newport-hospitality.md",
+      "label": "Newport Hospitality",
+      "type": "concept",
+      "description": "The hospitality services provided by Newport during the racing event",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/p-id.md",
+      "label": "P&ID",
+      "type": "concept",
+      "description": "A schematic diagram that shows how equipment and instruments connect to form a functional process system",
+      "val": 12.5
+    },
+    {
+      "id": "equipment/leguna-seca-racing-event.md",
+      "label": "Leguna Seca Racing Event",
+      "type": "event",
+      "description": "A racing event held at Leguna Seca, Monterey, Ca on September 10, 1995",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/pipe-specifications.md",
+      "label": "Pipe Specifications",
+      "type": "concept",
+      "description": "Details about pipe size, material, and other characteristics",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/torquatus.md",
+      "label": "Torquatus",
+      "type": "concept",
+      "description": "Reference to a person, possibly a philosopher",
+      "val": 2.0
+    },
+    {
+      "id": "equipment/wiring-diagrams.md",
+      "label": "Wiring Diagrams",
+      "type": "concept",
+      "description": "Diagrams showing circuit components as simplified shapes with power and signal wiring between devices.",
+      "val": 3.5
+    },
+    {
+      "id": "equipment/quantum-aristoxeni.md",
+      "label": "Quantum Aristoxeni",
+      "type": "concept",
+      "description": "Reference to Aristoxenus' work in music",
+      "val": 2.0
+    }
+  ],
+  "links": [
+    {
+      "source": "procedures/p-id-drafting-procedure.md",
+      "target": "equipment/p-id.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "alerts/conflict-mock.md",
+      "target": "regulations/sr-12.md",
+      "type": "VIOLATES"
+    },
+    {
+      "source": "alerts/conflict-mock.md",
+      "target": "procedures/p-03.md",
+      "type": "VIOLATES"
+    },
+    {
+      "source": "regulations/hazard-communication-standard.md",
+      "target": "regulations/process-safety-management.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "regulations/hazard-communication-standard.md",
+      "target": "regulations/occupational-safety-and-health-act-of-1970.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "regulations/clean-air-act-amendments.md",
+      "target": "regulations/29-cfr-1910-119.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "regulations/p-id-completeness-checklist.md",
+      "target": "equipment/p-id.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "regulations/p-id-quality-assurance-matrix.md",
+      "target": "equipment/p-id.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "regulations/occupational-safety-and-health-act-of-1970.md",
+      "target": "regulations/process-safety-management.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/logic-diagrams.md",
+      "target": "equipment/piping-and-instrumentation-diagrams-p-ids.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/piping-and-instrumentation-diagrams-p-ids.md",
+      "target": "equipment/process-flow-diagrams-pfds.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/piping-and-instrumentation-diagrams-p-ids.md",
+      "target": "equipment/instrument-schematics.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/piping-and-instrumentation-diagrams-p-ids.md",
+      "target": "equipment/wiring-diagrams.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/piping-and-instrumentation-diagrams-p-ids.md",
+      "target": "equipment/scada-network-diagrams.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/process-flow-diagrams-pfds.md",
+      "target": "equipment/instrument-schematics.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/equipment-title-blocks.md",
+      "target": "equipment/p-id.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/occupational-safety-and-health-administration-osha.md",
+      "target": "regulations/29-cfr-1910-119.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/control-loops.md",
+      "target": "equipment/piping-and-instrumentation-diagrams-p-ids.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/instrument-loop-elements.md",
+      "target": "equipment/p-id.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/osha.md",
+      "target": "regulations/process-safety-management.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/osha.md",
+      "target": "regulations/hazard-communication-standard.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/valve-specification.md",
+      "target": "equipment/p-id.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/process-safety-management.md",
+      "target": "regulations/29-cfr-1910-119.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/newport-hospitality.md",
+      "target": "procedures/newport-racing-event-survey.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/leguna-seca-racing-event.md",
+      "target": "procedures/newport-racing-event-survey.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/pipe-specifications.md",
+      "target": "equipment/p-id.md",
+      "type": "REFERENCES"
+    }
+  ]
+}

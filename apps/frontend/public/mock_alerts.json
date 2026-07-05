@@ -1,0 +1,11 @@
+[
+  {
+    "id": "conflict-mock.md",
+    "title": "Conflict: Safety Valve V-202 Setpoint Mismatch",
+    "description": "Process Procedure P-03 requires setting the bypass valve to 120 PSI, but Safety Regulation SR-12 strictly limits pressure to 100 PSI.",
+    "severity": "high",
+    "confidence_score": 0.85,
+    "timestamp": "2026-07-04T11:00:00",
+    "content": "# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts.\n\n## Conflict Details\n- **Conflicting Source A**: [Safety Regulation SR-12](../regulations/sr-12.md)\n- **Conflicting Source B**: [Process Procedure P-03](../procedures/p-03.md)\n\n## Audit Findings\nSafety Regulation SR-12 explicitly limits the maximum operating pressure of V-202 to 100 PSI. However, Process Procedure P-03 instructs technicians to set the bypass pressure to 120 PSI, directly violating SR-12 and creating an overpressure explosion hazard."
+  }
+]
