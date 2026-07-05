@@ -35,7 +35,8 @@ export function drawNode(
   const size = node.size || 3.5;
   const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
   const isSelected = selectedNodeId === node.id;
-  const color = typeColors[node.type] || "#a1a1aa";
+  const typeLower = (node.type || "concept").toLowerCase().trim();
+  const color = typeColors[typeLower] || typeColors[node.type] || "#a1a1aa";
 
   ctx.save();
   ctx.globalAlpha = isHighlighted ? 1.0 : 0.15;
@@ -49,7 +50,13 @@ export function drawNode(
     ctx.stroke();
   }
 
-  if (node.type === "equipment" || node.type === "concept") {
+  if (
+    typeLower === "equipment" ||
+    typeLower === "concept" ||
+    typeLower === "drawing" ||
+    typeLower === "event" ||
+    typeLower === "organization"
+  ) {
     // 1. Rectangular shape for Equipment / Concept nodes
     const w = size * 3.8;
     const h = size * 2.0;
@@ -68,7 +75,7 @@ export function drawNode(
     ctx.textBaseline = "middle";
     ctx.fillText(monoText, x, y);
 
-  } else if (node.type === "regulation") {
+  } else if (typeLower === "regulation") {
     // 2. Hexagon outline for Regulation nodes
     const r = size * 1.8;
     ctx.beginPath();
@@ -85,7 +92,7 @@ export function drawNode(
     ctx.globalAlpha = isHighlighted ? 0.25 : 0.05;
     ctx.fill();
 
-  } else if (node.type === "procedure" || node.type === "maintenance_log") {
+  } else if (typeLower === "procedure" || typeLower === "maintenance_log" || typeLower === "maintenance") {
     // 3. File-tab shape for Document nodes
     const w = size * 3.2;
     const h = size * 2.2;
@@ -121,7 +128,13 @@ export function drawNode(
   }
 
   // Draw external label underneath node types that do not put mono text inside
-  if (node.type !== "equipment" && node.type !== "concept") {
+  if (
+    typeLower !== "equipment" &&
+    typeLower !== "concept" &&
+    typeLower !== "drawing" &&
+    typeLower !== "event" &&
+    typeLower !== "organization"
+  ) {
     const isHovered = highlightNodes.size > 0 && highlightNodes.has(node.id);
     const shouldShowLabel = globalScale > 1.5 || isSelected || isHovered;
     

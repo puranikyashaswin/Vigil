@@ -83,20 +83,29 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const hasZoomedRef = useRef(false);
+
+  useEffect(() => {
+    hasZoomedRef.current = false;
+  }, [initializedData.nodes.length]);
+
   useEffect(() => {
     if (!fgRef.current || initializedData.nodes.length === 0) return;
     const chargeForce = fgRef.current.d3Force("charge");
-    if (chargeForce) chargeForce.strength(-350).distanceMax(300);
+    if (chargeForce) chargeForce.strength(-180).distanceMax(250);
     const centerForce = fgRef.current.d3Force("center");
     if (centerForce) centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
     const linkForce = fgRef.current.d3Force("link");
-    if (linkForce) linkForce.distance(130).strength(0.8);
+    if (linkForce) linkForce.distance(90).strength(0.8);
     const collisionForce = fgRef.current.d3Force("collision");
-    if (collisionForce) collisionForce.radius(35).strength(0.7);
+    if (collisionForce) collisionForce.radius(24).strength(0.7);
     fgRef.current.d3ReheatSimulation();
     setTimeout(() => {
-      if (fgRef.current) fgRef.current.zoomToFit(400, 100);
-    }, 1000);
+      if (fgRef.current && !hasZoomedRef.current) {
+        fgRef.current.zoomToFit(600, 60);
+        hasZoomedRef.current = true;
+      }
+    }, 1500);
   }, [initializedData.nodes.length, dimensions.width, dimensions.height]);
 
   useEffect(() => {
@@ -168,6 +177,12 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
           onNodeHover={handleNodeHover}
           onNodeClick={(node: any) => onNodeClick(node as Node)}
           enableNodeDrag={true}
+          onEngineStop={() => {
+            if (fgRef.current && !hasZoomedRef.current) {
+              fgRef.current.zoomToFit(600, 60);
+              hasZoomedRef.current = true;
+            }
+          }}
         />
       )}
     </div>
