@@ -209,8 +209,8 @@ Vigil was evaluated against a 10-question benchmark spanning compliance, RCA, an
 
 | Metric | Score |
 |:---|---|
-| Faithfulness | **0.741** |
-| Context Precision | **0.778** |
+| Faithfulness | **0.781** |
+| Context Precision | **0.728** |
 | Context Recall | **0.900** |
 | Answer Relevancy | N/A (Pydantic adapter conflict in RAGAS) |
 

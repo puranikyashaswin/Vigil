@@ -3,8 +3,8 @@
 This report summarizes the performance of Vigil's multi-agent query network against the 10-question evaluation benchmark.
 
 ## Overall Averages
-*   **Faithfulness**: `0.7411`
-*   **Context Precision**: `0.7783`
+*   **Faithfulness**: `0.7811`
+*   **Context Precision**: `0.7283`
 *   **Context Recall**: `0.9000`
 *   **Answer Relevancy**: `N/A` (Metrics calculation bypassed due to a known Pydantic validation conflict in the third-party `FastEmbedEmbeddings` adapter).
 
