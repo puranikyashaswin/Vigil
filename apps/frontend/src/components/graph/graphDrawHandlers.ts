@@ -69,7 +69,7 @@ export function drawNode(
     // Inner mono-spaced equipment tag text
     const monoText = node.label.split(" ")[0] || node.label;
     ctx.font = "bold 8px monospace";
-    ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
+    ctx.fillStyle = "#faf9f5"; // Clear white text inside colored rectangles for high contrast
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(monoText, x, y);
@@ -135,18 +135,24 @@ export function drawNode(
     typeLower !== "organization"
   ) {
     const isHovered = highlightNodes.size > 0 && highlightNodes.has(node.id);
-    const shouldShowLabel = globalScale > 1.5 || isSelected || isHovered;
+    const shouldShowLabel = globalScale > 0.8 || isSelected || isHovered;
     
     if (shouldShowLabel) {
-      const fontSize = Math.max(2.4, 9 / globalScale);
-      ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
+      const fontSize = Math.max(3.2, 9 / globalScale);
+      ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
       
-      const isTextHighlighted = isHighlighted ? (globalScale > 1.1 || isSelected ? 0.95 : 0.45) : 0.08;
+      const isTextHighlighted = isHighlighted ? (globalScale > 1.1 || isSelected ? 1.0 : 0.85) : 0.15;
       ctx.globalAlpha = isTextHighlighted;
       
+      // Draw background stroke for maximum contrast outline
+      ctx.strokeStyle = isDark ? "#141413" : "#faf9f5";
+      ctx.lineWidth = 3.0;
+      ctx.lineJoin = "round";
+      ctx.strokeText(node.label, x, y + size * 2.2 + 2);
+
+      ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
       ctx.fillText(node.label, x, y + size * 2.2 + 2);
     }
   }

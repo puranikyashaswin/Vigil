@@ -30,9 +30,9 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   const isDark = resolvedTheme === "dark";
   const TYPE_COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
   const canvasBg = isDark ? "#141413" : "#faf9f5";
-  const nodeBorderLight = isDark ? "#b0aea5" : "#e8e6dc";
+  const nodeBorderLight = isDark ? "#52525b" : "#71717a";
   const nodeBorderSelected = isDark ? "#faf9f5" : "#141413";
-  const linkDefault = isDark ? "#b0aea5" : "#e8e6dc";
+  const linkDefault = isDark ? "#3f3f46" : "#a1a1aa";
 
   const initializedData = useMemo(() => {
     const degs: Record<string, number> = {};
