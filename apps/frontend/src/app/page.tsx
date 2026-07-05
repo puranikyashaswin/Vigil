@@ -66,6 +66,8 @@ interface Conversation {
   messages: ChatMessage[];
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"inspect" | "alerts">("inspect");
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
@@ -87,8 +89,8 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const [graphRes, alertsRes] = await Promise.all([
-        fetch("http://127.0.0.1:8000/api/graph"),
-        fetch("http://127.0.0.1:8000/api/alerts")
+        fetch(`${API_BASE_URL}/api/graph`),
+        fetch(`${API_BASE_URL}/api/alerts`)
       ]);
       const gData = await graphRes.json();
       const aData = await alertsRes.json();
@@ -226,7 +228,7 @@ export default function Dashboard() {
     setIsTyping(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/query", {
+      const res = await fetch(`${API_BASE_URL}/api/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: userMsg })
