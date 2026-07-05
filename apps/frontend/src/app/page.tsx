@@ -55,6 +55,7 @@ export default function Dashboard() {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showFloatingResponse, setShowFloatingResponse] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -68,14 +69,33 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
+      // Attempt live API fetch
       const [graphRes, alertsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/graph`),
         fetch(`${API_BASE_URL}/api/alerts`)
       ]);
+      if (graphRes.ok && alertsRes.ok) {
+        setGraphData(await graphRes.json());
+        setAlerts(await alertsRes.json());
+        setIsDemoMode(false);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.warn("Backend API not reachable. Falling back to static demo mode...", e);
+    }
+
+    // Fallback to static pre-generated JSON files in public/
+    try {
+      const [graphRes, alertsRes] = await Promise.all([
+        fetch("/mock_graph.json"),
+        fetch("/mock_alerts.json")
+      ]);
       setGraphData(await graphRes.json());
       setAlerts(await alertsRes.json());
-    } catch (e) {
-      console.error("Failed to load dashboard data from API", e);
+      setIsDemoMode(true);
+    } catch (err) {
+      console.error("Failed to load static mock files as fallback", err);
     } finally {
       setLoading(false);
     }
@@ -169,6 +189,22 @@ export default function Dashboard() {
     setMessages(updated);
     updateConversationMessages(currentConversationId, updated);
     setIsTyping(true);
+
+    if (isDemoMode) {
+      setTimeout(() => {
+        const next = [...updated, { 
+          role: "assistant", 
+          content: "⚠️ **Demo Mode Notice**: The live multi-agent chat is disabled on this static web preview. To query the Expert Copilot, Compliance, RCA, or Lessons-Learned agents, please clone the repository and run the API server locally.", 
+          category: "system" 
+        } as ChatMessage];
+        setMessages(next);
+        updateConversationMessages(currentConversationId, next);
+        setShowFloatingResponse(true);
+        setIsTyping(false);
+      }, 800);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/query`, {
         method: "POST",

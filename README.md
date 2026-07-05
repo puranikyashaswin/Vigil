@@ -231,6 +231,17 @@ python test_agents.py "What does OSHA 1910.119 require?"
 python test_agents.py
 ```
 
+### 8. Generate Static Mocks for Vercel Deployment (optional)
+
+If you want to deploy the frontend to Vercel as a static preview without hosting a live backend server:
+
+```bash
+# Pre-compile static JSON assets to the frontend public/ directory
+python dump_static_json.py
+```
+
+The frontend will automatically load these files in `isDemoMode` if no live backend endpoint is reachable.
+
 ---
 
 ## RAGAS Evaluation Results
@@ -295,6 +306,7 @@ vigil/
   test_agents.py            # CLI test harness for query agents
   p&ID_topology_extractor.py # P&ID vision visual topology extractor
   evaluate_rag_performance.py # RAGAS performance evaluation suite (HTTP live API)
+  dump_static_json.py       # Exporter utility dumping static json graph/alerts to frontend
   apps/
     backend/
       api.py                # FastAPI server (REST endpoints)
