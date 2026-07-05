@@ -35,6 +35,12 @@ Below is the scaling path for each system component, outlining the current imple
 - **Current Setup**: Local file-based Qdrant database (`vigil_qdrant.db`).
 - **Bottlenecks**: SQLite-backed local databases run in-process and perform synchronous disk I/O. Assuming an average chunking ratio of 8 to 10 chunks per document, a corpus of 20,000 to 30,000 documents will produce 160,000 to 300,000 vectors. At this scale, in-memory indexing overhead inside the FastAPI process will cause memory usage to swell, and concurrent query latency on the local SQLite storage will degrade significantly. It also offers no support for backups, replication, high availability, or horizontal scaling.
 - **Production Replacement**: A **Qdrant Cloud** cluster or self-hosted **Qdrant cluster** deployed on Kubernetes (EKS/GKE), using sharded collections (split by concept category or plant location) and a replication factor of at least 2 for fault tolerance.
+  
+  > [!NOTE]
+  > **Local Quantized Alternative (turbovec)**:
+  > For deployments where teams want to avoid the operational cost and network dependencies of a managed Qdrant Cloud cluster while maintaining a low memory footprint at scale, [turbovec](https://github.com/RyanCodrai/turbovec) serves as a viable production path. It is a Rust-based vector index using **TurboQuant** quantization, offering roughly 16x memory compression over float32 embeddings and faster ARM/x86 SIMD search execution than FAISS. This allows for a fully local, high-performance option with zero external managed service dependencies.
+  > 
+  > *Implementation Impact:* Choosing turbovec requires a real architectural swap rather than a drop-in addition, as it requires completely replacing the current `qdrant-client` integration across all backend query graphs and pipeline ingestion scripts.
 
 ### Contradiction Detection's Reverse-Link Scan
 - **Current Setup**: Brute-force regex scan over all local files (`build_graph.py:65`).
