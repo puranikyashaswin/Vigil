@@ -215,8 +215,19 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
     return hitSize * hitSize;
   }, []);
 
+  // Increase tap target area on touch screens, dynamic based on zoom scale
+  const nodePointerAreaPaint = useCallback((node: GraphNode, color: string, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const size = node.size || 3.5;
+    // Keep target at least 24px in size on screen coordinates
+    const tapAreaSize = Math.max(16, 24 / globalScale, size * 2.5);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, tapAreaSize, 0, 2 * Math.PI);
+    ctx.fill();
+  }, []);
+
   return (
-    <div ref={containerRef} className="w-full h-full relative overflow-hidden bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+    <div ref={containerRef} className="w-full h-full relative overflow-hidden bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 select-none touch-none">
       {initializedData.nodes.length === 0 ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-zinc-50 dark:bg-zinc-950">
           <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6 border border-zinc-300 dark:border-zinc-600">
@@ -239,6 +250,9 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
           nodeCanvasObject={nodeCanvasObject}
           linkCanvasObject={linkCanvasObject}
           nodeVal={nodeVal}
+          nodePointerAreaPaint={nodePointerAreaPaint}
+          enableZoomInteraction={true}
+          enablePanInteraction={true}
           d3AlphaDecay={0.012}
           d3VelocityDecay={0.35}
           onNodeHover={handleNodeHover}

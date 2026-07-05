@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence } from "framer-motion";
-import { ShieldAlert, RefreshCw, Database, FolderOpen, LayoutGrid, Bookmark, BookmarkCheck, Tag, Star, Activity, PlusCircle, Settings, Share2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ShieldAlert, RefreshCw, Database, FolderOpen, LayoutGrid, Bookmark, BookmarkCheck, Tag, Star, Activity, PlusCircle, Settings, Share2, MessageSquare } from "lucide-react";
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from "@/components/ui/menubar";
 import ThemeToggle from "@/components/ThemeToggle";
 import SplashScreen from "@/components/SplashScreen";
@@ -62,6 +62,9 @@ export default function Dashboard() {
   const [isOrganized, setIsOrganized] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -80,6 +83,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
     try {
       const stored = localStorage.getItem("vigil_conversations");
       let loadedConvs: Conversation[] = stored ? JSON.parse(stored) : [];
@@ -96,6 +103,8 @@ export default function Dashboard() {
     } catch (e) {
       console.error("Failed to load chat history", e);
     }
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const updateConversationMessages = (convId: string, newMsgs: ChatMessage[]) => {
@@ -220,8 +229,16 @@ export default function Dashboard() {
             <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 flex flex-col md:flex-row h-[calc(100vh-80px)] overflow-hidden bg-zinc-50 dark:bg-zinc-950">
-          <section className={`p-6 flex flex-col relative transition-all duration-300 ${isFullScreen ? "fixed inset-0 z-40 bg-zinc-50 dark:bg-zinc-950 h-screen w-screen" : "flex-1 h-2/3 md:h-full md:w-3/5 border-r border-zinc-200 dark:border-zinc-800"}`}>
+        <main className={`flex-1 flex flex-col md:flex-row overflow-hidden bg-zinc-50 dark:bg-zinc-950 ${
+          isMobile ? "h-[calc(100vh-144px)] pb-16" : "h-[calc(100vh-80px)] pb-0"
+        }`}>
+          <section className={`p-4 md:p-6 flex flex-col relative transition-all duration-300 ${
+            isFullScreen 
+              ? "fixed inset-0 z-40 bg-zinc-50 dark:bg-zinc-950 h-screen w-screen" 
+              : isMobile
+                ? (mobileTab === "graph" ? "flex-1 h-full w-full" : "hidden")
+                : "flex-1 h-2/3 md:h-full md:w-3/5 border-r border-zinc-200 dark:border-zinc-800"
+          }`}>
             {isFullScreen && (
               <button
                 onClick={() => setIsFullScreen(false)}
@@ -256,11 +273,16 @@ export default function Dashboard() {
               </div>
             )}
             <div className="flex-1 w-full min-h-0 relative">
-              <ForceGraph2D data={graphData} onNodeClick={(node) => { setSelectedNode(node); setActiveTab("inspect"); }} selectedNodeId={selectedNode?.id} isOrganized={isOrganized} />
+              <ForceGraph2D data={graphData} onNodeClick={(node) => { setSelectedNode(node); if (!isMobile) setActiveTab("inspect"); }} selectedNodeId={selectedNode?.id} isOrganized={isOrganized} />
             </div>
           </section>
-          <aside className="md:w-2/5 border-t md:border-t-0 bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col overflow-hidden h-1/3 md:h-full">
-            <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2.5 flex justify-center shrink-0">
+          
+          <aside className={`${
+            isMobile 
+              ? (mobileTab === "alerts" ? "flex-1 flex flex-col overflow-hidden h-full w-full" : "hidden")
+              : "md:w-2/5 border-t md:border-t-0 bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col overflow-hidden h-1/3 md:h-full"
+          }`}>
+            <div className="hidden md:block border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2.5 flex justify-center shrink-0">
               <Menubar className="w-full justify-start border-none bg-transparent h-auto">
                 <button
                   onClick={() => setActiveTab("inspect")}
@@ -295,16 +317,116 @@ export default function Dashboard() {
                 </button>
               </Menubar>
             </div>
-            <div className="flex-1 overflow-y-auto p-8 relative bg-zinc-50/50 dark:bg-zinc-950/50">
-              <AnimatePresence mode="wait">
-                {activeTab === "inspect" && <InspectorPanel selectedNode={selectedNode} />}
-                {activeTab === "alerts" && <AlertFeed alerts={alerts} onSelectAlert={setSelectedAlert} />}
-              </AnimatePresence>
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 relative bg-zinc-50/50 dark:bg-zinc-950/50">
+              {isMobile ? (
+                <AlertFeed alerts={alerts} onSelectAlert={setSelectedAlert} />
+              ) : (
+                <AnimatePresence mode="wait">
+                  {activeTab === "inspect" && <InspectorPanel selectedNode={selectedNode} />}
+                  {activeTab === "alerts" && <AlertFeed alerts={alerts} onSelectAlert={setSelectedAlert} />}
+                </AnimatePresence>
+              )}
             </div>
           </aside>
         </main>
       </div>
-      {!isFullScreen && (
+      
+      {/* Mobile Node Inspector Bottom Sheet */}
+      <AnimatePresence>
+        {isMobile && selectedNode && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedNode(null)}
+              className="fixed inset-0 bg-black/60 z-40"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              drag="y"
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0.05, bottom: 0.8 }}
+              onDragEnd={(e, info) => {
+                if (info.offset.y > 120) {
+                  setSelectedNode(null);
+                }
+              }}
+              className="fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] bg-zinc-50 dark:bg-zinc-950 rounded-t-3xl border-t border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col font-sans overflow-hidden"
+            >
+              <div className="w-full flex justify-center py-3 shrink-0 bg-white dark:bg-zinc-900 rounded-t-3xl cursor-grab active:cursor-grabbing border-b border-zinc-100 dark:border-zinc-800/50">
+                <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+              </div>
+              <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+                <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Node Inspector</span>
+                <button
+                  onClick={() => setSelectedNode(null)}
+                  className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-semibold text-xs rounded-lg transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50 dark:bg-zinc-950/50">
+                <InspectorPanel selectedNode={selectedNode} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Fixed Bottom Navigation Bar */}
+      {isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 z-30 h-16 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around px-4 shadow-lg shrink-0">
+          <button
+            onClick={() => setMobileTab("graph")}
+            className={`flex flex-col items-center justify-center gap-1 w-20 h-full transition cursor-pointer ${
+              mobileTab === "graph" ? "text-clay font-bold" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"
+            }`}
+          >
+            <LayoutGrid className="w-5 h-5" />
+            <span className="text-[10px] tracking-wide uppercase">Graph</span>
+          </button>
+          
+          <button
+            onClick={() => setShowHistory(true)}
+            className={`flex flex-col items-center justify-center gap-1 w-20 h-full transition cursor-pointer ${
+              showHistory ? "text-clay font-bold" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"
+            }`}
+          >
+            <div className="relative">
+              <MessageSquare className="w-5 h-5" />
+              {messages.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-clay text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  {messages.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] tracking-wide uppercase">Chat</span>
+          </button>
+
+          <button
+            onClick={() => setMobileTab("alerts")}
+            className={`flex flex-col items-center justify-center gap-1 w-20 h-full transition cursor-pointer ${
+              mobileTab === "alerts" ? "text-clay font-bold" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"
+            }`}
+          >
+            <div className="relative">
+              <ShieldAlert className="w-5 h-5" />
+              {alerts.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse">
+                  {alerts.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] tracking-wide uppercase">Alerts</span>
+          </button>
+        </nav>
+      )}
+
+      {!isFullScreen && !isMobile && (
         <>
           <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4 pointer-events-none">
             <div className="pointer-events-auto">

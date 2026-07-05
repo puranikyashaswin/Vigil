@@ -34,25 +34,96 @@ export default function ChatHistoryOverlay({
   onSendMessage,
   onInputChange
 }: ChatHistoryOverlayProps) {
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [showSidebarMobile, setShowSidebarMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  React.useEffect(() => {
+    if (!show) {
+      setShowSidebarMobile(false);
+    }
+  }, [show]);
+
+  const variants = {
+    initial: isMobile ? { y: "100%" } : { opacity: 0 },
+    animate: isMobile ? { y: 0 } : { opacity: 1 },
+    exit: isMobile ? { y: "100%" } : { opacity: 0 }
+  };
+
+  const transition = isMobile ? {
+    type: "spring" as const,
+    damping: 25,
+    stiffness: 220
+  } : {
+    type: "tween" as const,
+    duration: 0.2
+  };
+
+  const handleSelectConv = (conv: Conversation) => {
+    onSelectConversation(conv);
+    if (isMobile) {
+      setShowSidebarMobile(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {show && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex bg-zinc-50 dark:bg-zinc-950 font-sans"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={variants}
+          transition={transition as any}
+          drag={isMobile ? "y" : false}
+          dragConstraints={{ top: 0 }}
+          dragElastic={{ top: 0.05, bottom: 0.8 }}
+          onDragEnd={(e, info) => {
+            if (info.offset.y > 150) {
+              onClose();
+            }
+          }}
+          className={isMobile 
+            ? "fixed bottom-0 left-0 right-0 z-50 h-[92vh] bg-zinc-50 dark:bg-zinc-950 rounded-t-3xl border-t border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col font-sans overflow-hidden"
+            : "fixed inset-0 z-50 flex bg-zinc-50 dark:bg-zinc-950 font-sans"
+          }
         >
+          {isMobile && (
+            <div className="w-full flex justify-center py-3 shrink-0 bg-white dark:bg-zinc-900 rounded-t-3xl cursor-grab active:cursor-grabbing border-b border-zinc-100 dark:border-zinc-800/50">
+              <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+            </div>
+          )}
+
           {/* Left Sidebar */}
-          <div className="w-[300px] border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full bg-zinc-100 dark:bg-zinc-900 select-none">
+          <div className={`border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full bg-zinc-100 dark:bg-zinc-900 select-none ${
+            isMobile ? (showSidebarMobile ? "w-full" : "hidden") : "w-[300px]"
+          }`}>
             <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Chat History
-              </span>
+              {isMobile ? (
+                <button
+                  type="button"
+                  onClick={() => setShowSidebarMobile(false)}
+                  className="px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 rounded cursor-pointer"
+                >
+                  Back
+                </button>
+              ) : (
+                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Chat History
+                </span>
+              )}
               <button
                 type="button"
-                onClick={onCreateNewChat}
+                onClick={() => {
+                  onCreateNewChat();
+                  if (isMobile) setShowSidebarMobile(false);
+                }}
                 className="px-2.5 py-1 text-xs font-medium text-white bg-clay hover:bg-clay/90 transition flex items-center gap-1 cursor-pointer rounded"
               >
                 + New Chat
@@ -74,7 +145,7 @@ export default function ChatHistoryOverlay({
                 return (
                   <div
                     key={conv.id}
-                    onClick={() => onSelectConversation(conv)}
+                    onClick={() => handleSelectConv(conv)}
                     className={`group flex items-center justify-between p-3 cursor-pointer transition rounded-lg ${
                       isActive
                         ? "bg-clay/10 dark:bg-clay/15 text-clay font-medium"
@@ -103,21 +174,34 @@ export default function ChatHistoryOverlay({
           </div>
 
           {/* Main Panel */}
-          <div className="flex-1 flex flex-col h-full bg-zinc-50 dark:bg-zinc-950 relative">
+          <div className={`flex flex-col h-full bg-zinc-50 dark:bg-zinc-950 relative ${
+            isMobile ? (showSidebarMobile ? "hidden" : "flex-1") : "flex-1"
+          }`}>
             <div className="h-16 border-b border-zinc-200 dark:border-zinc-800 px-6 flex items-center justify-between shrink-0 bg-white dark:bg-zinc-900">
-              <div>
-                <h3 className="text-sm font-semibold tracking-wide text-zinc-800 dark:text-zinc-200">
-                  {conversations.find(c => c.id === currentConversationId)?.title || "Active Chat"}
-                </h3>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
-                  Total messages: {messages.length}
-                </p>
+              <div className="flex items-center gap-3">
+                {isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSidebarMobile(true)}
+                    className="px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition cursor-pointer"
+                  >
+                    History
+                  </button>
+                )}
+                <div>
+                  <h3 className="text-sm font-semibold tracking-wide text-zinc-800 dark:text-zinc-200">
+                    {conversations.find(c => c.id === currentConversationId)?.title || "Active Chat"}
+                  </h3>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    Total messages: {messages.length}
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={onClose}
                 className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-800"
-                title="Close history"
+                title="Close chat"
               >
                 <X className="w-4 h-4" />
               </button>
