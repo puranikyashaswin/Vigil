@@ -122,16 +122,21 @@ export function drawNode(
 
   // Draw external label underneath node types that do not put mono text inside
   if (node.type !== "equipment" && node.type !== "concept") {
-    const fontSize = Math.max(2.4, 9 / globalScale);
-    ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = isDark ? "#f4f4f5" : "#18181b";
+    const isHovered = highlightNodes.size > 0 && highlightNodes.has(node.id);
+    const shouldShowLabel = globalScale > 1.5 || isSelected || isHovered;
     
-    const isTextHighlighted = isHighlighted ? (globalScale > 1.1 || isSelected ? 0.95 : 0.45) : 0.08;
-    ctx.globalAlpha = isTextHighlighted;
-    
-    ctx.fillText(node.label, x, y + size * 2.2 + 2);
+    if (shouldShowLabel) {
+      const fontSize = Math.max(2.4, 9 / globalScale);
+      ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = isDark ? "#f4f4f5" : "#18181b";
+      
+      const isTextHighlighted = isHighlighted ? (globalScale > 1.1 || isSelected ? 0.95 : 0.45) : 0.08;
+      ctx.globalAlpha = isTextHighlighted;
+      
+      ctx.fillText(node.label, x, y + size * 2.2 + 2);
+    }
   }
 
   ctx.restore();

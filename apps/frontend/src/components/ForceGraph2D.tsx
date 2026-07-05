@@ -86,13 +86,13 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId }: Forc
   useEffect(() => {
     if (!fgRef.current || initializedData.nodes.length === 0) return;
     const chargeForce = fgRef.current.d3Force("charge");
-    if (chargeForce) chargeForce.strength(-100).distanceMax(250);
+    if (chargeForce) chargeForce.strength(-350).distanceMax(300);
     const centerForce = fgRef.current.d3Force("center");
     if (centerForce) centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
     const linkForce = fgRef.current.d3Force("link");
-    if (linkForce) linkForce.distance(60).strength(0.8);
+    if (linkForce) linkForce.distance(130).strength(0.8);
     const collisionForce = fgRef.current.d3Force("collision");
-    if (collisionForce) collisionForce.radius(18).strength(0.7);
+    if (collisionForce) collisionForce.radius(35).strength(0.7);
     fgRef.current.d3ReheatSimulation();
     setTimeout(() => {
       if (fgRef.current) fgRef.current.zoomToFit(400, 100);
