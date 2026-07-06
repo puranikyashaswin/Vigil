@@ -268,25 +268,25 @@ export default function Dashboard() {
     <>
       <SplashScreen />
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <header className="h-20 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-sm px-8 flex items-center justify-between z-20 shrink-0">
-          <div className="flex items-center gap-3">
-            <Logo className="w-9 h-9" />
+        <header className="h-20 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-sm px-4 sm:px-8 flex items-center justify-between z-20 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Logo className="w-8 h-8 sm:w-9 h-9" />
             <div>
-              <span className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 font-serif">Vigil</span>
-              <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 tracking-wide ml-2 hidden sm:inline">Industrial Intel Console</span>
+              <span className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 font-serif">Vigil</span>
+              <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 tracking-wide ml-2 hidden sm:inline">Industrial Intel Console</span>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 max-w-full overflow-x-auto">
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Nodes: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.nodes.length}</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Edges: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.links.length}</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Compliance: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.nodes.length > 0 ? (Math.max(0, 100 - (alerts.length * 12.5))).toFixed(1) : "100.0"}%</strong></span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
+            <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
               <span>Alerts: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{alerts.length}</strong></span>
             </div>
             <button 
@@ -297,19 +297,23 @@ export default function Dashboard() {
               <Activity className="w-3.5 h-3.5 text-[#788c5d]" />
               <span>Pipeline: <strong className="text-[#788c5d] font-bold">ONLINE</strong></span>
             </button>
-            <button onClick={loadData} className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition flex items-center gap-2 cursor-pointer rounded-lg">
+            <button 
+              onClick={loadData} 
+              className="p-2 sm:px-4 sm:py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition flex items-center gap-2 cursor-pointer rounded-lg border border-zinc-200/30 dark:border-zinc-800/30"
+              title="Refresh graph data"
+            >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
             <button 
               onClick={() => {
                 window.open(`${API_BASE_URL}/api/compliance/export`, '_blank');
               }}
-              className="px-4 py-2 bg-clay text-[#faf9f5] dark:text-[#141413] hover:bg-clay/90 text-sm font-medium transition flex items-center gap-2 cursor-pointer rounded-lg shadow-sm font-sans select-none"
+              className="p-2 sm:px-4 sm:py-2 bg-clay text-[#faf9f5] dark:text-[#141413] hover:bg-clay/90 text-sm font-medium transition flex items-center gap-2 cursor-pointer rounded-lg shadow-sm font-sans select-none"
               title="Download compliance evidence package zip"
             >
               <Database className="w-4 h-4" />
-              Export Audit Package
+              <span className="hidden sm:inline">Export Audit Package</span>
             </button>
             <ThemeToggle />
           </div>
