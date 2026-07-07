@@ -8,20 +8,6 @@
       "val": 3.5
     },
     {
-      "id": "procedures/newport-racing-event-survey.md",
-      "label": "Newport Racing Event Survey",
-      "type": "procedure",
-      "description": "A survey of the Newport racing event held at Leguna Seca, Monterey, Ca",
-      "val": 5.0
-    },
-    {
-      "id": "procedures/qwikpdf-browser-generator.md",
-      "label": "QwikPDF Browser Generator",
-      "type": "procedure",
-      "description": "A tool used to generate PDF files",
-      "val": 2.0
-    },
-    {
       "id": "procedures/p-id-drafting-procedure.md",
       "label": "P&ID Drafting Procedure",
       "type": "procedure",
@@ -69,13 +55,6 @@
       "type": "regulation",
       "description": "A standard for communicating hazards associated with chemicals in the workplace",
       "val": 6.5
-    },
-    {
-      "id": "regulations/pdf-1-7.md",
-      "label": "PDF 1.7",
-      "type": "regulation",
-      "description": "A version of the PDF file format",
-      "val": 2.0
     },
     {
       "id": "regulations/clean-air-act-amendments.md",
@@ -176,13 +155,6 @@
       "val": 3.5
     },
     {
-      "id": "equipment/sample-100kb-pdf.md",
-      "label": "sample-100kb.pdf",
-      "type": "drawing",
-      "description": "A sample PDF file containing text and embedded PNG images",
-      "val": 2.0
-    },
-    {
       "id": "equipment/control-loops.md",
       "label": "Control Loops",
       "type": "concept",
@@ -211,13 +183,6 @@
       "val": 3.5
     },
     {
-      "id": "equipment/pomponius.md",
-      "label": "Pomponius",
-      "type": "concept",
-      "description": "Reference to a person, possibly a philosopher or writer",
-      "val": 2.0
-    },
-    {
       "id": "equipment/valve-specification.md",
       "label": "Valve Specification",
       "type": "concept",
@@ -239,25 +204,11 @@
       "val": 3.5
     },
     {
-      "id": "equipment/newport-hospitality.md",
-      "label": "Newport Hospitality",
-      "type": "concept",
-      "description": "The hospitality services provided by Newport during the racing event",
-      "val": 3.5
-    },
-    {
       "id": "equipment/p-id.md",
       "label": "P&ID",
       "type": "concept",
       "description": "A schematic diagram that shows how equipment and instruments connect to form a functional process system",
       "val": 12.5
-    },
-    {
-      "id": "equipment/leguna-seca-racing-event.md",
-      "label": "Leguna Seca Racing Event",
-      "type": "event",
-      "description": "A racing event held at Leguna Seca, Monterey, Ca on September 10, 1995",
-      "val": 3.5
     },
     {
       "id": "equipment/pipe-specifications.md",
@@ -267,25 +218,11 @@
       "val": 3.5
     },
     {
-      "id": "equipment/torquatus.md",
-      "label": "Torquatus",
-      "type": "concept",
-      "description": "Reference to a person, possibly a philosopher",
-      "val": 2.0
-    },
-    {
       "id": "equipment/wiring-diagrams.md",
       "label": "Wiring Diagrams",
       "type": "concept",
       "description": "Diagrams showing circuit components as simplified shapes with power and signal wiring between devices.",
       "val": 3.5
-    },
-    {
-      "id": "equipment/quantum-aristoxeni.md",
-      "label": "Quantum Aristoxeni",
-      "type": "concept",
-      "description": "Reference to Aristoxenus' work in music",
-      "val": 2.0
     }
   ],
   "links": [
@@ -402,16 +339,6 @@
     {
       "source": "equipment/process-safety-management.md",
       "target": "regulations/29-cfr-1910-119.md",
-      "type": "REFERENCES"
-    },
-    {
-      "source": "equipment/newport-hospitality.md",
-      "target": "procedures/newport-racing-event-survey.md",
-      "type": "REFERENCES"
-    },
-    {
-      "source": "equipment/leguna-seca-racing-event.md",
-      "target": "procedures/newport-racing-event-survey.md",
       "type": "REFERENCES"
     },
     {

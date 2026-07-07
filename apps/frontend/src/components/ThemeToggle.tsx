@@ -3,13 +3,10 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ThemeToggleProps {
   className?: string;
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
 }
 
 export default function ThemeToggle({ className }: ThemeToggleProps) {
@@ -85,12 +82,3 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
   );
 }
 
-export function DefaultToggle() {
-  return (
-    <div className="space-y-2 text-center">
-      <div className="flex justify-center">
-        <ThemeToggle />
-      </div>
-    </div>
-  );
-}
