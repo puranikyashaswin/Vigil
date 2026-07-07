@@ -26,49 +26,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("vigil.ragas_external_eval")
 
-# 10 Domain-expert benchmark questions and ground truths matching tests/eval_benchmark.json
-BENCHMARK_CASES = [
-    {
-        "question": "What safety procedures apply to pump P-102?",
-        "ground_truth": "Pump P-102 handles process fluids and must comply with process safety management standards under 29 CFR 1910.119 and Clean Air Act Amendments."
-    },
-    {
-        "question": "Is there a calibration schedule conflict for any equipment?",
-        "ground_truth": "No direct scheduling conflicts or timeline overlaps are present in the maintenance logs. However, pump P-102 is overdue for calibration, violating P&ID completeness and quality assurance requirements."
-    },
-    {
-        "question": "What does OSHA 1910.119 require for process safety management?",
-        "ground_truth": "OSHA 1910.119 requires process safety management of highly hazardous chemicals to prevent or minimize the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals."
-    },
-    {
-        "question": "Summarize maintenance history for equipment mentioned in the P&ID documents.",
-        "ground_truth": "P-101 was serviced on 2026-06-15 (due 2026-09-15), P-102 was serviced on 2026-01-12 (due 2026-07-12), V-202 was serviced on 2026-05-10 (due 2026-11-10), and T-301 was serviced on 2026-04-20 (due 2026-10-20)."
-    },
-    {
-        "question": "Are there any unresolved compliance alerts right now?",
-        "ground_truth": "Yes, there is an active contradiction alert between Safety Regulation SR-12 and Process Procedure P-03, where P-03 specifies a bypass setpoint of 120 PSI, directly violating SR-12's maximum limit of 100 PSI for valve V-202."
-    },
-    {
-        "question": "What is the function of control loops in engineering diagrams?",
-        "ground_truth": "Control loops maintain a process condition at a set value by adjusting devices based on feedback from instruments."
-    },
-    {
-        "question": "What standard defines the format for displaying equipment information on a P&ID?",
-        "ground_truth": "Equipment Title Blocks define the standard format for displaying equipment information on a Piping and Instrumentation Diagram."
-    },
-    {
-        "question": "Who serviced the equipment T-301 and when is it next due?",
-        "ground_truth": "T-301 was serviced by technician Marcus Wright on 2026-04-20, and is next due for service on 2026-10-20."
-    },
-    {
-        "question": "What is the purpose of the Hazard Communication Standard?",
-        "ground_truth": "The Hazard Communication Standard is a standard for communicating hazards associated with chemicals in the workplace."
-    },
-    {
-        "question": "What does a Piping and Instrumentation Diagram (P&ID) show?",
-        "ground_truth": "Piping and Instrumentation Diagrams (P&IDs) show the piping, instruments, and equipment in a process plant, defining their connections and configurations."
-    }
-]
 
 def main() -> None:
     load_dotenv()
@@ -78,6 +35,14 @@ def main() -> None:
     if not openrouter_api_key or "your_" in openrouter_api_key:
         logger.error("Missing valid OPENROUTER_API_KEY environment variable.")
         sys.exit(1)
+
+    benchmark_path = "tests/eval_benchmark.json"
+    if not os.path.exists(benchmark_path):
+        logger.error(f"Benchmark file not found: {benchmark_path}")
+        sys.exit(1)
+        
+    with open(benchmark_path, "r", encoding="utf-8") as f:
+        benchmark_cases = json.load(f)
 
     logger.info("Verifying backend API connection...")
     try:
@@ -90,12 +55,12 @@ def main() -> None:
         logger.error("Start it using: python apps/backend/api.py or uvicorn apps.backend.api:api --host 127.0.0.1 --port 8000")
         sys.exit(1)
 
-    logger.info(f"Querying {len(BENCHMARK_CASES)} benchmark cases from live API endpoint...")
+    logger.info(f"Querying {len(benchmark_cases)} benchmark cases from live API endpoint...")
     dataset_records = []
 
     with httpx.Client(timeout=45.0) as client:
-        for idx, item in enumerate(BENCHMARK_CASES):
-            logger.info(f"[{idx+1}/{len(BENCHMARK_CASES)}] Question: '{item['question']}'")
+        for idx, item in enumerate(benchmark_cases):
+            logger.info(f"[{idx+1}/{len(benchmark_cases)}] Question: '{item['question']}'")
             try:
                 response = client.post(api_url, json={"query": item["question"]})
                 if response.status_code != 200:

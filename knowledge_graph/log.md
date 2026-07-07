@@ -236,3 +236,201 @@ Global audit trail of pipeline runs:
 
 ### 2026-07-05
 **INGEST**: Ingested entity Newport Hospitality into category equipment (2026-07-05T10:14:21.166188)
+
+### 2026-07-07
+**INGEST**: Ingested entity 29 CFR 1910.119 into category regulations (2026-07-07T19:59:38.937962)
+
+### 2026-07-07
+**INGEST**: Ingested entity Process Safety Management into category equipment (2026-07-07T19:59:38.938570)
+
+### 2026-07-07
+**INGEST**: Ingested entity Occupational Safety and Health Administration (OSHA) into category equipment (2026-07-07T19:59:38.938750)
+
+### 2026-07-07
+**INGEST**: Ingested entity Clean Air Act Amendments into category regulations (2026-07-07T19:59:38.938906)
+
+### 2026-07-07
+**INGEST**: Ingested entity Hazard Communication Standard into category regulations (2026-07-07T19:59:38.939052)
+
+### 2026-07-07
+**INGEST**: Ingested entity Piping and Instrumentation Diagrams (P&IDs) into category equipment (2026-07-07T19:59:38.939220)
+
+### 2026-07-07
+**INGEST**: Ingested entity Process Flow Diagrams (PFDs) into category equipment (2026-07-07T19:59:38.939362)
+
+### 2026-07-07
+**INGEST**: Ingested entity Instrument Schematics into category equipment (2026-07-07T19:59:38.939500)
+
+### 2026-07-07
+**INGEST**: Ingested entity Wiring Diagrams into category equipment (2026-07-07T19:59:38.939649)
+
+### 2026-07-07
+**INGEST**: Ingested entity SCADA Network Diagrams into category equipment (2026-07-07T19:59:38.939827)
+
+### 2026-07-07
+**INGEST**: Ingested entity Logic Diagrams into category equipment (2026-07-07T19:59:38.940068)
+
+### 2026-07-07
+**INGEST**: Ingested entity Control Loops into category equipment (2026-07-07T19:59:38.940469)
+
+### 2026-07-07
+**INGEST**: Ingested entity Project Management Data into category equipment (2026-07-07T19:59:38.940652)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID into category equipment (2026-07-07T19:59:38.940849)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Drafting Procedure into category procedures (2026-07-07T19:59:38.942192)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Quality Assurance Matrix into category regulations (2026-07-07T19:59:38.942383)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Completeness Checklist into category regulations (2026-07-07T19:59:38.942541)
+
+### 2026-07-07
+**INGEST**: Ingested entity Equipment Title Blocks into category equipment (2026-07-07T19:59:38.942960)
+
+### 2026-07-07
+**INGEST**: Ingested entity Instrument Loop Elements into category equipment (2026-07-07T19:59:38.943124)
+
+### 2026-07-07
+**INGEST**: Ingested entity Pipe Specifications into category equipment (2026-07-07T19:59:38.943289)
+
+### 2026-07-07
+**INGEST**: Ingested entity Valve Specification into category equipment (2026-07-07T19:59:38.943456)
+
+### 2026-07-07
+**INGEST**: Ingested entity P-101 Maintenance Log into category maintenance (2026-07-07T19:59:38.944045)
+
+### 2026-07-07
+**INGEST**: Ingested entity V-202 Maintenance Log into category maintenance (2026-07-07T19:59:38.944195)
+
+### 2026-07-07
+**INGEST**: Ingested entity T-301 Maintenance Log into category maintenance (2026-07-07T19:59:38.944338)
+
+### 2026-07-07
+**INGEST**: Ingested entity P-102 Maintenance Log into category maintenance (2026-07-07T19:59:38.944594)
+
+### 2026-07-07
+**INGEST**: Ingested entity Process Safety Management into category regulations (2026-07-07T19:59:38.944757)
+
+### 2026-07-07
+**INGEST**: Ingested entity Hazard Communication Standard into category regulations (2026-07-07T19:59:38.944930)
+
+### 2026-07-07
+**INGEST**: Ingested entity Occupational Safety and Health Act of 1970 into category regulations (2026-07-07T19:59:38.945090)
+
+### 2026-07-07
+**INGEST**: Ingested entity OSHA into category equipment (2026-07-07T19:59:38.945418)
+
+### 2026-07-07
+**INGEST**: Ingested entity Sheet1 into category equipment (2026-07-07T19:59:38.945661)
+
+### 2026-07-07
+**INGEST**: Ingested entity Newport Racing Event Survey into category procedures (2026-07-07T19:59:38.945909)
+
+### 2026-07-07
+**INGEST**: Ingested entity Leguna Seca Racing Event into category equipment (2026-07-07T19:59:38.946128)
+
+### 2026-07-07
+**INGEST**: Ingested entity Newport Hospitality into category equipment (2026-07-07T19:59:38.946365)
+
+### 2026-07-07
+**INGEST**: Ingested entity 29 CFR 1910.119 into category regulations (2026-07-07T20:03:22.978120)
+
+### 2026-07-07
+**INGEST**: Ingested entity Process Safety Management into category equipment (2026-07-07T20:03:22.978620)
+
+### 2026-07-07
+**INGEST**: Ingested entity Occupational Safety and Health Administration (OSHA) into category equipment (2026-07-07T20:03:22.978796)
+
+### 2026-07-07
+**INGEST**: Ingested entity Clean Air Act Amendments into category regulations (2026-07-07T20:03:22.978966)
+
+### 2026-07-07
+**INGEST**: Ingested entity Hazard Communication Standard into category regulations (2026-07-07T20:03:22.979128)
+
+### 2026-07-07
+**INGEST**: Ingested entity Piping and Instrumentation Diagrams (P&IDs) into category equipment (2026-07-07T20:03:22.979287)
+
+### 2026-07-07
+**INGEST**: Ingested entity Process Flow Diagrams (PFDs) into category equipment (2026-07-07T20:03:22.979444)
+
+### 2026-07-07
+**INGEST**: Ingested entity Instrument Schematics into category equipment (2026-07-07T20:03:22.979603)
+
+### 2026-07-07
+**INGEST**: Ingested entity Wiring Diagrams into category equipment (2026-07-07T20:03:22.979769)
+
+### 2026-07-07
+**INGEST**: Ingested entity SCADA Network Diagrams into category equipment (2026-07-07T20:03:22.979934)
+
+### 2026-07-07
+**INGEST**: Ingested entity Logic Diagrams into category equipment (2026-07-07T20:03:22.980137)
+
+### 2026-07-07
+**INGEST**: Ingested entity Control Loops into category equipment (2026-07-07T20:03:22.980726)
+
+### 2026-07-07
+**INGEST**: Ingested entity Project Management Data into category equipment (2026-07-07T20:03:22.980910)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID into category equipment (2026-07-07T20:03:22.981306)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Drafting Procedure into category procedures (2026-07-07T20:03:22.981778)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Quality Assurance Matrix into category regulations (2026-07-07T20:03:22.981946)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Completeness Checklist into category regulations (2026-07-07T20:03:22.982100)
+
+### 2026-07-07
+**INGEST**: Ingested entity Equipment Title Blocks into category equipment (2026-07-07T20:03:22.982278)
+
+### 2026-07-07
+**INGEST**: Ingested entity Instrument Loop Elements into category equipment (2026-07-07T20:03:22.982457)
+
+### 2026-07-07
+**INGEST**: Ingested entity Pipe Specifications into category equipment (2026-07-07T20:03:22.982668)
+
+### 2026-07-07
+**INGEST**: Ingested entity Valve Specification into category equipment (2026-07-07T20:03:22.982853)
+
+### 2026-07-07
+**INGEST**: Ingested entity P-101 Maintenance Log into category maintenance (2026-07-07T20:03:22.983219)
+
+### 2026-07-07
+**INGEST**: Ingested entity V-202 Maintenance Log into category maintenance (2026-07-07T20:03:22.983430)
+
+### 2026-07-07
+**INGEST**: Ingested entity T-301 Maintenance Log into category maintenance (2026-07-07T20:03:22.983765)
+
+### 2026-07-07
+**INGEST**: Ingested entity P-102 Maintenance Log into category maintenance (2026-07-07T20:03:22.983937)
+
+### 2026-07-07
+**INGEST**: Ingested entity Process Safety Management into category regulations (2026-07-07T20:03:22.984188)
+
+### 2026-07-07
+**INGEST**: Ingested entity Hazard Communication Standard into category regulations (2026-07-07T20:03:22.984344)
+
+### 2026-07-07
+**INGEST**: Ingested entity Occupational Safety and Health Act of 1970 into category regulations (2026-07-07T20:03:22.984516)
+
+### 2026-07-07
+**INGEST**: Ingested entity OSHA into category equipment (2026-07-07T20:03:22.984669)
+
+### 2026-07-07
+**INGEST**: Ingested entity Sheet1 into category equipment (2026-07-07T20:03:22.984819)
+
+### 2026-07-07
+**INGEST**: Ingested entity Newport Racing Event Survey into category procedures (2026-07-07T20:03:22.985073)
+
+### 2026-07-07
+**INGEST**: Ingested entity Leguna Seca Racing Event into category equipment (2026-07-07T20:03:22.985313)
+
+### 2026-07-07
+**INGEST**: Ingested entity Newport Hospitality into category equipment (2026-07-07T20:03:22.985503)

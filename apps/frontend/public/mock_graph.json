@@ -8,6 +8,13 @@
       "val": 3.5
     },
     {
+      "id": "procedures/newport-racing-event-survey.md",
+      "label": "Newport Racing Event Survey",
+      "type": "procedure",
+      "description": "A survey of the Newport racing event held at Leguna Seca, Monterey, Ca",
+      "val": 5.0
+    },
+    {
       "id": "procedures/p-id-drafting-procedure.md",
       "label": "P&ID Drafting Procedure",
       "type": "procedure",
@@ -204,11 +211,25 @@
       "val": 3.5
     },
     {
+      "id": "equipment/newport-hospitality.md",
+      "label": "Newport Hospitality",
+      "type": "concept",
+      "description": "The hospitality services provided by Newport during the racing event",
+      "val": 3.5
+    },
+    {
       "id": "equipment/p-id.md",
       "label": "P&ID",
       "type": "concept",
       "description": "A schematic diagram that shows how equipment and instruments connect to form a functional process system",
       "val": 12.5
+    },
+    {
+      "id": "equipment/leguna-seca-racing-event.md",
+      "label": "Leguna Seca Racing Event",
+      "type": "event",
+      "description": "A racing event held at Leguna Seca, Monterey, Ca on September 10, 1995",
+      "val": 3.5
     },
     {
       "id": "equipment/pipe-specifications.md",
@@ -339,6 +360,16 @@
     {
       "source": "equipment/process-safety-management.md",
       "target": "regulations/29-cfr-1910-119.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/newport-hospitality.md",
+      "target": "procedures/newport-racing-event-survey.md",
+      "type": "REFERENCES"
+    },
+    {
+      "source": "equipment/leguna-seca-racing-event.md",
+      "target": "procedures/newport-racing-event-survey.md",
       "type": "REFERENCES"
     },
     {

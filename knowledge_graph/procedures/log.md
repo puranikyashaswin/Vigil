@@ -23,3 +23,15 @@ Record of ingest, link, and modification actions:
 
 ### 2026-07-05
 **INGEST**: Ingested entity Newport Racing Event Survey from source test_documents/scanned_form_1.png (2026-07-05T10:14:21.165873)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Drafting Procedure from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-07-07T19:59:38.941563)
+
+### 2026-07-07
+**INGEST**: Ingested entity Newport Racing Event Survey from source test_documents/scanned_form_1.png (2026-07-07T19:59:38.945873)
+
+### 2026-07-07
+**INGEST**: Ingested entity P&ID Drafting Procedure from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-07-07T20:03:22.981654)
+
+### 2026-07-07
+**INGEST**: Ingested entity Newport Racing Event Survey from source test_documents/scanned_form_1.png (2026-07-07T20:03:22.985028)

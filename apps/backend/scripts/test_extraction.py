@@ -7,8 +7,8 @@ import logging
 from typing import List, Tuple
 from pydantic import BaseModel, Field, ValidationError
 from dotenv import load_dotenv
-from openai import OpenAI
-from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared_utils import get_client, clean_json_string
 
 # Set up logging
 logging.basicConfig(
@@ -31,39 +31,6 @@ class ExtractedEntity(BaseModel):
 class ExtractedEntitiesList(BaseModel):
     entities: List[ExtractedEntity]
 
-def get_portkey_client() -> Tuple[OpenAI, str]:
-    """
-    Initializes OpenAI client. Routes through OpenRouter if Groq/Portkey keys are placeholders.
-    Returns (client, model_slug).
-    """
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    portkey_api_key = os.getenv("PORTKEY_API_KEY")
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-    
-    # Check for placeholders
-    is_groq_placeholder = not groq_api_key or "your_" in groq_api_key
-    is_portkey_placeholder = not portkey_api_key or "your_" in portkey_api_key
-    
-    if (is_groq_placeholder or is_portkey_placeholder) and openrouter_api_key and "your_" not in openrouter_api_key:
-        logger.info("Using OpenRouter endpoint for entity extraction (Portkey/Groq keys are placeholders).")
-        client = OpenAI(
-            api_key=openrouter_api_key,
-            base_url="https://openrouter.ai/api/v1"
-        )
-        return client, "meta-llama/llama-3.3-70b-instruct"
-        
-    if not groq_api_key or not portkey_api_key:
-        raise Exception("Missing GROQ_API_KEY or PORTKEY_API_KEY in environment.")
-        
-    client = OpenAI(
-        api_key=groq_api_key,
-        base_url=PORTKEY_GATEWAY_URL,
-        default_headers=createHeaders(
-            provider="groq",
-            api_key=portkey_api_key
-        )
-    )
-    return client, "llama-3.3-70b-versatile"
 
 def extract_entities_llm(client: OpenAI, model: str, text: str, self_repair_error: str = None) -> str:
     """
@@ -140,20 +107,6 @@ def run_extraction_flow(client: OpenAI, model: str, text: str, fallback_title: s
             )
             return ExtractedEntitiesList(entities=[fallback_entity])
 
-def clean_json_string(s: str) -> str:
-    """
-    Cleans raw markdown block wrappers from JSON string.
-    """
-    s = s.strip()
-    if s.startswith("```"):
-        # Remove first line
-        lines = s.splitlines()
-        if lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines[-1].startswith("```"):
-            lines = lines[:-1]
-        s = "\n".join(lines).strip()
-    return s
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Vigil Entity Extraction Test Suite")
@@ -190,7 +143,7 @@ def main():
         
     logger.info(f"Initializing LLM client...")
     try:
-        client, model = get_portkey_client()
+        client, model = get_client()
         logger.info(f"Using model: {model}")
     except Exception as e:
         logger.error(f"Failed to initialize client: {str(e)}")

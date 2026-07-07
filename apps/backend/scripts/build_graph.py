@@ -10,10 +10,12 @@ from typing import List, Dict, Any, Tuple
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Add current path to sys.path
+# Add parent and script paths to sys.path
 sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from okf_utils import slugify, init_okf_dir, append_to_index, append_to_log
 from contradiction import check_contradiction, find_pairs_to_check
+from shared_utils import get_client
 
 # Set up logging
 logging.basicConfig(
@@ -33,33 +35,6 @@ DIR_MAP = {
     "alert": "alerts"
 }
 
-def get_client() -> Tuple[OpenAI, str]:
-    """
-    Initializes OpenAI client routed through OpenRouter or Portkey.
-    """
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    portkey_api_key = os.getenv("PORTKEY_API_KEY")
-    openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-    
-    is_groq_placeholder = not groq_api_key or "your_" in groq_api_key
-    is_portkey_placeholder = not portkey_api_key or "your_" in portkey_api_key
-    
-    if (is_groq_placeholder or is_portkey_placeholder) and openrouter_api_key and "your_" not in openrouter_api_key:
-        client = OpenAI(
-            api_key=openrouter_api_key,
-            base_url="https://openrouter.ai/api/v1"
-        )
-        return client, "meta-llama/llama-3.3-70b-instruct"
-        
-    client = OpenAI(
-        api_key=groq_api_key,
-        base_url="https://api.portkey.ai/v1",
-        default_headers={
-            "x-portkey-provider": "groq",
-            "x-portkey-api-key": portkey_api_key
-        }
-    )
-    return client, "llama-3.3-70b-versatile"
 
 async def check_contradiction_async(client: OpenAI, model: str, ent_a: Dict[str, Any], ent_b: Dict[str, Any], semaphore: asyncio.Semaphore) -> Dict[str, Any]:
     async with semaphore:
@@ -75,6 +50,38 @@ async def run_contradiction_checks(client: OpenAI, model: str, pairs: List[Tuple
         for a, b in pairs
     ]
     return await asyncio.gather(*tasks)
+
+def check_link_integrity(kg_dir: str) -> None:
+    """
+    Scans generated OKF Markdown files and validates that all relative markdown links exist on disk.
+    """
+    logger.info("Starting OKF Link Integrity Audit...")
+    broken_links = 0
+    checked_links = 0
+
+    for root, _, files in os.walk(kg_dir):
+        for file in files:
+            if file.endswith(".md") and file not in ["index.md", "log.md"]:
+                file_path = os.path.join(root, file)
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                # Find all relative markdown links
+                links = re.findall(r'\[[^\]]+\]\(([^)]+)\)', content)
+                for link in links:
+                    if link.startswith("http") or link.startswith("mailto:"):
+                        continue
+                    
+                    target_path = os.path.normpath(os.path.join(root, link))
+                    checked_links += 1
+                    if not os.path.exists(target_path):
+                        broken_links += 1
+                        logger.error(f"[LINK INTEGRITY ERROR] Broken link in {os.path.relpath(file_path, kg_dir)}: Link to '{link}' (Resolved: '{os.path.relpath(target_path, kg_dir)}') does not exist.")
+
+    if broken_links > 0:
+        logger.warning(f"Link Integrity Audit finished: checked {checked_links} links, found {broken_links} broken link(s).")
+    else:
+        logger.info(f"Link Integrity Audit complete: all {checked_links} relative links are valid!")
 
 def main():
     load_dotenv()
@@ -254,6 +261,7 @@ def main():
             append_to_log(os.path.join(kg_dir, "alerts"), "ALERT", f"Detected contradiction between {ent['name']} and {target_ent['name']}")
             append_to_log(kg_dir, "ALERT", f"Contradiction alert created: {alert_filename}")
             
+    check_link_integrity(kg_dir)
     logger.info(f"Graph construction and safety audit complete. Found {contradiction_count} contradictions.")
 
 if __name__ == "__main__":

@@ -7,6 +7,8 @@ import argparse
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 from openai import OpenAI
+sys.path.append(os.path.join(os.path.dirname(__file__), "apps", "backend"))
+from shared_utils import clean_json_string
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
@@ -42,19 +44,6 @@ def encode_image(image_path: str) -> str:
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
 
-def clean_json_response(raw_response: str) -> str:
-    """
-    Strips markdown codeblock wrappers from the LLM response text.
-    """
-    cleaned = raw_response.strip()
-    if cleaned.startswith("```"):
-        lines = cleaned.splitlines()
-        if lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines[-1].startswith("```"):
-            lines = lines[:-1]
-        cleaned = "\n".join(lines).strip()
-    return cleaned
 
 @retry(
     stop=stop_after_attempt(3),
@@ -120,7 +109,7 @@ def fetch_topology_from_llm(client: OpenAI, model_slug: str, image_b64: str) -> 
     if not raw_text:
         raise ValueError("Received empty response from Vision LLM.")
 
-    cleaned_json = clean_json_response(raw_text)
+    cleaned_json = clean_json_string(raw_text)
     
     # Validate structure using Pydantic
     parsed_graph = TopologyGraph.model_validate_json(cleaned_json)

@@ -4,7 +4,7 @@ title: "Process Safety Management"
 description: "A standard for preventing or minimizing the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals"
 resource: "test_documents/osha_1910_119.pdf"
 tags: ['process safety', 'hazardous chemicals', 'regulation']
-timestamp: 2026-07-05T10:14:21.164119
+timestamp: 2026-07-07T20:03:22.984003
 ---
 
 # Process Safety Management

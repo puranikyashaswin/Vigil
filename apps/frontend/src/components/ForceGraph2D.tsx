@@ -6,6 +6,7 @@ import ForceGraph2DClient, { ForceGraphMethods } from "react-force-graph-2d";
 import { LIGHT_COLORS, DARK_COLORS } from "./graph/graphColors";
 import { drawNode, drawLink, GraphNode, GraphLink } from "./graph/graphDrawHandlers";
 import { Node } from "@/types";
+import { Settings, Sliders, X, RotateCcw } from "lucide-react";
 
 interface GraphData {
   nodes: Node[];
@@ -27,6 +28,10 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<GraphLink>>(new Set());
+  const [chargeStrength, setChargeStrength] = useState(-240);
+  const [linkDistance, setLinkDistance] = useState(95);
+  const [collisionRadius, setCollisionRadius] = useState(36);
+  const [showConfig, setShowConfig] = useState(false);
 
   const isDark = resolvedTheme === "dark";
   const TYPE_COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
@@ -91,13 +96,14 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
     if (dimensions.width < 100 || dimensions.height < 100) return;
 
     const chargeForce = fgRef.current.d3Force("charge");
-    if (chargeForce) chargeForce.strength(-240).distanceMax(250);
+    if (chargeForce) chargeForce.strength(chargeStrength).distanceMax(250);
     const centerForce = fgRef.current.d3Force("center");
     if (centerForce) centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
     const linkForce = fgRef.current.d3Force("link");
-    if (linkForce) linkForce.distance(95).strength(0.8);
+    if (linkForce) linkForce.distance(linkDistance).strength(0.8);
     const collisionForce = fgRef.current.d3Force("collision");
-    if (collisionForce) collisionForce.radius(36).strength(0.7);
+    if (collisionForce) collisionForce.radius(collisionRadius).strength(0.7);
+
     fgRef.current.d3ReheatSimulation();
     setTimeout(() => {
       if (fgRef.current && !hasZoomedRef.current && !isOrganized) {
@@ -121,6 +127,9 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
     if (initializedData.nodes.length === 0) return;
     
     if (isOrganized) {
+      if (fgRef.current) {
+        fgRef.current.d3ReheatSimulation();
+      }
       const N = initializedData.nodes.length;
       const C_x = dimensions.width / 2;
       const C_y = dimensions.height / 2;
@@ -253,32 +262,124 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
           </p>
         </div>
       ) : (
-        <ForceGraph2DClient
-          key={isDark ? "dark" : "light"}
-          ref={fgRef as unknown as React.MutableRefObject<ForceGraphMethods<GraphNode, GraphLink> | undefined>}
-          width={dimensions.width}
-          height={dimensions.height}
-          graphData={initializedData}
-          backgroundColor={canvasBg}
-          nodeRelSize={1}
-          nodeCanvasObject={nodeCanvasObject}
-          linkCanvasObject={linkCanvasObject}
-          nodeVal={nodeVal}
-          nodePointerAreaPaint={nodePointerAreaPaint}
-          enableZoomInteraction={true}
-          enablePanInteraction={true}
-          d3AlphaDecay={0.012}
-          d3VelocityDecay={0.35}
-          onNodeHover={handleNodeHover}
-          onNodeClick={(node) => onNodeClick(node as unknown as Node)}
-          enableNodeDrag={true}
-          onEngineStop={() => {
-            if (fgRef.current && !hasZoomedRef.current) {
-              fgRef.current.zoomToFit(600, 60);
-              hasZoomedRef.current = true;
-            }
-          }}
-        />
+        <>
+          <ForceGraph2DClient
+            key={isDark ? "dark" : "light"}
+            ref={fgRef as unknown as React.MutableRefObject<ForceGraphMethods<GraphNode, GraphLink> | undefined>}
+            width={dimensions.width}
+            height={dimensions.height}
+            graphData={initializedData}
+            backgroundColor={canvasBg}
+            nodeRelSize={1}
+            nodeCanvasObject={nodeCanvasObject}
+            linkCanvasObject={linkCanvasObject}
+            nodeVal={nodeVal}
+            nodePointerAreaPaint={nodePointerAreaPaint}
+            enableZoomInteraction={true}
+            enablePanInteraction={true}
+            d3AlphaDecay={0.012}
+            d3VelocityDecay={0.35}
+            onNodeHover={handleNodeHover}
+            onNodeClick={(node) => onNodeClick(node as unknown as Node)}
+            enableNodeDrag={true}
+            onEngineStop={() => {
+              if (fgRef.current && !hasZoomedRef.current) {
+                fgRef.current.zoomToFit(600, 60);
+                hasZoomedRef.current = true;
+              }
+            }}
+          />
+
+          {/* Obsidian-Style Force Control Button & Panel */}
+          <button 
+            onClick={() => setShowConfig(!showConfig)}
+            className="absolute top-4 left-4 z-10 p-2 rounded-lg bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-all shadow-lg"
+          >
+            <Sliders className="w-5 h-5" />
+          </button>
+
+          {showConfig && (
+            <div className="absolute top-16 left-4 z-10 w-64 p-4 rounded-xl bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 shadow-xl space-y-4">
+              <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-900 pb-2">
+                <span className="font-semibold text-xs text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                  <Settings className="w-3.5 h-3.5 text-zinc-500" /> Layout Physics
+                </span>
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => {
+                      setChargeStrength(-240);
+                      setLinkDistance(95);
+                      setCollisionRadius(36);
+                    }}
+                    title="Reset defaults"
+                    className="p-1 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                  </button>
+                  <button 
+                    onClick={() => setShowConfig(false)}
+                    className="p-1 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {/* Charge Strength Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span>Charge Strength</span>
+                    <span>{chargeStrength}</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="-600" 
+                    max="0" 
+                    step="10" 
+                    value={chargeStrength}
+                    onChange={(e) => setChargeStrength(Number(e.target.value))}
+                    className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-zinc-900 dark:accent-zinc-100"
+                  />
+                </div>
+
+                {/* Link Distance Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span>Link Distance</span>
+                    <span>{linkDistance}px</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="30" 
+                    max="200" 
+                    step="5" 
+                    value={linkDistance}
+                    onChange={(e) => setLinkDistance(Number(e.target.value))}
+                    className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-zinc-900 dark:accent-zinc-100"
+                  />
+                </div>
+
+                {/* Collision Radius Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span>Collision Radius</span>
+                    <span>{collisionRadius}px</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="10" 
+                    max="80" 
+                    step="2" 
+                    value={collisionRadius}
+                    onChange={(e) => setCollisionRadius(Number(e.target.value))}
+                    className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-zinc-900 dark:accent-zinc-100"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
