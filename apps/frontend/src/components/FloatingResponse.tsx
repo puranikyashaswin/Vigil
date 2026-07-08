@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { X, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage } from "@/types";
@@ -41,6 +42,21 @@ export default function FloatingResponse({
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
+            {lastAssistantMsg.metadata?.trace && (
+              <div className="mb-3 pb-2 border-b border-brand-mid-gray/25 dark:border-brand-mid-gray/15 font-mono text-[9px] uppercase tracking-wider text-brand-mid-gray flex items-center gap-1.5 overflow-x-auto whitespace-nowrap select-none">
+                <span className="text-brand-orange font-semibold">LOG_EXEC:</span>
+                <div className="flex items-center gap-1">
+                  {lastAssistantMsg.metadata.trace.map((node: string, idx: number) => (
+                    <React.Fragment key={idx}>
+                      {idx > 0 && <span className="text-brand-mid-gray/50">→</span>}
+                      <span className="bg-brand-light-gray dark:bg-brand-dark/50 text-brand-dark dark:text-brand-light px-1.5 py-0.5 rounded border border-brand-mid-gray/15 font-semibold font-mono text-[8px]">
+                        {node}
+                      </span>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
             <div 
               className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed line-clamp-4 font-serif [&_ul]:list-disc [&_ul]:pl-5 [&_p]:mb-2 [&_li]:mb-1"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(lastAssistantMsg.content) }}

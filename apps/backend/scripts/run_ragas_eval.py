@@ -96,7 +96,7 @@ def main():
     evaluator_llm = ChatOpenAI(
         api_key=openrouter_api_key,
         base_url="https://openrouter.ai/api/v1",
-        model="meta-llama/llama-3.3-70b-instruct",
+        model="openrouter/free",
         temperature=0.0
     )
     

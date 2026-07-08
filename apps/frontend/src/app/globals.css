@@ -5,6 +5,13 @@
 
 @theme {
   --color-clay: var(--clay-color);
+  --color-brand-dark: #141413;
+  --color-brand-light: #faf9f5;
+  --color-brand-mid-gray: #b0aea5;
+  --color-brand-light-gray: #e8e6dc;
+  --color-brand-orange: #d97757;
+  --color-brand-blue: #6a9bcc;
+  --color-brand-green: #788c5d;
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-serif: 'Lora', Georgia, serif;
 }

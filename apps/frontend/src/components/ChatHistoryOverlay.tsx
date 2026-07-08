@@ -229,6 +229,21 @@ export default function ChatHistoryOverlay({
                         ? "bg-clay/10 dark:bg-clay/15 text-zinc-900 dark:text-zinc-100 rounded-br-none border border-clay/10 dark:border-clay/20"
                         : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-800"
                     }`}>
+                      {msg.role === "assistant" && msg.metadata?.trace && (
+                        <div className="mb-3 pb-2 border-b border-brand-mid-gray/25 dark:border-brand-mid-gray/15 font-mono text-[9px] uppercase tracking-wider text-brand-mid-gray flex items-center gap-1.5 overflow-x-auto whitespace-nowrap select-none">
+                          <span className="text-brand-orange font-semibold">LOG_EXEC:</span>
+                          <div className="flex items-center gap-1">
+                            {msg.metadata.trace.map((node: string, idx: number) => (
+                              <React.Fragment key={idx}>
+                                {idx > 0 && <span className="text-brand-mid-gray/50">→</span>}
+                                <span className="bg-brand-light-gray dark:bg-brand-dark/50 text-brand-dark dark:text-brand-light px-1.5 py-0.5 rounded border border-brand-mid-gray/15 font-semibold font-mono text-[8px]">
+                                  {node}
+                                </span>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {msg.role === "assistant" ? (
                         <div 
                           className="font-serif text-zinc-800 dark:text-zinc-200 text-sm [&_ul]:list-disc [&_ul]:pl-5 [&_p]:mb-2 [&_li]:mb-1"
@@ -238,23 +253,10 @@ export default function ChatHistoryOverlay({
                         <div className="whitespace-pre-wrap">{msg.content}</div>
                       )}
                       {msg.role === "assistant" && msg.category && (
-                        <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[10px] flex flex-col gap-1.5 text-zinc-500 dark:text-zinc-400">
+                        <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[10px] flex flex-col gap-1.5 text-zinc-500 dark:text-zinc-400 font-mono">
                           <span className="font-medium text-zinc-400 dark:text-zinc-500">
                             Resolved by: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.category} agent</span>
                           </span>
-                          {msg.metadata?.trace && (
-                            <div className="flex items-center gap-1 flex-wrap mt-1">
-                              <span className="font-semibold text-zinc-500 dark:text-zinc-400">Trace:</span>
-                              {msg.metadata.trace.map((node: string, idx: number) => (
-                                <React.Fragment key={idx}>
-                                  {idx > 0 && <span className="text-zinc-400">→</span>}
-                                  <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-1.5 py-0.5 rounded border border-zinc-200/50 dark:border-zinc-700/50 font-mono text-[8px] font-semibold">
-                                    {node}
-                                  </span>
-                                </React.Fragment>
-                              ))}
-                            </div>
-                          )}
                           {msg.citations && msg.citations.length > 0 && (
                             <div className="text-zinc-400 dark:text-zinc-500 mt-1">
                               <span className="font-semibold text-zinc-500 dark:text-zinc-400">Citations:</span>

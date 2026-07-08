@@ -20,7 +20,7 @@ def get_client() -> Tuple[OpenAI, str]:
             api_key=openrouter_api_key,
             base_url="https://openrouter.ai/api/v1"
         )
-        return client, "meta-llama/llama-3.3-70b-instruct"
+        return client, "openrouter/free"
         
     client = OpenAI(
         api_key=groq_api_key,

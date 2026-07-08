@@ -2,49 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion } from "framer-motion";
-import { ShieldAlert, RefreshCw, Database, FolderOpen, LayoutGrid, Bookmark, BookmarkCheck, Tag, Star, Activity, PlusCircle, Settings, Share2, MessageSquare } from "lucide-react";
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from "@/components/ui/menubar";
-import ThemeToggle from "@/components/ThemeToggle";
-import SplashScreen from "@/components/SplashScreen";
-import GraphLegend from "@/components/GraphLegend";
-import InspectorPanel from "@/components/InspectorPanel";
-import AlertFeed from "@/components/AlertFeed";
-import AlertDetailModal from "@/components/AlertDetailModal";
+import { AnimatePresence } from "framer-motion";
+import Header from "@/components/Header";
+import SchematicPanel from "@/components/SchematicPanel";
+import SidebarPanel from "@/components/SidebarPanel";
+import MobileNodeInspector from "@/components/MobileNodeInspector";
+import MobileNavBar from "@/components/MobileNavBar";
+import PipelineStatusOverlay from "@/components/PipelineStatusOverlay";
 import FloatingChatInput from "@/components/FloatingChatInput";
-import FloatingResponse from "@/components/FloatingResponse";
 import ChatHistoryOverlay from "@/components/ChatHistoryOverlay";
-import PipelineVisualizer from "@/components/PipelineVisualizer";
+import AlertDetailModal from "@/components/AlertDetailModal";
+import SplashScreen from "@/components/SplashScreen";
 import { Node, GraphData, Alert, ChatMessage, Conversation } from "@/types";
 
-const ForceGraph2D = dynamic(() => import("@/components/ForceGraph2D"), { ssr: false });
+const PipelineVisualizer = dynamic(() => import("@/components/PipelineVisualizer"), { ssr: false });
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
-function Logo({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
-      <rect width="32" height="32" rx="8" className="fill-zinc-900 dark:fill-zinc-100 transition-colors duration-300" />
-      <path
-        d="M9 10L16 22L23 10"
-        className="stroke-zinc-100 dark:stroke-zinc-900 transition-colors duration-300"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle
-        cx="16"
-        cy="12"
-        r="3"
-        className="fill-zinc-400 dark:fill-zinc-500 transition-colors duration-300"
-      />
-    </svg>
-  );
-}
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"inspect" | "alerts">("inspect");
@@ -66,14 +38,12 @@ export default function Dashboard() {
   const [currentConversationId, setCurrentConversationId] = useState<string>("");
   const [isOrganized, setIsOrganized] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
 
   const handleRunImpactAnalysisAnimation = (nodeIds: Set<string>) => {
     const idsArray = Array.from(nodeIds);
     setExternalHighlightNodeIds(new Set());
-    
     idsArray.forEach((id, idx) => {
       setTimeout(() => {
         setExternalHighlightNodeIds((prev) => {
@@ -88,7 +58,6 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      // Attempt live API fetch
       const [graphRes, alertsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/graph`),
         fetch(`${API_BASE_URL}/api/alerts`)
@@ -103,8 +72,6 @@ export default function Dashboard() {
     } catch (e) {
       console.warn("Backend API not reachable. Falling back to static demo mode...", e);
     }
-
-    // Fallback to static pre-generated JSON files in public/
     try {
       const [graphRes, alertsRes] = await Promise.all([
         fetch("/mock_graph.json"),
@@ -125,7 +92,6 @@ export default function Dashboard() {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
-
     try {
       const stored = localStorage.getItem("vigil_conversations");
       let loadedConvs: Conversation[] = stored ? JSON.parse(stored) : [];
@@ -142,7 +108,6 @@ export default function Dashboard() {
     } catch (e) {
       console.error("Failed to load chat history", e);
     }
-
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
@@ -209,7 +174,6 @@ export default function Dashboard() {
     updateConversationMessages(currentConversationId, updated);
     setIsTyping(true);
     setPipelineStep(1);
-
     const stepInterval = setInterval(() => {
       setPipelineStep(prev => (prev < 6 ? prev + 1 : prev));
     }, 900);
@@ -268,303 +232,104 @@ export default function Dashboard() {
     <>
       <SplashScreen />
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <header className="h-20 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-sm px-4 sm:px-8 flex items-center justify-between z-20 shrink-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Logo className="w-8 h-8 sm:w-9 h-9" />
-            <div>
-              <span className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 font-serif">Vigil</span>
-              <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 tracking-wide ml-2 hidden sm:inline">Industrial Intel Console</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <span>Nodes: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.nodes.length}</strong></span>
-            </div>
-            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <span>Edges: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.links.length}</strong></span>
-            </div>
-            <div className="hidden md:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <span>Compliance: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{graphData.nodes.length > 0 ? (Math.max(0, 100 - (alerts.length * 12.5))).toFixed(1) : "100.0"}%</strong></span>
-            </div>
-            <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg font-mono">
-              <span>Alerts: <strong className="text-zinc-900 dark:text-zinc-100 font-bold">{alerts.length}</strong></span>
-            </div>
-            <button 
-              onClick={() => setShowPipelineVisualizer(true)}
-              className="hidden lg:flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 py-2 rounded-lg font-mono cursor-pointer transition select-none border border-zinc-200/20 dark:border-zinc-700/20"
-              title="Open Ingestion Pipeline Console"
-            >
-              <Activity className="w-3.5 h-3.5 text-[#788c5d]" />
-              <span>Pipeline: <strong className="text-[#788c5d] font-bold">ONLINE</strong></span>
-            </button>
-            <button 
-              onClick={loadData} 
-              className="p-2 sm:px-4 sm:py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition flex items-center gap-2 cursor-pointer rounded-lg border border-zinc-200/30 dark:border-zinc-800/30"
-              title="Refresh graph data"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-            <button 
-              onClick={() => {
-                window.open(`${API_BASE_URL}/api/compliance/export`, '_blank');
-              }}
-              className="p-2 sm:px-4 sm:py-2 bg-clay text-[#faf9f5] dark:text-[#141413] hover:bg-clay/90 text-sm font-medium transition flex items-center gap-2 cursor-pointer rounded-lg shadow-sm font-sans select-none"
-              title="Download compliance evidence package zip"
-            >
-              <Database className="w-4 h-4" />
-              <span className="hidden sm:inline">Export Audit Package</span>
-            </button>
-            <ThemeToggle />
-          </div>
-        </header>
-        <main className={`flex-1 flex flex-col md:flex-row overflow-hidden bg-zinc-50 dark:bg-zinc-950 ${
-          isMobile ? "h-[calc(100vh-144px)] pb-16" : "h-[calc(100vh-80px)] pb-0"
-        }`}>
-          <section className={`p-4 md:p-6 flex flex-col relative transition-all duration-300 ${
-            isFullScreen 
-              ? "fixed inset-0 z-40 bg-zinc-50 dark:bg-zinc-950 h-screen w-screen" 
-              : isMobile
-                ? (mobileTab === "graph" ? "flex-1 h-full w-full" : "hidden")
-                : "flex-1 h-2/3 md:h-full md:w-3/5 border-r border-zinc-200 dark:border-zinc-800"
-          }`}>
-            {isFullScreen && (
-              <button
-                onClick={() => setIsFullScreen(false)}
-                className="absolute top-6 right-6 z-50 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-xs font-semibold font-mono rounded-lg transition shadow-lg cursor-pointer border border-zinc-200 dark:border-zinc-800"
-              >
-                Exit Full Screen
-              </button>
-            )}
-            {!isFullScreen && (
-              <div className="flex items-center justify-end mb-4 shrink-0">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setIsOrganized(!isOrganized)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition cursor-pointer select-none font-mono ${
-                      isOrganized
-                        ? "bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                        : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                    }`}
-                  >
-                    {isOrganized ? "Reset Layout" : "Organize"}
-                  </button>
-                  <button
-                    onClick={() => setIsFullScreen(true)}
-                    className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition cursor-pointer select-none flex items-center gap-1.5"
-                    title="Full Screen Mode"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-                    <span className="text-xs font-semibold font-mono">Full Screen</span>
-                  </button>
-                </div>
-              </div>
-            )}
-            <div className="flex-1 w-full min-h-0 relative">
-              <GraphLegend graphData={graphData} />
-              <ForceGraph2D data={graphData} onNodeClick={(node) => { setSelectedNode(node); setExternalHighlightNodeIds(new Set()); if (!isMobile) setActiveTab("inspect"); }} selectedNodeId={selectedNode?.id} isOrganized={isOrganized} externalHighlightNodeIds={externalHighlightNodeIds} />
-            </div>
-          </section>
-          
-          <aside className={`${
-            isMobile 
-              ? (mobileTab === "alerts" ? "flex-1 flex flex-col overflow-hidden h-full w-full" : "hidden")
-              : "md:w-2/5 border-t md:border-t-0 bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col overflow-hidden h-1/3 md:h-full"
-          }`}>
-            <div className="hidden md:block border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2.5 flex justify-center shrink-0">
-              <Menubar className="w-full justify-start border-none bg-transparent h-auto">
-                <button
-                  onClick={() => setActiveTab("inspect")}
-                  className={`flex cursor-pointer select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none transition-colors ${
-                    activeTab === "inspect"
-                      ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold"
-                      : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  }`}
-                >
-                  <FolderOpen className="mr-2 size-4 text-clay" />
-                  Inspector Panel
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("alerts")}
-                  className={`flex cursor-pointer select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none transition-colors ${
-                    activeTab === "alerts"
-                      ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold"
-                      : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  }`}
-                >
-                  <ShieldAlert className="mr-2 size-4 text-clay" />
-                  System Alerts ({alerts.length})
-                </button>
-
-                <button
-                  onClick={loadData}
-                  className="flex cursor-pointer select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                >
-                  <RefreshCw className={`mr-2 size-4 text-[#788c5d] ${loading ? 'animate-spin' : ''}`} />
-                  Refresh Data
-                </button>
-              </Menubar>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 relative bg-zinc-50/50 dark:bg-zinc-950/50">
-              {isMobile ? (
-                <AlertFeed alerts={alerts} onSelectAlert={setSelectedAlert} />
-              ) : (
-                <AnimatePresence mode="wait">
-                  {activeTab === "inspect" && <InspectorPanel selectedNode={selectedNode} onRunImpactAnalysis={handleRunImpactAnalysisAnimation} />}
-                  {activeTab === "alerts" && <AlertFeed alerts={alerts} onSelectAlert={setSelectedAlert} />}
-                </AnimatePresence>
-              )}
-            </div>
-          </aside>
+        <Header 
+          nodesCount={graphData.nodes.length}
+          edgesCount={graphData.links.length}
+          alertsCount={alerts.length}
+          loading={loading}
+          onShowPipeline={() => setShowPipelineVisualizer(true)}
+          onRefresh={loadData}
+          apiBaseUrl={API_BASE_URL}
+        />
+        <main className={`flex-1 flex flex-col md:flex-row overflow-hidden bg-zinc-50 dark:bg-zinc-950 ${isMobile ? "h-[calc(100vh-144px)] pb-16" : "h-[calc(100vh-80px)] pb-0"}`}>
+          <SchematicPanel 
+            isFullScreen={isFullScreen}
+            setIsFullScreen={setIsFullScreen}
+            isMobile={isMobile}
+            mobileTab={mobileTab}
+            graphData={graphData}
+            selectedNode={selectedNode}
+            setSelectedNode={setSelectedNode}
+            isOrganized={isOrganized}
+            setIsOrganized={setIsOrganized}
+            externalHighlightNodeIds={externalHighlightNodeIds}
+            setExternalHighlightNodeIds={setExternalHighlightNodeIds}
+            setActiveTab={setActiveTab}
+          />
+          <SidebarPanel 
+            isMobile={isMobile}
+            mobileTab={mobileTab}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            selectedNode={selectedNode}
+            onRunImpactAnalysis={handleRunImpactAnalysisAnimation}
+            alerts={alerts}
+            setSelectedAlert={setSelectedAlert}
+            loading={loading}
+            onRefresh={loadData}
+          />
         </main>
       </div>
-      
-      {/* Mobile Node Inspector Bottom Sheet */}
-      <AnimatePresence>
-        {isMobile && selectedNode && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedNode(null)}
-              className="fixed inset-0 bg-black/60 z-40"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              drag="y"
-              dragConstraints={{ top: 0 }}
-              dragElastic={{ top: 0.05, bottom: 0.8 }}
-              onDragEnd={(e, info) => {
-                if (info.offset.y > 120) {
-                  setSelectedNode(null);
-                }
-              }}
-              className="fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] bg-zinc-50 dark:bg-zinc-950 rounded-t-3xl border-t border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col font-sans overflow-hidden"
-            >
-              <div className="w-full flex justify-center py-3 shrink-0 bg-white dark:bg-zinc-900 rounded-t-3xl cursor-grab active:cursor-grabbing border-b border-zinc-100 dark:border-zinc-800/50">
-                <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
-              </div>
-              <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
-                <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Node Inspector</span>
-                <button
-                  onClick={() => setSelectedNode(null)}
-                  className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-semibold text-xs rounded-lg transition cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50 dark:bg-zinc-950/50">
-                <InspectorPanel selectedNode={selectedNode} onRunImpactAnalysis={handleRunImpactAnalysisAnimation} />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
-      {/* Mobile Fixed Bottom Navigation Bar */}
+      <MobileNodeInspector 
+        isMobile={isMobile}
+        selectedNode={selectedNode}
+        setSelectedNode={setSelectedNode}
+        onRunImpactAnalysis={handleRunImpactAnalysisAnimation}
+      />
+
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-30 h-16 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around px-4 shadow-lg shrink-0">
-          <button
-            onClick={() => setMobileTab("graph")}
-            className={`flex flex-col items-center justify-center gap-1 w-20 h-full transition cursor-pointer ${
-              mobileTab === "graph" ? "text-clay font-bold" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"
-            }`}
-          >
-            <LayoutGrid className="w-5 h-5" />
-            <span className="text-[10px] tracking-wide uppercase">Graph</span>
-          </button>
-          
-          <button
-            onClick={() => setShowHistory(true)}
-            className={`flex flex-col items-center justify-center gap-1 w-20 h-full transition cursor-pointer ${
-              showHistory ? "text-clay font-bold" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"
-            }`}
-          >
-            <div className="relative">
-              <MessageSquare className="w-5 h-5" />
-              {messages.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-clay text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                  {messages.length}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px] tracking-wide uppercase">Chat</span>
-          </button>
-
-          <button
-            onClick={() => setMobileTab("alerts")}
-            className={`flex flex-col items-center justify-center gap-1 w-20 h-full transition cursor-pointer ${
-              mobileTab === "alerts" ? "text-clay font-bold" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"
-            }`}
-          >
-            <div className="relative">
-              <ShieldAlert className="w-5 h-5" />
-              {alerts.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                  {alerts.length}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px] tracking-wide uppercase">Alerts</span>
-          </button>
-        </nav>
+        <MobileNavBar 
+          mobileTab={mobileTab}
+          setMobileTab={setMobileTab}
+          onShowHistory={() => setShowHistory(true)}
+          messagesCount={messages.length}
+          alertsCount={alerts.length}
+        />
       )}
 
       {!isFullScreen && !isMobile && (
         <>
-          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4 pointer-events-none">
-            <div className="pointer-events-auto flex flex-col gap-2">
-              {isTyping && (
-                <div className="bg-zinc-900/90 text-zinc-100 border border-zinc-700/50 backdrop-blur-md rounded-xl p-3 shadow-xl font-mono text-[10px] uppercase tracking-wider flex flex-col gap-1.5 transition-all">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-clay">Agent Graph Pipeline Running</span>
-                    <span className="text-zinc-500">{pipelineStep}/6</span>
-                  </div>
-                  <div className="w-full bg-zinc-800 rounded-full h-1">
-                    <div className="bg-clay h-1 rounded-full transition-all duration-500" style={{ width: `${(pipelineStep / 6) * 100}%` }} />
-                  </div>
-                  <div className="text-zinc-400">
-                    {pipelineStep === 1 && "▶ [1/6] INTENT ROUTER: Classifying query intent..."}
-                    {pipelineStep === 2 && "▶ [2/6] VECTOR RETRIEVAL: Querying Qdrant points..."}
-                    {pipelineStep === 3 && "▶ [3/6] FLASH-RANK: Reranking matching contexts..."}
-                    {pipelineStep === 4 && "▶ [4/6] CORE AGENT: Synthesizing response..."}
-                    {pipelineStep === 5 && "▶ [5/6] CONTRADICTION GUARD: Evaluating safety and conflicts..."}
-                    {pipelineStep === 6 && "▶ [6/6] TELEMETRY PIPELINE: Logging RAGAS metrics..."}
-                  </div>
-                </div>
-              )}
-              {!isTyping && lastAssistantMsg?.metadata?.trace && (
-                <div className="bg-zinc-100 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800 backdrop-blur-sm rounded-xl p-2.5 shadow-md font-mono text-[9px] uppercase tracking-wider flex items-center gap-2 select-none">
-                  <span className="text-zinc-500 dark:text-zinc-400">Trace:</span>
-                  <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap">
-                    {lastAssistantMsg.metadata.trace.map((node: string, idx: number) => (
-                      <React.Fragment key={idx}>
-                        {idx > 0 && <span className="text-zinc-400">→</span>}
-                        <span className="bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-1.5 py-0.5 rounded">
-                          {node}
-                        </span>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <FloatingResponse show={showFloatingResponse} lastAssistantMsg={lastAssistantMsg} conversationCount={messages.length} onClose={() => setShowFloatingResponse(false)} onViewHistory={() => setShowHistory(true)} />
-            </div>
-          </div>
+          <PipelineStatusOverlay 
+            isTyping={isTyping}
+            pipelineStep={pipelineStep}
+            lastAssistantMsg={lastAssistantMsg}
+          />
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4 pointer-events-none">
             <div className="pointer-events-auto">
-              <FloatingChatInput inputMessage={inputMessage} isTyping={isTyping} onSubmit={handleSendMessage} onChange={setInputMessage} onToggleHistory={() => setShowHistory(!showHistory)} />
+              <FloatingChatInput 
+                inputMessage={inputMessage} 
+                isTyping={isTyping} 
+                onSubmit={handleSendMessage} 
+                onChange={setInputMessage} 
+                onToggleHistory={() => setShowHistory(!showHistory)} 
+              />
             </div>
           </div>
         </>
       )}
-      <ChatHistoryOverlay show={showHistory} conversations={conversations} currentConversationId={currentConversationId} messages={messages} inputMessage={inputMessage} isTyping={isTyping} pipelineStep={pipelineStep} onClose={() => setShowHistory(false)} onCreateNewChat={handleCreateNewChat} onSelectConversation={(c) => { setCurrentConversationId(c.id); setMessages(c.messages); }} onDeleteChat={handleDeleteChat} onSendMessage={handleSendMessage} onInputChange={setInputMessage} />
-      <AlertDetailModal selectedAlert={selectedAlert} onClose={() => setSelectedAlert(null)} />
+
+      <ChatHistoryOverlay 
+        show={showHistory} 
+        conversations={conversations} 
+        currentConversationId={currentConversationId} 
+        messages={messages} 
+        inputMessage={inputMessage} 
+        isTyping={isTyping} 
+        pipelineStep={pipelineStep} 
+        onClose={() => setShowHistory(false)} 
+        onCreateNewChat={handleCreateNewChat} 
+        onSelectConversation={(c) => { setCurrentConversationId(c.id); setMessages(c.messages); }} 
+        onDeleteChat={handleDeleteChat} 
+        onSendMessage={handleSendMessage} 
+        onInputChange={setInputMessage} 
+      />
+
+      <AlertDetailModal 
+        selectedAlert={selectedAlert} 
+        onClose={() => setSelectedAlert(null)} 
+      />
+
       <AnimatePresence>
         {showPipelineVisualizer && (
           <PipelineVisualizer 
