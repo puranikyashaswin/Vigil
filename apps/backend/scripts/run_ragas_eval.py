@@ -32,58 +32,84 @@ logger = logging.getLogger("vigil.ragas_eval")
 def main():
     load_dotenv()
     
-    benchmark_path = "tests/eval_benchmark.json"
-    if not os.path.exists(benchmark_path):
-        logger.error(f"Benchmark file not found: {benchmark_path}")
-        sys.exit(1)
-        
-    with open(benchmark_path, "r", encoding="utf-8") as f:
-        benchmark_data = json.load(f)
-        
-    logger.info(f"Loaded {len(benchmark_data)} evaluation test cases.")
+    # Check if we should evaluate from the clean log file
+    use_clean_log = "--clean-log" in sys.argv
     
     results = []
     
-    for i, item in enumerate(benchmark_data):
-        query = item["question"]
-        category = item["category"]
-        logger.info(f"[{i+1}/{len(benchmark_data)}] Querying agent with: '{query}'")
+    if use_clean_log:
+        clean_log_path = "logs/ragas/interactions.clean.jsonl"
+        if not os.path.exists(clean_log_path):
+            logger.error(f"Cleaned log file not found: {clean_log_path}")
+            sys.exit(1)
+            
+        logger.info(f"Loading datasets directly from cleaned log: {clean_log_path}")
+        with open(clean_log_path, "r", encoding="utf-8") as f:
+            for idx, line in enumerate(f, 1):
+                line_str = line.strip()
+                if not line_str:
+                    continue
+                try:
+                    entry = json.loads(line_str)
+                    results.append({
+                        "question": entry.get("question", ""),
+                        "contexts": entry.get("contexts", [""]),
+                        "answer": entry.get("answer", ""),
+                        "ground_truth": entry.get("answer", "")  # Fallback to generated answer as proxy ground truth
+                    })
+                except Exception as e:
+                    logger.error(f"Error parsing clean log JSON at line {idx}: {str(e)}")
+    else:
+        benchmark_path = "tests/eval_benchmark.json"
+        if not os.path.exists(benchmark_path):
+            logger.error(f"Benchmark file not found: {benchmark_path}")
+            sys.exit(1)
+            
+        with open(benchmark_path, "r", encoding="utf-8") as f:
+            benchmark_data = json.load(f)
+            
+        logger.info(f"Loaded {len(benchmark_data)} evaluation test cases.")
         
-        # Invoke LangGraph agent
-        state = {
-            "query": query,
-            "category": "",
-            "retrieved_contexts": [],
-            "citations": [],
-            "generated_response": "",
-            "ragas_log": None,
-            "metadata": {}
-        }
-        
-        try:
-            final_state = agent_graph.invoke(state)
+        for i, item in enumerate(benchmark_data):
+            query = item["question"]
+            category = item["category"]
+            logger.info(f"[{i+1}/{len(benchmark_data)}] Querying agent with: '{query}'")
             
-            # Formulate the response for RAGAS evaluation
-            # If the retrieval node returns nothing or guard blocks, context is empty
-            contexts = final_state.get("retrieved_contexts", [])
-            answer = final_state.get("generated_response", "")
+            # Invoke LangGraph agent
+            state = {
+                "query": query,
+                "category": "",
+                "retrieved_contexts": [],
+                "citations": [],
+                "generated_response": "",
+                "ragas_log": None,
+                "metadata": {}
+            }
             
-            # Ragas expects context as a list of strings
-            results.append({
-                "question": query,
-                "contexts": contexts if contexts else [""],
-                "answer": answer if answer else "Error: Insufficient context",
-                "ground_truth": item["ground_truth"]
-            })
-            
-        except Exception as e:
-            logger.error(f"Failed to query case {i+1}: {str(e)}")
-            results.append({
-                "question": query,
-                "contexts": [""],
-                "answer": "Error occurred during execution",
-                "ground_truth": item["ground_truth"]
-            })
+            try:
+                final_state = agent_graph.invoke(state)
+                
+                # Formulate the response for RAGAS evaluation
+                # If the retrieval node returns nothing or guard blocks, context is empty
+                contexts = final_state.get("retrieved_contexts", [])
+                answer = final_state.get("generated_response", "")
+                
+                # Ragas expects context as a list of strings
+                results.append({
+                    "question": query,
+                    "contexts": contexts if contexts else [""],
+                    "answer": answer if answer else "Error: Insufficient context",
+                    "ground_truth": item["ground_truth"]
+                })
+                
+            except Exception as e:
+                logger.error(f"Failed to query case {i+1}: {str(e)}")
+                results.append({
+                    "question": query,
+                    "contexts": [""],
+                    "answer": "Error occurred during execution",
+                    "ground_truth": item["ground_truth"]
+                })
             
     logger.info("Executing Ragas Evaluation Suite via OpenRouter...")
     
@@ -127,16 +153,32 @@ def main():
         report_df = eval_result.to_pandas()
         report_df.to_csv("docs/ragas_eval_results.csv", index=False)
         
+        # Calculate averages safely
+        scores_dict = getattr(eval_result, "_repr_dict", None)
+        if scores_dict is None:
+            if isinstance(eval_result.scores, list):
+                scores_df = pd.DataFrame(eval_result.scores)
+                scores_dict = scores_df.mean().to_dict()
+            elif hasattr(eval_result.scores, "get"):
+                scores_dict = eval_result.scores
+            else:
+                scores_dict = {}
+        
+        avg_faithfulness = scores_dict.get("faithfulness", 0.0) if scores_dict else 0.0
+        avg_relevancy = scores_dict.get("answer_relevancy", 0.0) if scores_dict else 0.0
+        avg_precision = scores_dict.get("context_precision", 0.0) if scores_dict else 0.0
+        avg_recall = scores_dict.get("context_recall", 0.0) if scores_dict else 0.0
+
         # Format overall summary
         summary_md = (
             "# RAGAS Evaluation Results Summary\n\n"
             "This report summarizes the performance of Vigil's multi-agent QA system against "
             "the evaluation benchmark.\n\n"
             "## Overall Averages\n"
-            f"- **Faithfulness**: {eval_result.scores.get('faithfulness', 0.0):.4f}\n"
-            f"- **Answer Relevancy**: {eval_result.scores.get('answer_relevancy', 0.0):.4f}\n"
-            f"- **Context Precision**: {eval_result.scores.get('context_precision', 0.0):.4f}\n"
-            f"- **Context Recall**: {eval_result.scores.get('context_recall', 0.0):.4f}\n\n"
+            f"- **Faithfulness**: {avg_faithfulness:.4f}\n"
+            f"- **Answer Relevancy**: {avg_relevancy:.4f}\n"
+            f"- **Context Precision**: {avg_precision:.4f}\n"
+            f"- **Context Recall**: {avg_recall:.4f}\n\n"
             "## Benchmark Scores breakdown\n"
         )
         

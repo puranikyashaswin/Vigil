@@ -36,54 +36,80 @@ def main() -> None:
         logger.error("Missing valid OPENROUTER_API_KEY environment variable.")
         sys.exit(1)
 
-    benchmark_path = "tests/eval_benchmark.json"
-    if not os.path.exists(benchmark_path):
-        logger.error(f"Benchmark file not found: {benchmark_path}")
-        sys.exit(1)
-        
-    with open(benchmark_path, "r", encoding="utf-8") as f:
-        benchmark_cases = json.load(f)
+    # Check if we should evaluate from the clean log file
+    use_clean_log = "--clean-log" in sys.argv
 
-    logger.info("Verifying backend API connection...")
-    try:
-        # Quick health check
-        health_url = api_url.replace("/api/query", "/api/health")
-        with httpx.Client(timeout=5.0) as client:
-            client.get(health_url)
-    except Exception:
-        logger.error(f"Cannot reach FastAPI backend at {api_url.replace('/api/query', '')}. Make sure the backend server is running.")
-        logger.error("Start it using: python apps/backend/api.py or uvicorn apps.backend.api:api --host 127.0.0.1 --port 8000")
-        sys.exit(1)
-
-    logger.info(f"Querying {len(benchmark_cases)} benchmark cases from live API endpoint...")
     dataset_records = []
 
-    with httpx.Client(timeout=45.0) as client:
-        for idx, item in enumerate(benchmark_cases):
-            logger.info(f"[{idx+1}/{len(benchmark_cases)}] Question: '{item['question']}'")
-            try:
-                response = client.post(api_url, json={"query": item["question"]})
-                if response.status_code != 200:
-                    raise Exception(f"HTTP {response.status_code}: {response.text}")
-                
-                data = response.json()
-                contexts = data.get("retrieved_contexts", [])
-                answer = data.get("generated_response", "")
+    if use_clean_log:
+        clean_log_path = "logs/ragas/interactions.clean.jsonl"
+        if not os.path.exists(clean_log_path):
+            logger.error(f"Cleaned log file not found: {clean_log_path}")
+            sys.exit(1)
+            
+        logger.info(f"Loading datasets directly from cleaned log: {clean_log_path}")
+        with open(clean_log_path, "r", encoding="utf-8") as f:
+            for idx, line in enumerate(f, 1):
+                line_str = line.strip()
+                if not line_str:
+                    continue
+                try:
+                    entry = json.loads(line_str)
+                    dataset_records.append({
+                        "question": entry.get("question", ""),
+                        "contexts": entry.get("contexts", [""]),
+                        "answer": entry.get("answer", ""),
+                        "ground_truth": entry.get("answer", "")  # Fallback to generated answer as proxy ground truth
+                    })
+                except Exception as e:
+                    logger.error(f"Error parsing clean log JSON at line {idx}: {str(e)}")
+    else:
+        benchmark_path = "tests/eval_benchmark.json"
+        if not os.path.exists(benchmark_path):
+            logger.error(f"Benchmark file not found: {benchmark_path}")
+            sys.exit(1)
+            
+        with open(benchmark_path, "r", encoding="utf-8") as f:
+            benchmark_cases = json.load(f)
 
-                dataset_records.append({
-                    "question": item["question"],
-                    "contexts": contexts if contexts else [""],
-                    "answer": answer if answer else "Error: Empty answer returned",
-                    "ground_truth": item["ground_truth"]
-                })
-            except Exception as e:
-                logger.error(f"Failed to query endpoint: {str(e)}")
-                dataset_records.append({
-                    "question": item["question"],
-                    "contexts": [""],
-                    "answer": "Error connecting to endpoint",
-                    "ground_truth": item["ground_truth"]
-                })
+        logger.info("Verifying backend API connection...")
+        try:
+            # Quick health check
+            health_url = api_url.replace("/api/query", "/api/health")
+            with httpx.Client(timeout=5.0) as client:
+                client.get(health_url)
+        except Exception:
+            logger.error(f"Cannot reach FastAPI backend at {api_url.replace('/api/query', '')}. Make sure the backend server is running.")
+            logger.error("Start it using: python apps/backend/api.py or uvicorn apps.backend.api:api --host 127.0.0.1 --port 8000")
+            sys.exit(1)
+
+        logger.info(f"Querying {len(benchmark_cases)} benchmark cases from live API endpoint...")
+        with httpx.Client(timeout=45.0) as client:
+            for idx, item in enumerate(benchmark_cases):
+                logger.info(f"[{idx+1}/{len(benchmark_cases)}] Question: '{item['question']}'")
+                try:
+                    response = client.post(api_url, json={"query": item["question"]})
+                    if response.status_code != 200:
+                        raise Exception(f"HTTP {response.status_code}: {response.text}")
+                    
+                    data = response.json()
+                    contexts = data.get("retrieved_contexts", [])
+                    answer = data.get("generated_response", "")
+
+                    dataset_records.append({
+                        "question": item["question"],
+                        "contexts": contexts if contexts else [""],
+                        "answer": answer if answer else "Error: Empty answer returned",
+                        "ground_truth": item["ground_truth"]
+                    })
+                except Exception as e:
+                    logger.error(f"Failed to query endpoint: {str(e)}")
+                    dataset_records.append({
+                        "question": item["question"],
+                        "contexts": [""],
+                        "answer": "Error connecting to endpoint",
+                        "ground_truth": item["ground_truth"]
+                    })
 
     logger.info("Configuring Ragas evaluation LLM and Embeddings...")
     evaluator_llm = ChatOpenAI(
@@ -111,10 +137,32 @@ def main() -> None:
         logger.info("Compiling markdown evaluation report...")
         report_df = eval_result.to_pandas()
         
-        # Calculate averages
-        avg_faithfulness = eval_result.scores.get("faithfulness", 0.0)
-        avg_relevancy = eval_result.scores.get("answer_relevancy", 0.0)
-        avg_precision = eval_result.scores.get("context_precision", 0.0)
+        # Calculate averages safely
+        scores_dict = getattr(eval_result, "_repr_dict", None)
+        if scores_dict is None:
+            if isinstance(eval_result.scores, list):
+                scores_df = pd.DataFrame(eval_result.scores)
+                scores_dict = scores_df.mean().to_dict()
+            elif hasattr(eval_result.scores, "get"):
+                scores_dict = eval_result.scores
+            else:
+                scores_dict = {}
+        
+        avg_faithfulness = scores_dict.get("faithfulness", 0.0) if scores_dict else 0.0
+        avg_relevancy = scores_dict.get("answer_relevancy", 0.0) if scores_dict else 0.0
+        avg_precision = scores_dict.get("context_precision", 0.0) if scores_dict else 0.0
+
+        # Safely select columns for the report table
+        cols_to_show = []
+        for col in ["question", "user_input"]:
+            if col in report_df.columns:
+                cols_to_show.append(col)
+                break
+        for col in ["faithfulness", "answer_relevancy", "context_precision"]:
+            if col in report_df.columns:
+                cols_to_show.append(col)
+        
+        report_table = report_df[cols_to_show].to_markdown(index=False) if cols_to_show else ""
 
         # Generate report markup
         report_content = [
@@ -131,7 +179,7 @@ def main() -> None:
             "Safety guardrails strictly prevent hallucination. In cases where the vector database lacks specific "
             "device documentation, the agents correctly choose to report insufficient context rather than guess.\n",
             "## Individual Test Case Scores\n",
-            report_df[["question", "faithfulness", "answer_relevancy", "context_precision"]].to_markdown(index=False),
+            report_table,
             "\n\n*Report compiled automatically on behalf of Vigil QA System.*"
         ]
 

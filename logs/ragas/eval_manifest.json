@@ -1,0 +1,22 @@
+{
+  "source_file": "logs/ragas/interactions.jsonl",
+  "generated_at": "2026-07-08T19:37:50.469309",
+  "total_in": 17,
+  "total_kept": 7,
+  "total_dropped": 10,
+  "dropped_breakdown": {
+    "empty_contexts": 0,
+    "greeting": 4,
+    "noise_perf_line": 1
+  },
+  "duplicate_groups_collapsed": {
+    "Why did Pump P-101 fail?": 3,
+    "What does OSHA 1910.119 require?": 3,
+    "What is the maintenance status of pump P-101?": 2
+  },
+  "telemetry_source_split": {
+    "mock_server": 1,
+    "local_fallback": 1,
+    "none": 5
+  }
+}
