@@ -203,3 +203,70 @@ export function drawLink(
   ctx.stroke();
   ctx.restore();
 }
+
+export function drawNodePointerArea(
+  node: GraphNode,
+  color: string,
+  ctx: CanvasRenderingContext2D,
+  globalScale: number
+): void {
+  const x = node.x;
+  const y = node.y;
+  const size = node.size || 3.5;
+  const typeLower = (node.type || "concept").toLowerCase().trim();
+
+  // Keep hit areas close to the node boundaries when zoomed out (preventing overlapping),
+  // but expand them when zoomed in to make tapping on mobile/touch screens easier.
+  const padding = globalScale < 0.8 ? 2.0 : Math.min(8.0, 12 / globalScale);
+
+  ctx.save();
+  ctx.fillStyle = color;
+
+  if (
+    typeLower === "equipment" ||
+    typeLower === "concept" ||
+    typeLower === "drawing" ||
+    typeLower === "event" ||
+    typeLower === "organization"
+  ) {
+    const w = size * 3.8 + padding * 2;
+    const h = size * 2.0 + padding * 2;
+    ctx.fillRect(x - w / 2, y - h / 2, w, h);
+  } else if (typeLower === "regulation") {
+    const r = size * 1.8 + padding;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      ctx.lineTo(x + r * Math.cos(angle), y + r * Math.sin(angle));
+    }
+    ctx.closePath();
+    ctx.fill();
+  } else if (
+    typeLower === "procedure" ||
+    typeLower === "maintenance_log" ||
+    typeLower === "maintenance"
+  ) {
+    const w = size * 3.2 + padding * 2;
+    const h = size * 2.2 + padding * 2;
+    const tabW = w * 0.4;
+    const tabH = h * 0.25;
+
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y - h / 2 + tabH);
+    ctx.lineTo(x - w / 2, y - h / 2);
+    ctx.lineTo(x - w / 2 + tabW, y - h / 2);
+    ctx.lineTo(x - w / 2 + tabW + 2, y - h / 2 + tabH);
+    ctx.lineTo(x + w / 2, y - h / 2 + tabH);
+    ctx.lineTo(x + w / 2, y + h / 2);
+    ctx.lineTo(x - w / 2, y + h / 2);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    const r = size + padding;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}

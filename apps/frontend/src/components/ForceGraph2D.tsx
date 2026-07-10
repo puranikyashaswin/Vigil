@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState, useMemo, useCallback } from "react"
 import { useTheme } from "next-themes";
 import ForceGraph2DClient, { ForceGraphMethods } from "react-force-graph-2d";
 import { LIGHT_COLORS, DARK_COLORS } from "./graph/graphColors";
-import { drawNode, drawLink, GraphNode, GraphLink } from "./graph/graphDrawHandlers";
+import { drawNode, drawLink, drawNodePointerArea, GraphNode, GraphLink } from "./graph/graphDrawHandlers";
 import { Node } from "@/types";
 import { Settings, Sliders, X, RotateCcw } from "lucide-react";
 
@@ -53,7 +53,8 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
       const degree = degs[n.id] || 0;
       const size = Math.max(3.5, 3.5 + degree * 0.9);
       const angle = (idx / (data.nodes.length || 1)) * 2 * Math.PI;
-      const radius = 120 + Math.random() * 40;
+      const pseudoRandom = ((idx * 9301 + 49297) % 233280) / 233280;
+      const radius = 120 + pseudoRandom * 40;
       const centerX = dimensions.width / 2;
       const centerY = dimensions.height / 2;
       const nx = (n as Partial<GraphNode>).x;
@@ -238,15 +239,8 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
     return hitSize * hitSize;
   }, []);
 
-  // Increase tap target area on touch screens, dynamic based on zoom scale
   const nodePointerAreaPaint = useCallback((node: GraphNode, color: string, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const size = node.size || 3.5;
-    // Keep target at least 24px in size on screen coordinates
-    const tapAreaSize = Math.max(16, 24 / globalScale, size * 2.5);
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, tapAreaSize, 0, 2 * Math.PI);
-    ctx.fill();
+    drawNodePointerArea(node, color, ctx, globalScale);
   }, []);
 
   return (
