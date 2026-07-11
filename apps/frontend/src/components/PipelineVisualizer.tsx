@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Eye, Cpu, ShieldAlert, Database, Play, X, CheckCircle2, Layers, Server, Activity, ChevronRight } from "lucide-react";
+import PerformanceTelemetry from "./PerformanceTelemetry";
+import PipelineStepsGrid from "./PipelineStepsGrid";
+import DocumentSelector from "./DocumentSelector";
 
 interface PipelineVisualizerProps {
   onClose: () => void;
@@ -192,79 +195,7 @@ export default function PipelineVisualizer({ onClose, onComplete }: PipelineVisu
           {/* LEFT COLUMN: Data Flow Map & Selection */}
           <div className="flex-[1.1] flex flex-col border-r border-zinc-800 overflow-hidden">
             
-            {/* The SVG Glowing Pipeline Visualizer */}
-            <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-[280px] border-b border-zinc-800 relative bg-zinc-950/10">
-              
-              {/* Glowing Laser Lines (Visual Connections) */}
-              <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 hidden md:block z-0 px-12">
-                <svg className="w-full h-8 overflow-visible">
-                  <path 
-                    d="M 20 4 H 500" 
-                    stroke="#1e1e1d" 
-                    strokeWidth="3" 
-                    strokeLinecap="round"
-                    className="dark:stroke-zinc-800"
-                  />
-                  {isRunning && (
-                    <motion.path 
-                      d="M 20 4 H 500" 
-                      stroke="url(#laserGrad)" 
-                      strokeWidth="1.5" 
-                      strokeLinecap="round"
-                      animate={{ strokeDashoffset: [-80, 0] }}
-                      strokeDasharray="15 35"
-                      transition={{ repeat: Infinity, ease: "linear", duration: 1.2 }}
-                    />
-                  )}
-                  <defs>
-                    <linearGradient id="laserGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#6a9bcc" />
-                      <stop offset="50%" stopColor="#788c5d" />
-                      <stop offset="100%" stopColor="#d97757" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-
-              {/* Glowing Pipeline Nodes Grid */}
-              <div className="w-full max-w-3xl flex flex-col md:flex-row items-center justify-between gap-6 relative z-10 px-6">
-                {steps.map((step) => {
-                  const StepIcon = step.icon;
-                  const isCompleted = activeStep > step.id;
-                  const isActive = activeStep === step.id;
-                  
-                  return (
-                    <div key={step.id} className="flex flex-col items-center w-full md:w-24">
-                      <div className="relative">
-                        {/* Interactive Node Card */}
-                        <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-300 relative ${
-                            isCompleted 
-                              ? "bg-[#788c5d]/20 border-[#788c5d] text-[#788c5d]" 
-                              : isActive 
-                                ? "bg-clay/20 border-clay text-clay" 
-                                : "bg-zinc-950 border-zinc-800 text-zinc-600"
-                          }`}
-                        >
-                          <StepIcon className="w-4 h-4" />
-                          
-                          {/* Inner glowing pulse indicator */}
-                          {isActive && (
-                            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-clay" />
-                          )}
-                          {isCompleted && (
-                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#788c5d] rounded-full flex items-center justify-center border border-zinc-900 text-white text-[7px]">✓</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <span className="text-[10px] font-medium tracking-wide text-zinc-300 mt-3 text-center">
-                        {step.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            <PipelineStepsGrid steps={steps} activeStep={activeStep} isRunning={isRunning} />
 
               {/* Progress HUD bar */}
               <div className="w-full max-w-xl mt-10 bg-zinc-950/50 border border-zinc-800/80 rounded-xl p-4 flex items-center gap-4">
@@ -289,35 +220,16 @@ export default function PipelineVisualizer({ onClose, onComplete }: PipelineVisu
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Document Selection & Process Overview Details */}
             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5 bg-zinc-950/20">
               
-              {/* Document Selector Area */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-semibold tracking-wider text-zinc-500 uppercase">Select Source Asset</span>
-                <div className="space-y-1.5">
-                  {documentOptions.map((doc) => (
-                    <button
-                      key={doc.name}
-                      disabled={isRunning}
-                      onClick={() => setSelectedDoc(doc.name)}
-                      className={`w-full text-left p-2.5 rounded-xl border text-xs transition flex justify-between items-center cursor-pointer ${
-                        selectedDoc === doc.name
-                          ? "bg-zinc-850 border-clay text-zinc-100 shadow-md"
-                          : "bg-zinc-950/40 border-zinc-800 text-zinc-400 hover:bg-zinc-800/30"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <FileText className={`w-3.5 h-3.5 ${selectedDoc === doc.name ? 'text-clay' : 'text-zinc-500'}`} />
-                        <span className="truncate">{doc.name}</span>
-                      </div>
-                      <span className="text-[9px] text-zinc-500">{doc.size}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <DocumentSelector
+                documentOptions={documentOptions}
+                selectedDoc={selectedDoc}
+                setSelectedDoc={setSelectedDoc}
+                isRunning={isRunning}
+              />
 
               {/* Editorial Process Overview */}
               <div className="flex flex-col gap-2 bg-zinc-950/40 border border-zinc-800/80 rounded-xl p-4">
@@ -381,51 +293,7 @@ export default function PipelineVisualizer({ onClose, onComplete }: PipelineVisu
               </div>
             </div>
 
-            {/* Performance Telemetry Charts */}
-            <div className="p-5 flex flex-col gap-3 shrink-0 h-44 bg-zinc-950/60">
-              <div className="flex items-center gap-2 text-zinc-500 border-b border-zinc-800 pb-1.5 shrink-0">
-                <Activity className="w-4 h-4 text-clay" />
-                <span className="font-semibold text-[10px] tracking-wide uppercase">Pipeline Performance Telemetry</span>
-              </div>
-
-              <div className="flex-1 grid grid-cols-2 gap-4 min-h-0 text-xs">
-                {/* SVG Graph for CPU / Memory */}
-                <div className="flex flex-col justify-between bg-zinc-900/30 border border-zinc-800/80 rounded-xl p-3">
-                  <div className="flex justify-between text-[10px] text-zinc-500 tracking-wide font-serif">
-                    <span>CPU LOAD</span>
-                    <span className="text-zinc-300 font-semibold">{metrics.length > 0 ? Math.round(metrics[metrics.length - 1].cpu) : 0}%</span>
-                  </div>
-                  <div className="h-12 w-full mt-2 relative">
-                    <svg className="w-full h-full overflow-visible">
-                      <polyline
-                        fill="none"
-                        stroke="#d97757"
-                        strokeWidth="1.5"
-                        points={metrics.map((m, idx) => `${(idx / 19) * 160},${48 - (m.cpu / 100) * 44}`).join(" ")}
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* SVG Graph for Processing Speed */}
-                <div className="flex flex-col justify-between bg-zinc-900/30 border border-zinc-800/80 rounded-xl p-3">
-                  <div className="flex justify-between text-[10px] text-zinc-500 tracking-wide font-serif">
-                    <span>INGEST RATE</span>
-                    <span className="text-zinc-300 font-semibold">{metrics.length > 0 ? Math.round(metrics[metrics.length - 1].speed) : 0} tok/s</span>
-                  </div>
-                  <div className="h-12 w-full mt-2 relative">
-                    <svg className="w-full h-full overflow-visible">
-                      <polyline
-                        fill="none"
-                        stroke="#788c5d"
-                        strokeWidth="1.5"
-                        points={metrics.map((m, idx) => `${(idx / 19) * 160},${48 - (m.speed / 1000) * 44}`).join(" ")}
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PerformanceTelemetry metrics={metrics} />
 
           </div>
         </div>

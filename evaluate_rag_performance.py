@@ -119,8 +119,20 @@ def main() -> None:
         temperature=0.0
     )
 
+    class TextEmbeddingStringMock(str):
+        def __new__(cls, value, model_obj):
+            obj = super().__new__(cls, value)
+            obj.model_obj = model_obj
+            return obj
+        def __getattr__(self, name):
+            return getattr(self.model_obj, name)
+
     evaluator_embeddings = FastEmbedEmbeddings(
         model_name="BAAI/bge-small-en-v1.5"
+    )
+    evaluator_embeddings.model = TextEmbeddingStringMock(
+        "BAAI/bge-small-en-v1.5",
+        evaluator_embeddings.model
     )
 
     logger.info("Running Ragas evaluation metrics...")

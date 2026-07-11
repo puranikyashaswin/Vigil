@@ -1,3 +1,5 @@
+import { Node } from "@/types";
+
 export interface GraphNode {
   id: string;
   label: string;
@@ -269,4 +271,39 @@ export function drawNodePointerArea(
   }
 
   ctx.restore();
+}
+
+export function initializeGraphData(
+  data: { nodes: Node[]; links: { source: string | GraphNode; target: string | GraphNode; index?: number }[] },
+  width: number,
+  height: number
+): { nodes: GraphNode[]; links: GraphLink[] } {
+  const degs: Record<string, number> = {};
+  data.nodes.forEach((n) => { degs[n.id] = 0; });
+  data.links.forEach((l) => {
+    const sourceId = typeof l.source === "object" ? l.source.id : l.source;
+    const targetId = typeof l.target === "object" ? l.target.id : l.target;
+    if (degs[sourceId] !== undefined) degs[sourceId]++;
+    if (degs[targetId] !== undefined) degs[targetId]++;
+  });
+  const nodes: GraphNode[] = data.nodes.map((n, idx) => {
+    const degree = degs[n.id] || 0;
+    const size = Math.max(3.5, 3.5 + degree * 0.9);
+    const angle = (idx / (data.nodes.length || 1)) * 2 * Math.PI;
+    const pseudoRandom = ((idx * 9301 + 49297) % 233280) / 233280;
+    const radius = 120 + pseudoRandom * 40;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const nx = (n as Partial<GraphNode>).x;
+    const ny = (n as Partial<GraphNode>).y;
+    return {
+      ...n,
+      x: nx !== undefined ? nx : centerX + Math.cos(angle) * radius,
+      y: ny !== undefined ? ny : centerY + Math.sin(angle) * radius,
+      degree,
+      size
+    };
+  });
+  const links: GraphLink[] = data.links.map((l) => ({ ...l }) as GraphLink);
+  return { nodes, links };
 }

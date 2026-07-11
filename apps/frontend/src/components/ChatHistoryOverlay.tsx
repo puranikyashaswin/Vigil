@@ -5,22 +5,35 @@ import { X, MessageSquare, RefreshCw, ArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage, Conversation } from "@/types";
 import { renderMarkdown } from "@/utils/markdown";
+import ChatHistorySidebar from "./ChatHistorySidebar";
 
 interface ChatHistoryOverlayProps {
-  show: boolean;
-  conversations: Conversation[];
-  currentConversationId: string;
-  messages: ChatMessage[];
-  inputMessage: string;
-  isTyping: boolean;
-  pipelineStep: number;
-  onClose: () => void;
-  onCreateNewChat: () => void;
-  onSelectConversation: (conv: Conversation) => void;
+  show: boolean; conversations: Conversation[]; currentConversationId: string; messages: ChatMessage[];
+  inputMessage: string; isTyping: boolean; pipelineStep: number; onClose: () => void;
+  onCreateNewChat: () => void; onSelectConversation: (conv: Conversation) => void;
   onDeleteChat: (convId: string, e: React.MouseEvent) => void;
-  onSendMessage: (e: React.FormEvent) => void;
-  onInputChange: (value: string) => void;
+  onSendMessage: (e: React.FormEvent) => void; onInputChange: (value: string) => void;
 }
+
+const STEP_LABELS = [
+  "",
+  "▶ [1/6] INTENT ROUTER: Classifying query intent...",
+  "▶ [2/6] VECTOR RETRIEVAL: Querying Qdrant points...",
+  "▶ [3/6] FLASH-RANK: Reranking matching contexts...",
+  "▶ [4/6] CORE AGENT: Synthesizing response...",
+  "▶ [5/6] CONTRADICTION GUARD: Evaluating safety and conflicts...",
+  "▶ [6/6] TELEMETRY PIPELINE: Logging RAGAS metrics..."
+];
+
+const VARIANTS = {
+  desktop: { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
+  mobile: { initial: { y: "100%" }, animate: { y: 0 }, exit: { y: "100%" } }
+};
+
+const TRANSITIONS = {
+  desktop: { type: "tween" as const, duration: 0.2 },
+  mobile: { type: "spring" as const, damping: 25, stiffness: 220 }
+};
 
 export default function ChatHistoryOverlay({
   show,
@@ -53,27 +66,8 @@ export default function ChatHistoryOverlay({
     }
   }, [show]);
 
-  const variants = {
-    initial: isMobile ? { y: "100%" } : { opacity: 0 },
-    animate: isMobile ? { y: 0 } : { opacity: 1 },
-    exit: isMobile ? { y: "100%" } : { opacity: 0 }
-  };
-
-  const transition = isMobile ? {
-    type: "spring" as const,
-    damping: 25,
-    stiffness: 220
-  } : {
-    type: "tween" as const,
-    duration: 0.2
-  };
-
-  const handleSelectConv = (conv: Conversation) => {
-    onSelectConversation(conv);
-    if (isMobile) {
-      setShowSidebarMobile(false);
-    }
-  };
+  const variants = isMobile ? VARIANTS.mobile : VARIANTS.desktop;
+  const transition = isMobile ? TRANSITIONS.mobile : TRANSITIONS.desktop;
 
   return (
     <AnimatePresence>
@@ -103,78 +97,16 @@ export default function ChatHistoryOverlay({
             </div>
           )}
 
-          {/* Left Sidebar */}
-          <div className={`border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full bg-zinc-100 dark:bg-zinc-900 select-none ${
-            isMobile ? (showSidebarMobile ? "w-full" : "hidden") : "w-[300px]"
-          }`}>
-            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-              {isMobile ? (
-                <button
-                  type="button"
-                  onClick={() => setShowSidebarMobile(false)}
-                  className="px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 rounded cursor-pointer"
-                >
-                  Back
-                </button>
-              ) : (
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                  Chat History
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  onCreateNewChat();
-                  if (isMobile) setShowSidebarMobile(false);
-                }}
-                className="px-2.5 py-1 text-xs font-medium text-white bg-[#d97757] hover:bg-[#c26243] transition flex items-center gap-1 cursor-pointer rounded"
-              >
-                + New Chat
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {conversations.map((conv) => {
-                const isActive = conv.id === currentConversationId;
-                const dateStr = new Date(conv.timestamp).toLocaleDateString([], {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                });
-                const lastMsg = conv.messages.filter(m => m.role === 'user').pop();
-                const previewText = lastMsg ? lastMsg.content : "Empty conversation";
-
-                return (
-                  <div
-                    key={conv.id}
-                    onClick={() => handleSelectConv(conv)}
-                    className={`group flex items-center justify-between p-3 cursor-pointer transition rounded-lg ${
-                      isActive
-                        ? "bg-clay/10 dark:bg-clay/15 text-clay font-medium"
-                        : "hover:bg-zinc-200/50 dark:hover:bg-zinc-800/40 text-zinc-700 dark:text-zinc-300"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0 pr-2">
-                      <div className="text-sm truncate font-medium">{conv.title}</div>
-                      <div className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 flex justify-between">
-                        <span>{dateStr}</span>
-                        <span className="truncate max-w-[120px] ml-2 italic">{previewText}</span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => onDeleteChat(conv.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition cursor-pointer"
-                      title="Delete chat"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <ChatHistorySidebar
+            conversations={conversations}
+            currentConversationId={currentConversationId}
+            isMobile={isMobile}
+            showSidebarMobile={showSidebarMobile}
+            setShowSidebarMobile={setShowSidebarMobile}
+            onCreateNewChat={onCreateNewChat}
+            onSelectConversation={onSelectConversation}
+            onDeleteChat={onDeleteChat}
+          />
 
           {/* Main Panel */}
           <div className={`flex flex-col h-full bg-zinc-50 dark:bg-zinc-950 relative ${
@@ -285,12 +217,7 @@ export default function ChatHistoryOverlay({
                     <div className="bg-clay h-1 rounded-full transition-all duration-500" style={{ width: `${(pipelineStep / 6) * 100}%` }} />
                   </div>
                   <div className="text-zinc-500 dark:text-zinc-400">
-                    {pipelineStep === 1 && "▶ [1/6] INTENT ROUTER: Classifying query intent..."}
-                    {pipelineStep === 2 && "▶ [2/6] VECTOR RETRIEVAL: Querying Qdrant points..."}
-                    {pipelineStep === 3 && "▶ [3/6] FLASH-RANK: Reranking matching contexts..."}
-                    {pipelineStep === 4 && "▶ [4/6] CORE AGENT: Synthesizing response..."}
-                    {pipelineStep === 5 && "▶ [5/6] CONTRADICTION GUARD: Evaluating safety and conflicts..."}
-                    {pipelineStep === 6 && "▶ [6/6] TELEMETRY PIPELINE: Logging RAGAS metrics..."}
+                    {STEP_LABELS[pipelineStep] || ""}
                   </div>
                 </div>
               )}
