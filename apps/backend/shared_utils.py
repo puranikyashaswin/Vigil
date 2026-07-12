@@ -14,13 +14,19 @@ def get_client() -> Tuple[OpenAI, str]:
     
     is_groq_placeholder = not groq_api_key or "your_" in groq_api_key
     is_portkey_placeholder = not portkey_api_key or "your_" in portkey_api_key
+    is_openrouter_placeholder = not openrouter_api_key or "your_" in openrouter_api_key
     
-    if (is_groq_placeholder or is_portkey_placeholder) and openrouter_api_key and "your_" not in openrouter_api_key:
+    if (is_groq_placeholder or is_portkey_placeholder):
+        if is_openrouter_placeholder:
+            raise ValueError(
+                "No valid API keys configured. Please set a valid OPENROUTER_API_KEY, "
+                "or GROQ_API_KEY & PORTKEY_API_KEY in your .env file."
+            )
         client = OpenAI(
             api_key=openrouter_api_key,
             base_url="https://openrouter.ai/api/v1"
         )
-        return client, "openrouter/free"
+        return client, "tencent/hy3:free"
         
     client = OpenAI(
         api_key=groq_api_key,

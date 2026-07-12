@@ -124,6 +124,31 @@ def get_mock_telemetry_data(tag: str) -> str:
     return f"Real-time sensor telemetry for {tag} shows all metrics are operating within nominal baseline parameters."
 
 # Node 4: Synthesize Agent Response Node
+def is_failed_generation(ans: str, query: str) -> bool:
+    ans_clean = ans.strip()
+    
+    # 1. Matches known moderation-verdict patterns
+    if ans_clean.lower().startswith("user safety:") or ans_clean.lower() in ("safe", "unsafe"):
+        return True
+        
+    # 2. Answer is under 20 words
+    words = ans_clean.split()
+    if len(words) < 20:
+        return True
+        
+    # 3. Doesn't reference any query terms
+    stopwords = {"what", "whats", "the", "for", "and", "are", "but", "not", "you", "your", "this", "that", "with", "from"}
+    query_words = re.findall(r"\b[a-zA-Z0-9_-]+\b", query.lower())
+    query_terms = [w for w in query_words if len(w) > 2 and w not in stopwords]
+    
+    if query_terms:
+        ans_lower = ans_clean.lower()
+        if not any(term in ans_lower for term in query_terms):
+            return True
+            
+    return False
+
+# Node 4: Synthesize Agent Response Node
 def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
     category = state["category"]
@@ -148,6 +173,29 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
             temperature=0.7
         )
         ans = completion.choices[0].message.content
+        
+        # Check if returned moderation-verdict patterns
+        if ans.strip().lower().startswith("user safety:") or ans.strip().lower() in ("safe", "unsafe"):
+            logger.warning("Path 1 synthesis returned a safety verdict. Retrying once...")
+            try:
+                completion = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": greeting_prompt},
+                        {"role": "user", "content": query}
+                    ],
+                    temperature=0.7
+                )
+                ans = completion.choices[0].message.content
+            except Exception:
+                ans = ""
+            if not ans or ans.strip().lower().startswith("user safety:") or ans.strip().lower() in ("safe", "unsafe"):
+                ans = (
+                    "Based on the provided sources, there is no information regarding the requested "
+                    "equipment or parameters in the ingested documents. Please ensure the relevant source "
+                    "documents are ingested into the database."
+                )
+                
         trace = metadata.get("trace", []) + ["synthesize_response"]
         return {
             "generated_response": ans,
@@ -203,6 +251,30 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
     )
     ans = completion.choices[0].message.content
     
+    if is_failed_generation(ans, query):
+        logger.warning("Path 2 synthesis failed validation checks. Retrying once...")
+        try:
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.2
+            )
+            ans = completion.choices[0].message.content
+        except Exception as retry_err:
+            logger.error(f"Retry synthesis failed: {retry_err}")
+            ans = ""
+            
+        if not ans or is_failed_generation(ans, query):
+            logger.warning("Path 2 synthesis failed retry validation. Falling back to default 'not found' response.")
+            ans = (
+                "Based on the provided sources, there is no information regarding the requested "
+                "equipment or parameters in the ingested documents. Please ensure the relevant source "
+                "documents are ingested into the database."
+            )
+            
     final_contexts = contexts + [telemetry_block] if telemetry_block else contexts
     trace = metadata.get("trace", []) + ["synthesize_response"]
     
@@ -244,7 +316,12 @@ def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
             temperature=0.0
         )
         guard_output = completion.choices[0].message.content.strip()
-        if "SAFE" not in guard_output.upper():
+        
+        # Clean any punctuation or wrapping and check the first word
+        first_word = re.findall(r"\b[a-zA-Z]+\b", guard_output)
+        first_word_upper = first_word[0].upper() if first_word else ""
+        
+        if first_word_upper != "SAFE":
             logger.warning(f"Contradiction Guard Flagged Conflict: {guard_output}")
             generated_response = f"⚠️ [SAFETY WARNING: Potential Contradiction Detected]\n{guard_output}\n\n{generated_response}"
     except Exception as e:
