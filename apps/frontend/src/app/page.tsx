@@ -40,6 +40,15 @@ export default function Dashboard() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
+  const [showFreeTierModal, setShowFreeTierModal] = useState(false);
+
+  useEffect(() => {
+    // Show the notice modal after the page has mounted
+    const timer = setTimeout(() => {
+      setShowFreeTierModal(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRunImpactAnalysisAnimation = (nodeIds: Set<string>) => {
     const idsArray = Array.from(nodeIds);
@@ -336,6 +345,59 @@ export default function Dashboard() {
             onClose={() => setShowPipelineVisualizer(false)} 
             onComplete={loadData}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showFreeTierModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm p-4 font-sans"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+            >
+              <h3 className="text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100 mb-3 text-clay dark:text-clay-light">
+                Cloud Service Notice
+              </h3>
+              <p className="text-sm text-zinc-650 dark:text-zinc-400 mb-4 leading-relaxed font-serif italic">
+                This public demonstration connects to a backend running on a free-tier hosting platform (Render).
+              </p>
+              <div className="space-y-3 text-xs text-zinc-600 dark:text-zinc-400 mb-6">
+                <div className="flex gap-2">
+                  <span className="text-clay">⚡</span>
+                  <p>
+                    <strong>Cold Start Wait:</strong> If the server has been idle, the first query or page load will take <strong>30-50 seconds</strong> to wake up.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-clay">🗄️</span>
+                  <p>
+                    <strong>Database Persistent:</strong> The Qdrant Cloud vector database is fully persistent, but custom file uploads will reset when the server restarts.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-clay">💻</span>
+                  <p>
+                    <strong>Run Locally:</strong> For instant, sub-second responses and permanent local file storage, clone the repository and run the services locally.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowFreeTierModal(false)}
+                  className="px-5 py-2.5 bg-clay text-white rounded-xl text-xs font-semibold hover:bg-clay/90 transition cursor-pointer select-none"
+                >
+                  Enter Console
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
