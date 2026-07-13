@@ -313,6 +313,14 @@ def index_all_kg_documents() -> Dict[str, Any]:
             vectors_config=VectorParams(size=384, distance=Distance.COSINE)
         )
         
+        # Create keyword payload index on directory field for strict category filtering on Qdrant Cloud
+        from qdrant_client.http.models import PayloadSchemaType
+        q_client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name="directory",
+            field_schema=PayloadSchemaType.KEYWORD
+        )
+        
         embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
         points = []
         point_id = 1

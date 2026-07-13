@@ -121,6 +121,14 @@ def main():
             collection_name=COLLECTION_NAME,
             vectors_config=VectorParams(size=384, distance=Distance.COSINE) # bge-small-en-v1.5 size is 384
         )
+        
+        # Create keyword payload index on directory field for strict category filtering on Qdrant Cloud
+        from qdrant_client.http.models import PayloadSchemaType
+        q_client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name="directory",
+            field_schema=PayloadSchemaType.KEYWORD
+        )
     except Exception as e:
         logger.error(f"Failed to initialize Qdrant collection structure: {str(e)}")
         sys.exit(1)
