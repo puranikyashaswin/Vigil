@@ -43,10 +43,10 @@ export default function Dashboard() {
   const [showFreeTierModal, setShowFreeTierModal] = useState(false);
 
   useEffect(() => {
-    // Show the notice modal after the page has mounted
+    // Show the notice modal 10 seconds after the page has mounted
     const timer = setTimeout(() => {
       setShowFreeTierModal(true);
-    }, 1500);
+    }, 10000);
     return () => clearTimeout(timer);
   }, []);
 
