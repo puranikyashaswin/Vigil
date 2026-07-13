@@ -352,6 +352,41 @@ def index_all_kg_documents() -> Dict[str, Any]:
         logger.error(f"Failed admin indexing: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api.get("/api/admin/debug-qdrant")
+def debug_qdrant_collection() -> Dict[str, Any]:
+    try:
+        from scripts.index_graph import get_qdrant_client, COLLECTION_NAME
+        q_client = get_qdrant_client()
+        
+        # Get collection info
+        collection_info = q_client.get_collection(COLLECTION_NAME)
+        
+        # Scroll points
+        points, _ = q_client.scroll(
+            collection_name=COLLECTION_NAME,
+            limit=5,
+            with_payload=True,
+            with_vectors=False
+        )
+        
+        points_debug = []
+        for p in points:
+            points_debug.append({
+                "id": p.id,
+                "payload": p.payload
+            })
+            
+        return {
+            "status": "success",
+            "collection_name": COLLECTION_NAME,
+            "points_count": collection_info.points_count,
+            "status_info": str(collection_info.status),
+            "sample_points": points_debug
+        }
+    except Exception as e:
+        logger.error(f"Debug Qdrant failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(api, host="127.0.0.1", port=8000)
