@@ -2,17 +2,14 @@ import os
 import logging
 from typing import List, Dict, Any, Tuple
 from fastembed import TextEmbedding
-from flashrank import Ranker, RerankRequest
 from state import AgentState, Citation, get_qdrant_client
 
 logger = logging.getLogger("vigil.retrieval")
 COLLECTION_NAME = "vigil_okf"
 
-# Initialize ONNX embedding and reranker models globally once on application startup
+# Initialize ONNX embedding model globally once on application startup (FlashRank disabled to conserve memory)
 logger.info("Initializing global TextEmbedding model: BAAI/bge-small-en-v1.5...")
 _embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-logger.info("Initializing global FlashRank model...")
-_ranker = Ranker()
 
 # 3. Retrieval layer with semantic filtering & rerank
 def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], List[Citation]]:
@@ -47,30 +44,16 @@ def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], Li
         if not search_results:
             return [], []
             
-        # If broad search (Copilot), use FlashRank reranker
+        # If broad search (Copilot), use simple ranking (bypassing FlashRank for memory saving)
         if not dirs:
-            passages = []
-            for hit in search_results:
-                passages.append({
-                    "id": len(passages),
-                    "text": hit.payload["text"],
-                    "meta": {
-                        "file_path": hit.payload["file_path"],
-                        "score": hit.score,
-                        "title": hit.payload["title"]
-                    }
-                })
-            rerank_request = RerankRequest(query=query, passages=passages)
-            rerank_results = _ranker.rerank(rerank_request)
-            
             contexts = []
             citations = []
-            for r in rerank_results[:5]:
-                contexts.append(r["text"])
+            for hit in search_results[:5]:
+                contexts.append(hit.payload["text"])
                 citations.append({
-                    "source_file": r["meta"]["file_path"],
-                    "excerpt": r["text"][:150] + "...",
-                    "score": float(r["score"])
+                    "source_file": hit.payload["file_path"],
+                    "excerpt": hit.payload["text"][:150] + "...",
+                    "score": float(hit.score)
                 })
             return contexts, citations
             
@@ -168,37 +151,13 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
         }
         
     if category == "copilot":
-        try:
-            passages = []
-            for idx, hit in enumerate(raw_hits):
-                passages.append({
-                    "id": idx,
-                    "text": hit["text"],
-                    "meta": {
-                        "file_path": hit["file_path"],
-                        "score": hit["score"],
-                        "title": hit["title"]
-                    }
-                })
-            rerank_request = RerankRequest(query=query, passages=passages)
-            rerank_results = _ranker.rerank(rerank_request)
-            
-            for r in rerank_results[:5]:
-                contexts.append(r["text"])
-                citations.append({
-                    "source_file": r["meta"]["file_path"],
-                    "excerpt": r["text"][:150] + "...",
-                    "score": float(r["score"])
-                })
-        except Exception as e:
-            logger.error(f"FlashRank reranking failed: {str(e)}")
-            for hit in raw_hits[:5]:
-                contexts.append(hit["text"])
-                citations.append({
-                    "source_file": hit["file_path"],
-                    "excerpt": hit["text"][:150] + "...",
-                    "score": hit["score"]
-                })
+        for hit in raw_hits[:5]:
+            contexts.append(hit["text"])
+            citations.append({
+                "source_file": hit["file_path"],
+                "excerpt": hit["text"][:150] + "...",
+                "score": hit["score"]
+            })
     else:
         for hit in raw_hits:
             contexts.append(hit["text"])
