@@ -362,27 +362,27 @@ export default function Dashboard() {
               exit={{ scale: 0.95, y: 15 }}
               className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl"
             >
-              <h3 className="text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100 mb-3 text-clay dark:text-clay-light">
+              <h3 className="text-lg font-serif font-bold text-[#d97757] mb-3">
                 Cloud Service Notice
               </h3>
-              <p className="text-sm text-zinc-650 dark:text-zinc-400 mb-4 leading-relaxed font-serif italic">
+              <p className="text-sm text-zinc-650 dark:text-zinc-300 mb-4 leading-relaxed font-serif italic">
                 This public demonstration connects to a backend running on a free-tier hosting platform (Render).
               </p>
               <div className="space-y-3 text-xs text-zinc-600 dark:text-zinc-400 mb-6">
                 <div className="flex gap-2">
-                  <span className="text-clay">⚡</span>
+                  <span className="text-[#d97757] font-bold">⚡</span>
                   <p>
                     <strong>Cold Start Wait:</strong> If the server has been idle, the first query or page load will take <strong>30-50 seconds</strong> to wake up.
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <span className="text-clay">🗄️</span>
+                  <span className="text-[#d97757] font-bold">🗄️</span>
                   <p>
                     <strong>Database Persistent:</strong> The Qdrant Cloud vector database is fully persistent, but custom file uploads will reset when the server restarts.
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <span className="text-clay">💻</span>
+                  <span className="text-[#d97757] font-bold">💻</span>
                   <p>
                     <strong>Run Locally:</strong> For instant, sub-second responses and permanent local file storage, clone the repository and run the services locally.
                   </p>
@@ -391,7 +391,7 @@ export default function Dashboard() {
               <div className="flex justify-end">
                 <button
                   onClick={() => setShowFreeTierModal(false)}
-                  className="px-5 py-2.5 bg-clay text-white rounded-xl text-xs font-semibold hover:bg-clay/90 transition cursor-pointer select-none"
+                  className="px-5 py-2.5 bg-[#d97757] hover:bg-[#c86646] text-white rounded-xl text-xs font-semibold transition cursor-pointer select-none"
                 >
                   Enter Console
                 </button>
