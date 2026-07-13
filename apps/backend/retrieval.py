@@ -2,10 +2,17 @@ import os
 import logging
 from typing import List, Dict, Any, Tuple
 from fastembed import TextEmbedding
+from flashrank import Ranker, RerankRequest
 from state import AgentState, Citation, get_qdrant_client
 
 logger = logging.getLogger("vigil.retrieval")
 COLLECTION_NAME = "vigil_okf"
+
+# Initialize ONNX embedding and reranker models globally once on application startup
+logger.info("Initializing global TextEmbedding model: BAAI/bge-small-en-v1.5...")
+_embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+logger.info("Initializing global FlashRank model...")
+_ranker = Ranker()
 
 # 3. Retrieval layer with semantic filtering & rerank
 def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], List[Citation]]:
@@ -15,8 +22,7 @@ def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], Li
     """
     try:
         q_client = get_qdrant_client()
-        embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-        query_vector = list(next(embedding_model.embed([query])))
+        query_vector = list(next(_embedding_model.embed([query])))
         
         query_filter = None
         if dirs:
@@ -43,8 +49,6 @@ def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], Li
             
         # If broad search (Copilot), use FlashRank reranker
         if not dirs:
-            from flashrank import Ranker, RerankRequest
-            ranker = Ranker()
             passages = []
             for hit in search_results:
                 passages.append({
@@ -57,7 +61,7 @@ def retrieve_contexts(query: str, dirs: List[str] = None) -> Tuple[List[str], Li
                     }
                 })
             rerank_request = RerankRequest(query=query, passages=passages)
-            rerank_results = ranker.rerank(rerank_request)
+            rerank_results = _ranker.rerank(rerank_request)
             
             contexts = []
             citations = []
@@ -102,8 +106,7 @@ def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
         
     try:
         q_client = get_qdrant_client()
-        embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-        query_vector = list(next(embedding_model.embed([query])))
+        query_vector = list(next(_embedding_model.embed([query])))
         
         query_filter = None
         if dirs:
@@ -166,8 +169,6 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
         
     if category == "copilot":
         try:
-            from flashrank import Ranker, RerankRequest
-            ranker = Ranker()
             passages = []
             for idx, hit in enumerate(raw_hits):
                 passages.append({
@@ -180,7 +181,7 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
                     }
                 })
             rerank_request = RerankRequest(query=query, passages=passages)
-            rerank_results = ranker.rerank(rerank_request)
+            rerank_results = _ranker.rerank(rerank_request)
             
             for r in rerank_results[:5]:
                 contexts.append(r["text"])
