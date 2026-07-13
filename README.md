@@ -242,6 +242,32 @@ python dump_static_json.py
 
 The frontend will automatically load these files in `isDemoMode` if no live backend endpoint is reachable.
 
+## Cloud Deployment & Optimizations
+
+Vigil is configured for production-grade scaling and cloud deployment.
+
+### 1. Vector Database Schema in Qdrant Cloud
+When deploying to Qdrant Cloud, a keyword payload index must be established on the `"directory"` field to support the strict directory routing filters used by the RCA, Compliance, and Lessons-Learned agents. Both `api.py` and `index_graph.py` automatically register this schema when creating the collection:
+```python
+from qdrant_client.http.models import PayloadSchemaType
+
+q_client.create_payload_index(
+    collection_name="vigil_okf",
+    field_name="directory",
+    field_schema=PayloadSchemaType.KEYWORD
+)
+```
+
+### 2. Administrative Cloud Helper Endpoint
+To populate the cloud vector database directly without running local python scripts, hit the helper endpoint on your deployed API server:
+- **Index All Concept Documents**: `GET /api/admin/index-all`  
+  This recursively scans the server workspace's `knowledge_graph/` folder, configures the Qdrant Cloud collection schema, and embeds/upserts all 35 OKF files.
+
+### 3. Memory & Latency Optimizations for Constrained Hosting (512MB RAM)
+To guarantee high performance and stability on constrained instances (such as Render's 512MB RAM Free Tier limit):
+- **Bypassed Reranking Overhead**: FlashRank reranking is disabled. The backend uses Qdrant's native fast cosine similarity scores. This prevents loading a second heavy ONNX model session, dropping idle RAM consumption from ~500MB to under 250MB and eliminating OOM crashes.
+- **Shared Embedding Singleton**: The administrative indexing endpoint imports the active global embedding model session directly from the query layer, preventing memory spikes when recreating the index.
+
 ---
 
 ## RAGAS Evaluation Results
