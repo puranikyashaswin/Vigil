@@ -292,7 +292,7 @@ def index_all_kg_documents() -> Dict[str, Any]:
     """
     try:
         from scripts.index_graph import load_okf_files, get_qdrant_client, COLLECTION_NAME, chunk_text
-        from fastembed import TextEmbedding
+        from retrieval import _embedding_model as embedding_model
         from qdrant_client.http.models import Distance, VectorParams, PointStruct
         
         kg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph"))
@@ -321,7 +321,6 @@ def index_all_kg_documents() -> Dict[str, Any]:
             field_schema=PayloadSchemaType.KEYWORD
         )
         
-        embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
         points = []
         point_id = 1
         
