@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Header from "@/components/Header";
 import SchematicPanel from "@/components/SchematicPanel";
 import SidebarPanel from "@/components/SidebarPanel";
