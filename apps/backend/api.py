@@ -284,6 +284,74 @@ def export_compliance_package() -> StreamingResponse:
         headers={"Content-Disposition": "attachment; filename=vigil_compliance_evidence.zip"}
     )
 
+@api.get("/api/admin/index-all")
+def index_all_kg_documents() -> Dict[str, Any]:
+    """
+    Reads all OKF files from the repository's knowledge_graph/ folder
+    and indexes them into the Qdrant Cloud cluster.
+    """
+    try:
+        from scripts.index_graph import load_okf_files, get_qdrant_client, COLLECTION_NAME, chunk_text
+        from fastembed import TextEmbedding
+        from qdrant_client.http.models import Distance, VectorParams, PointStruct
+        
+        kg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph"))
+        if not os.path.exists(kg_dir):
+            raise HTTPException(status_code=404, detail="knowledge_graph folder not found on server")
+            
+        documents = load_okf_files(kg_dir)
+        q_client = get_qdrant_client()
+        
+        # Recreate collection
+        try:
+            q_client.delete_collection(COLLECTION_NAME)
+        except Exception:
+            pass
+            
+        q_client.create_collection(
+            collection_name=COLLECTION_NAME,
+            vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+        )
+        
+        embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+        points = []
+        point_id = 1
+        
+        for doc in documents:
+            chunks = chunk_text(doc["text"])
+            for chunk in chunks:
+                embed_text = f"Title: {doc['title']}\nType: {doc['type']}\nContent: {chunk}"
+                vector = list(next(embedding_model.embed([embed_text])))
+                payload = {
+                    "file_path": doc["file_path"],
+                    "directory": doc["directory"],
+                    "text": chunk,
+                    "type": doc["type"],
+                    "title": doc["title"]
+                }
+                points.append(
+                    PointStruct(
+                        id=point_id,
+                        vector=vector,
+                        payload=payload
+                    )
+                )
+                point_id += 1
+                
+        # Batch upsert
+        BATCH_SIZE = 500
+        for i in range(0, len(points), BATCH_SIZE):
+            batch = points[i:i + BATCH_SIZE]
+            q_client.upsert(
+                collection_name=COLLECTION_NAME,
+                points=batch
+            )
+            
+        return {"status": "success", "indexed_documents": len(documents), "vectors_count": len(points)}
+    except Exception as e:
+        logger.error(f"Failed admin indexing: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(api, host="127.0.0.1", port=8000)
