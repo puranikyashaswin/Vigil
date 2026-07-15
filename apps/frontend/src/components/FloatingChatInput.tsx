@@ -8,6 +8,7 @@ interface FloatingChatInputProps {
   onSubmit: (e: React.FormEvent) => void;
   onChange: (value: string) => void;
   onToggleHistory: () => void;
+  shouldGlow?: boolean;
 }
 
 export default function FloatingChatInput({
@@ -15,7 +16,8 @@ export default function FloatingChatInput({
   isTyping,
   onSubmit,
   onChange,
-  onToggleHistory
+  onToggleHistory,
+  shouldGlow = false
 }: FloatingChatInputProps) {
   return (
     <form onSubmit={onSubmit} className="mt-4 w-full max-w-xl mx-auto px-4">
@@ -30,7 +32,11 @@ export default function FloatingChatInput({
         <button
           type="button"
           onClick={onToggleHistory}
-          className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+          className={`p-2 transition rounded-full cursor-pointer ${
+            shouldGlow 
+              ? "chat-glow-button" 
+              : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          }`}
           title="View conversation history"
         >
           <MessageSquare className="w-4 h-4" />

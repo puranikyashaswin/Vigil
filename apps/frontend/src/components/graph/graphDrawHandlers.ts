@@ -58,9 +58,19 @@ export function drawNode(
     typeLower === "event" ||
     typeLower === "organization"
   ) {
+    // Inner mono-spaced equipment tag text
+    const monoText = node.label.split(" ")[0] || node.label;
+    ctx.font = "bold 8.5px monospace";
+    
+    // Calculate dynamic width based on text length to prevent text overflow in light mode
+    ctx.save();
+    const textWidth = ctx.measureText(monoText).width;
+    ctx.restore();
+    
     // 1. Rectangular shape for Equipment / Concept nodes
-    const w = size * 3.8;
-    const h = size * 2.0;
+    const paddingX = 6;
+    const w = Math.max(size * 4.2, textWidth + paddingX);
+    const h = size * 2.2;
     ctx.fillStyle = color;
     ctx.fillRect(x - w / 2, y - h / 2, w, h);
 
@@ -68,9 +78,6 @@ export function drawNode(
     ctx.lineWidth = 0.8;
     ctx.strokeRect(x - w / 2, y - h / 2, w, h);
 
-    // Inner mono-spaced equipment tag text
-    const monoText = node.label.split(" ")[0] || node.label;
-    ctx.font = "bold 8px monospace";
     ctx.fillStyle = "#faf9f5"; // Clear white text inside colored rectangles for high contrast
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -231,8 +238,14 @@ export function drawNodePointerArea(
     typeLower === "event" ||
     typeLower === "organization"
   ) {
-    const w = size * 3.8 + padding * 2;
-    const h = size * 2.0 + padding * 2;
+    const monoText = node.label.split(" ")[0] || node.label;
+    ctx.font = "bold 8.5px monospace";
+    ctx.save();
+    const textWidth = ctx.measureText(monoText).width;
+    ctx.restore();
+    const paddingX = 6;
+    const w = Math.max(size * 4.2, textWidth + paddingX) + padding * 2;
+    const h = size * 2.2 + padding * 2;
     ctx.fillRect(x - w / 2, y - h / 2, w, h);
   } else if (typeLower === "regulation") {
     const r = size * 1.8 + padding;

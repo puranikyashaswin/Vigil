@@ -198,6 +198,7 @@ export default function Dashboard() {
         setMessages(next);
         updateConversationMessages(currentConversationId, next);
         setShowFloatingResponse(true);
+        setShowHistory(true); // Automatically open the full screen chat history
         setIsTyping(false);
         setPipelineStep(0);
         clearInterval(stepInterval);
@@ -222,12 +223,14 @@ export default function Dashboard() {
       setMessages(next);
       updateConversationMessages(currentConversationId, next);
       setShowFloatingResponse(true);
+      setShowHistory(true); // Automatically open the full screen chat history
     } catch (err) {
       console.error("Chat error:", err);
       const errMsgs = [...updated, { role: "assistant", content: "Error: Connection to backend query service failed." } as ChatMessage];
       setMessages(errMsgs);
       updateConversationMessages(currentConversationId, errMsgs);
       setShowFloatingResponse(true);
+      setShowHistory(true); // Automatically open the full screen chat history to show the error
     } finally {
       setIsTyping(false);
       setPipelineStep(0);
@@ -312,6 +315,7 @@ export default function Dashboard() {
                 onSubmit={handleSendMessage} 
                 onChange={setInputMessage} 
                 onToggleHistory={() => setShowHistory(!showHistory)} 
+                shouldGlow={messages.length > 0 && !showHistory}
               />
             </div>
           </div>

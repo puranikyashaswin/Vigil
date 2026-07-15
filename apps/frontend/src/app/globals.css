@@ -61,3 +61,29 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: var(--color-zinc-500);
 }
+
+/* Pulsing glow animation for the chat history button */
+@keyframes chatGlow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(217, 119, 87, 0.4);
+    border-color: rgba(217, 119, 87, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(217, 119, 87, 0.8), 0 0 24px rgba(217, 119, 87, 0.4);
+    border-color: rgba(217, 119, 87, 0.8);
+    transform: scale(1.1);
+  }
+}
+
+.chat-glow-button {
+  animation: chatGlow 2s infinite ease-in-out;
+  border: 1px solid rgba(217, 119, 87, 0.5) !important;
+  background-color: rgba(217, 119, 87, 0.1) !important;
+  color: #d97757 !important;
+}
+
+.dark .chat-glow-button {
+  background-color: rgba(217, 119, 87, 0.15) !important;
+  color: #d97757 !important;
+}
