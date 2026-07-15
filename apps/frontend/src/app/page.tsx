@@ -36,7 +36,7 @@ export default function Dashboard() {
   const [showFloatingResponse, setShowFloatingResponse] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>("");
-  const [isOrganized, setIsOrganized] = useState(false);
+  const [isOrganized, setIsOrganized] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
