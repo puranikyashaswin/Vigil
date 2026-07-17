@@ -171,6 +171,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
             linkCanvasObject={linkCanvasObject}
             nodeVal={nodeVal}
             nodePointerAreaPaint={nodePointerAreaPaint}
+            nodeLabel={(node) => (node as GraphNode).label || (node as GraphNode).id}
             enableZoomInteraction={true}
             enablePanInteraction={true}
             d3AlphaDecay={0.012}
