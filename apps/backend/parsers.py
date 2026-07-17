@@ -1,6 +1,11 @@
 import os
 import base64
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 import mimetypes
 import logging
 from typing import List, Tuple
@@ -21,10 +26,11 @@ logger = logging.getLogger("vigil.parsers")
 OCR_MODEL_FALLBACKS = [
     "nvidia/nemotron-nano-12b-v2-vl:free",
     "google/gemma-4-26b-a4b-it:free",
-    "openrouter/free"
+    "openrouter/free",
 ]
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
+
 
 def detect_document_type(file_path: str) -> Tuple[str, str]:
     """
@@ -33,11 +39,13 @@ def detect_document_type(file_path: str) -> Tuple[str, str]:
     """
     file_size = os.path.getsize(file_path)
     if file_size > MAX_FILE_SIZE_BYTES:
-        raise ValueError(f"File exceeds maximum allowed size of {MAX_FILE_SIZE_BYTES // (1024*1024)}MB: {file_path} ({file_size} bytes)")
-    
+        raise ValueError(
+            f"File exceeds maximum allowed size of {MAX_FILE_SIZE_BYTES // (1024*1024)}MB: {file_path} ({file_size} bytes)"
+        )
+
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
-    
+
     if ext in [".png", ".jpg", ".jpeg"]:
         return "image", ext
     elif ext == ".pdf":
@@ -52,6 +60,7 @@ def detect_document_type(file_path: str) -> Tuple[str, str]:
     else:
         # Fallback to general classification
         return "unknown", ext
+
 
 def is_pdf_scanned(file_path: str) -> bool:
     """
@@ -68,8 +77,11 @@ def is_pdf_scanned(file_path: str) -> bool:
                     text += page_text.strip()
             return len(text) < 50
     except Exception as e:
-        logger.warning(f"Error checking if PDF is scanned, defaulting to True: {str(e)}")
+        logger.warning(
+            f"Error checking if PDF is scanned, defaulting to True: {str(e)}"
+        )
         return True
+
 
 def parse_pdf_local(file_path: str) -> str:
     """
@@ -84,15 +96,19 @@ def parse_pdf_local(file_path: str) -> str:
             for page in doc:
                 text_pages.append(page.get_text("text") or "")
         parsed_text = "\n\n--- Page Break ---\n\n".join(text_pages)
-        
+
         # If PyMuPDF returned valid text (at least 10 non-whitespace chars), return it
         if parsed_text and len(parsed_text.strip()) >= 10:
             logger.info("Successfully extracted text using PyMuPDF.")
             return parsed_text
         else:
-            logger.warning("PyMuPDF returned empty or too short text, falling back to pdfplumber.")
+            logger.warning(
+                "PyMuPDF returned empty or too short text, falling back to pdfplumber."
+            )
     except Exception as e:
-        logger.warning(f"PyMuPDF extraction failed: {str(e)}. Falling back to pdfplumber.")
+        logger.warning(
+            f"PyMuPDF extraction failed: {str(e)}. Falling back to pdfplumber."
+        )
 
     # 2. Fallback: pdfplumber
     try:
@@ -105,6 +121,7 @@ def parse_pdf_local(file_path: str) -> str:
     except Exception as e:
         raise Exception(f"pdfplumber extraction failed: {str(e)}")
 
+
 def parse_docx_local(file_path: str) -> str:
     """
     Parses a DOCX document locally using python-docx.
@@ -115,16 +132,17 @@ def parse_docx_local(file_path: str) -> str:
         for para in doc.paragraphs:
             if para.text.strip():
                 result.append(para.text)
-        
+
         for i, table in enumerate(doc.tables):
             result.append(f"\n### Table {i+1}")
             for row in table.rows:
                 row_text = [cell.text.strip() for cell in row.cells]
                 result.append("| " + " | ".join(row_text) + " |")
-        
+
         return "\n\n".join(result)
     except Exception as e:
         raise Exception(f"docx extraction failed: {str(e)}")
+
 
 def parse_xlsx_local(file_path: str) -> str:
     """
@@ -140,22 +158,23 @@ def parse_xlsx_local(file_path: str) -> str:
             rows = [r for r in rows if any(val is not None for val in r)]
             if not rows:
                 continue
-            
+
             headers = [str(h) if h is not None else "" for h in rows[0]]
             result.append("| " + " | ".join(headers) + " |")
             result.append("| " + " | ".join(["---"] * len(headers)) + " |")
-            
+
             for row in rows[1:]:
                 row_str = [str(cell) if cell is not None else "" for cell in row]
                 if len(row_str) < len(headers):
                     row_str += [""] * (len(headers) - len(row_str))
                 elif len(row_str) > len(headers):
-                    row_str = row_str[:len(headers)]
+                    row_str = row_str[: len(headers)]
                 result.append("| " + " | ".join(row_str) + " |")
             result.append("")
         return "\n".join(result)
     except Exception as e:
         raise Exception(f"openpyxl extraction failed: {str(e)}")
+
 
 def parse_xls_local(file_path: str) -> str:
     """
@@ -168,6 +187,7 @@ def parse_xls_local(file_path: str) -> str:
             if "xlsx file" in str(e).lower():
                 import tempfile
                 import shutil
+
                 with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
                     tmp_name = tmp.name
                 shutil.copyfile(file_path, tmp_name)
@@ -184,53 +204,55 @@ def parse_xls_local(file_path: str) -> str:
             result.append(f"## Sheet: {name}\n")
             if sheet.nrows == 0:
                 continue
-            
+
             rows = []
             for rx in range(sheet.nrows):
                 row = [sheet.cell_value(rx, cx) for cx in range(sheet.ncols)]
                 rows.append(row)
-            
+
             rows = [r for r in rows if any(val != "" and val is not None for val in r)]
             if not rows:
                 continue
-            
+
             headers = [str(h) if h is not None else "" for h in rows[0]]
             result.append("| " + " | ".join(headers) + " |")
             result.append("| " + " | ".join(["---"] * len(headers)) + " |")
-            
+
             for row in rows[1:]:
                 row_str = [str(cell) if cell is not None else "" for cell in row]
                 if len(row_str) < len(headers):
                     row_str += [""] * (len(headers) - len(row_str))
                 elif len(row_str) > len(headers):
-                    row_str = row_str[:len(headers)]
+                    row_str = row_str[: len(headers)]
                 result.append("| " + " | ".join(row_str) + " |")
             result.append("")
         return "\n".join(result)
     except Exception as e:
         raise Exception(f"xlrd extraction failed: {str(e)}")
 
+
 def parse_csv_local(file_path: str) -> str:
     """
     Parses a CSV file locally using Python's csv module.
     """
     try:
-        with open(file_path, mode='r', encoding='utf-8-sig', errors='ignore') as f:
+        with open(file_path, mode="r", encoding="utf-8-sig", errors="ignore") as f:
             reader = csv.reader(f)
             rows = list(reader)
             if not rows:
                 return ""
-            
+
             result = []
             headers = rows[0]
             result.append("| " + " | ".join(headers) + " |")
             result.append("| " + " | ".join(["---"] * len(headers)) + " |")
-            
+
             for row in rows[1:]:
                 result.append("| " + " | ".join(row) + " |")
             return "\n".join(result)
     except Exception as e:
         raise Exception(f"CSV extraction failed: {str(e)}")
+
 
 def parse_unstructured_local(file_path: str) -> str:
     """
@@ -238,10 +260,12 @@ def parse_unstructured_local(file_path: str) -> str:
     """
     try:
         from unstructured.partition.auto import partition
+
         elements = partition(filename=file_path)
         return "\n\n".join([str(el) for el in elements])
     except Exception as e:
         raise Exception(f"Unstructured extraction fallback failed: {str(e)}")
+
 
 def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
     """
@@ -250,11 +274,13 @@ def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
     Returns (transcription, model_used).
     """
     if not api_key:
-        raise Exception("OpenRouter API key is missing. Set OPENROUTER_API_KEY in .env.")
-        
+        raise Exception(
+            "OpenRouter API key is missing. Set OPENROUTER_API_KEY in .env."
+        )
+
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
-    
+
     # 1. Convert Scanned PDFs to images
     base64_images: List[str] = []
     if ext == ".pdf":
@@ -273,45 +299,45 @@ def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
         with open(file_path, "rb") as image_file:
             img_b64 = base64.b64encode(image_file.read()).decode("utf-8")
             base64_images.append(img_b64)
-            
+
     # 2. Call OpenRouter with fallback models
     last_error = None
     for model in OCR_MODEL_FALLBACKS:
         try:
             logger.info(f"Attempting OCR using model: {model}")
             transcriptions = []
-            
+
             for idx, base64_image in enumerate(base64_images):
                 if len(base64_images) > 1:
                     logger.info(f"Transcribing page {idx+1}/{len(base64_images)}")
-                
+
                 # Execute API request with backoff
                 text = run_api_ocr_request(base64_image, model, api_key)
                 transcriptions.append(text)
-                
+
             return "\n\n--- Page Break ---\n\n".join(transcriptions), model
-            
+
         except Exception as e:
-            logger.warning(f"Model {model} failed: {str(e)}. Attempting next fallback model...")
+            logger.warning(
+                f"Model {model} failed: {str(e)}. Attempting next fallback model..."
+            )
             last_error = e
             continue
-            
+
     raise Exception(f"All OCR fallback models failed. Last error: {str(last_error)}")
+
 
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=2, min=2, max=16),
     retry=retry_if_exception_type(Exception),
-    reraise=True
+    reraise=True,
 )
 def run_api_ocr_request(base64_image: str, model_slug: str, api_key: str) -> str:
     """
     Dispatches the base64 encoded image to OpenRouter with automatic exponential backoff retry.
     """
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {
         "model": model_slug,
         "messages": [
@@ -320,23 +346,21 @@ def run_api_ocr_request(base64_image: str, model_slug: str, api_key: str) -> str
                 "content": [
                     {
                         "type": "text",
-                        "text": "Transcribe all text from this image exactly. Keep formatting, tables, and layouts intact where possible. Output direct transcripts only."
+                        "text": "Transcribe all text from this image exactly. Keep formatting, tables, and layouts intact where possible. Output direct transcripts only.",
                     },
                     {
                         "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{base64_image}"
-                        }
-                    }
-                ]
+                        "image_url": {"url": f"data:image/png;base64,{base64_image}"},
+                    },
+                ],
             }
-        ]
+        ],
     }
     with httpx.Client(timeout=90.0) as client:
         response = client.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
-            json=payload
+            json=payload,
         )
         if response.status_code == 200:
             data = response.json()
@@ -345,4 +369,3 @@ def run_api_ocr_request(base64_image: str, model_slug: str, api_key: str) -> str
             raise Exception("Rate limited (429). Will retry...")
         else:
             raise Exception(f"HTTP {response.status_code}: {response.text}")
-

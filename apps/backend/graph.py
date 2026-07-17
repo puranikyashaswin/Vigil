@@ -6,7 +6,7 @@ from nodes import (
     route_query_intent,
     synthesize_response_node,
     contradiction_guard_node,
-    log_ragas_metrics_node
+    log_ragas_metrics_node,
 )
 
 # Set up logging
