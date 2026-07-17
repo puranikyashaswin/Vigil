@@ -10,3 +10,9 @@ results/
 *.log
 .DS_Store
 .commandcode/
+
+# Local databases and directories
+*.db
+vigil_qdrant.db/
+logs/
+results_entities/

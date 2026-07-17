@@ -19,7 +19,7 @@ const STEP_LABELS = [
   "",
   "▶ [1/6] INTENT ROUTER: Classifying query intent...",
   "▶ [2/6] VECTOR RETRIEVAL: Querying Qdrant points...",
-  "▶ [3/6] FLASH-RANK: Reranking matching contexts...",
+  "▶ [3/6] RERANK PROCESS: Optimizing context relevance...",
   "▶ [4/6] CORE AGENT: Synthesizing response...",
   "▶ [5/6] CONTRADICTION GUARD: Evaluating safety and conflicts...",
   "▶ [6/6] TELEMETRY PIPELINE: Logging RAGAS metrics..."

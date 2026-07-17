@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./knowledge_graph:/app/knowledge_graph
+      - ./vigil_qdrant.db:/app/vigil_qdrant.db
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/backend
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000

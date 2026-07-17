@@ -1,0 +1,632 @@
+[
+  {
+    "pair_id": 1,
+    "ent_a": {
+      "name": "Safety Regulation SR-12",
+      "type": "regulation",
+      "description": "Bypass valve V-202 max pressure is strictly limited to 100 PSI under all circumstances to prevent overpressure hazards."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-03",
+      "type": "procedure",
+      "description": "During system startup, operator must set the V-202 bypass pressure regulator setpoint to 120 PSI."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "valve bypass pressure limit"
+  },
+  {
+    "pair_id": 2,
+    "ent_a": {
+      "name": "P&ID Completeness Checklist",
+      "type": "regulation",
+      "description": "Requires all safety critical equipment to be calibrated on schedule, with no active calibration periods exceeding 6 months."
+    },
+    "ent_b": {
+      "name": "Pump P-102 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Serviced on 2026-01-12. Calibration next due 2026-07-12. Status: Overdue for calibration as of current run."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "calibration schedule"
+  },
+  {
+    "pair_id": 3,
+    "ent_a": {
+      "name": "Safety Regulation SR-12",
+      "type": "regulation",
+      "description": "Bypass valve V-202 max pressure is strictly limited to 100 PSI under all circumstances to prevent overpressure hazards."
+    },
+    "ent_b": {
+      "name": "Valve V-202 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Serviced on 2026-05-10. Pressure tested up to 90 PSI with bubble-tight shutoff verified."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "valve pressure check"
+  },
+  {
+    "pair_id": 4,
+    "ent_a": {
+      "name": "29 CFR 1910.119",
+      "type": "regulation",
+      "description": "Requires systematic process safety management of highly hazardous chemicals to prevent or minimize the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals."
+    },
+    "ent_b": {
+      "name": "Clean Air Act Amendments",
+      "type": "regulation",
+      "description": "Requires industrial facilities to establish risk management plans for hazardous chemical prevention."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "regulatory safety intent"
+  },
+  {
+    "pair_id": 5,
+    "ent_a": {
+      "name": "Safety Regulation SR-13",
+      "type": "regulation",
+      "description": "Vessel T-301 maximum safe operating temperature is 150 C. Alarm setpoints must not exceed this value."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-04",
+      "type": "procedure",
+      "description": "To optimize high viscosity fluid transfer, adjust the T-301 temperature control loop target to 180 C."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "vessel operating temperature"
+  },
+  {
+    "pair_id": 6,
+    "ent_a": {
+      "name": "Safety Regulation SR-13",
+      "type": "regulation",
+      "description": "Vessel T-301 maximum safe operating temperature is 150 C. Alarm setpoints must not exceed this value."
+    },
+    "ent_b": {
+      "name": "Tank T-301 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Serviced on 2026-04-20. Temperature safety interlock tested and calibrated at 140 C limit."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "vessel safety calibration"
+  },
+  {
+    "pair_id": 7,
+    "ent_a": {
+      "name": "Piping Standards P-05",
+      "type": "regulation",
+      "description": "Any process lines with diameter greater than 2.0 inches must have double isolation block valves."
+    },
+    "ent_b": {
+      "name": "Line 105 Specifications",
+      "type": "equipment",
+      "description": "Line 105 has a diameter of 3.0 inches and is configured with a single gate valve for isolation."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "valve isolation design"
+  },
+  {
+    "pair_id": 8,
+    "ent_a": {
+      "name": "Piping Standards P-05",
+      "type": "regulation",
+      "description": "Any process lines with diameter greater than 2.0 inches must have double isolation block valves."
+    },
+    "ent_b": {
+      "name": "Line 102 Specifications",
+      "type": "equipment",
+      "description": "Line 102 has a diameter of 1.5 inches and is configured with a single globe valve for isolation."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "valve isolation design"
+  },
+  {
+    "pair_id": 9,
+    "ent_a": {
+      "name": "OSHA 1910.147 Standard",
+      "type": "regulation",
+      "description": "Requires lockout/tagout (LOTO) energy isolation to be fully established before servicing electrical components."
+    },
+    "ent_b": {
+      "name": "Panel Maintenance Procedure P-12",
+      "type": "procedure",
+      "description": "Allows technicians to adjust internal wiring and terminal blocks while the 480V panel is energized."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "lockout tagout electrical safety"
+  },
+  {
+    "pair_id": 10,
+    "ent_a": {
+      "name": "OSHA 1910.147 Standard",
+      "type": "regulation",
+      "description": "Requires lockout/tagout (LOTO) energy isolation to be fully established before servicing electrical components."
+    },
+    "ent_b": {
+      "name": "Switchgear Servicing P-11",
+      "type": "procedure",
+      "description": "Mandates full de-energization, lock placement, and verification of zero energy state before cover removal."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "lockout tagout electrical safety"
+  },
+  {
+    "pair_id": 11,
+    "ent_a": {
+      "name": "Pump P-101 Specifications",
+      "type": "equipment",
+      "description": "P-101 design limit has a maximum safe continuous flow rate of 500 GPM to prevent impeller cavitation."
+    },
+    "ent_b": {
+      "name": "Transfer Procedure P-08",
+      "type": "procedure",
+      "description": "To achieve production targets, operators must run transfer pump P-101 at a rate of 600 GPM."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "pump safe operating flow"
+  },
+  {
+    "pair_id": 12,
+    "ent_a": {
+      "name": "Pump P-101 Specifications",
+      "type": "equipment",
+      "description": "P-101 design limit has a maximum safe continuous flow rate of 500 GPM to prevent impeller cavitation."
+    },
+    "ent_b": {
+      "name": "Normal Transfer P-07",
+      "type": "procedure",
+      "description": "Establishes normal transfer rate for pump P-101 at 400 GPM under standard conditions."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "pump flow rate"
+  },
+  {
+    "pair_id": 13,
+    "ent_a": {
+      "name": "OSHA Noise Standard",
+      "type": "regulation",
+      "description": "Permissible noise exposure limit is 85 dBA. Hearing protection is mandatory for areas above 90 dBA."
+    },
+    "ent_b": {
+      "name": "Compressor Room Procedure P-15",
+      "type": "procedure",
+      "description": "Operating in the compressor vault (measured ambient level 95 dBA); use of hearing protection is optional."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "hearing protection requirement"
+  },
+  {
+    "pair_id": 14,
+    "ent_a": {
+      "name": "OSHA Noise Standard",
+      "type": "regulation",
+      "description": "Permissible noise exposure limit is 85 dBA. Hearing protection is mandatory for areas above 90 dBA."
+    },
+    "ent_b": {
+      "name": "Generator Vault Entry P-16",
+      "type": "procedure",
+      "description": "Vault ambient noise level is 90 dBA. High-reduction ear muffs must be worn by all personnel entering the space."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "hearing protection safety"
+  },
+  {
+    "pair_id": 15,
+    "ent_a": {
+      "name": "Confined Space Entry Standard",
+      "type": "regulation",
+      "description": "Continuous atmospheric oxygen monitoring is required during all class A confined space entries."
+    },
+    "ent_b": {
+      "name": "Vessel Cleanout Procedure P-21",
+      "type": "procedure",
+      "description": "Requires initial gas test prior to class A tank entry; subsequent continuous monitoring is not required."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "confined space oxygen monitoring"
+  },
+  {
+    "pair_id": 16,
+    "ent_a": {
+      "name": "Confined Space Entry Standard",
+      "type": "regulation",
+      "description": "Continuous atmospheric oxygen monitoring is required during all class A confined space entries."
+    },
+    "ent_b": {
+      "name": "Column Inspection Procedure P-22",
+      "type": "procedure",
+      "description": "Establishes entry rules requiring a portable multi-gas detector to remain active inside the column at all times."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "confined space gas safety"
+  },
+  {
+    "pair_id": 17,
+    "ent_a": {
+      "name": "Vessel T-301 Design Data",
+      "type": "equipment",
+      "description": "T-301 maximum allowable working pressure (MAWP) is 15 bar at design temperature."
+    },
+    "ent_b": {
+      "name": "Pressurization Step P-09",
+      "type": "procedure",
+      "description": "During high-pressure reaction phases, operators must raise the pressure inside T-301 to 18 bar."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "vessel pressure limit"
+  },
+  {
+    "pair_id": 18,
+    "ent_a": {
+      "name": "Vessel T-301 Design Data",
+      "type": "equipment",
+      "description": "T-301 maximum allowable working pressure (MAWP) is 15 bar at design temperature."
+    },
+    "ent_b": {
+      "name": "Normal Operating Rules P-10",
+      "type": "procedure",
+      "description": "Normal running operations should maintain pressure inside T-301 at approximately 10 bar."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "vessel operational pressure"
+  },
+  {
+    "pair_id": 19,
+    "ent_a": {
+      "name": "EPA Wastewater Standard",
+      "type": "regulation",
+      "description": "Wastewater effluent must not contain more than 5 ppm concentration of total oil and grease discharge."
+    },
+    "ent_b": {
+      "name": "Effluent Flush Procedure P-33",
+      "type": "procedure",
+      "description": "Allows process discharge lines containing up to 15 ppm oil and grease to flush directly to wastewater sewer."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "wastewater oil concentration"
+  },
+  {
+    "pair_id": 20,
+    "ent_a": {
+      "name": "EPA Wastewater Standard",
+      "type": "regulation",
+      "description": "Wastewater effluent must not contain more than 5 ppm concentration of total oil and grease discharge."
+    },
+    "ent_b": {
+      "name": "Sump Cleanout Procedure P-34",
+      "type": "procedure",
+      "description": "Directs discharge only after treatment verify oil concentration level is below 2 ppm."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "wastewater discharge compliance"
+  },
+  {
+    "pair_id": 21,
+    "ent_a": {
+      "name": "Hot Work Permit Standards",
+      "type": "regulation",
+      "description": "Combustible gas tests must be performed within 30 minutes of starting hot work in hazardous areas."
+    },
+    "ent_b": {
+      "name": "Welding General Procedure P-40",
+      "type": "procedure",
+      "description": "Allows welding to begin up to 4 hours after initial gas tests are completed in the piping corridor."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "hot work gas test window"
+  },
+  {
+    "pair_id": 22,
+    "ent_a": {
+      "name": "Hot Work Permit Standards",
+      "type": "regulation",
+      "description": "Combustible gas tests must be performed within 30 minutes of starting hot work in hazardous areas."
+    },
+    "ent_b": {
+      "name": "Pipe Fitting Repairs P-41",
+      "type": "procedure",
+      "description": "Instructs safety lead to verify gas levels with a calibrated sniffer maximum 15 minutes before hot work starts."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "hot work safety checks"
+  },
+  {
+    "pair_id": 23,
+    "ent_a": {
+      "name": "Valve V-202 Material Specs",
+      "type": "equipment",
+      "description": "V-202 is made of carbon steel and lacks NACE MR0175 certification; not suitable for wet H2S sour service."
+    },
+    "ent_b": {
+      "name": "Sour Gas Start Step P-50",
+      "type": "procedure",
+      "description": "Directs operators to route raw wet sour gas containing up to 2% H2S through the V-202 bypass loop."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "valve sour service suitability"
+  },
+  {
+    "pair_id": 24,
+    "ent_a": {
+      "name": "Valve V-202 Material Specs",
+      "type": "equipment",
+      "description": "V-202 is made of carbon steel and lacks NACE MR0175 certification; not suitable for wet H2S sour service."
+    },
+    "ent_b": {
+      "name": "Sweet Gas Process P-51",
+      "type": "procedure",
+      "description": "Establishes normal routing of dry sweet gas through the V-202 pressure reduction loop."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "valve process service suitability"
+  },
+  {
+    "pair_id": 25,
+    "ent_a": {
+      "name": "Crane Safety Standards",
+      "type": "regulation",
+      "description": "All overhead crane assemblies must receive a physical load certification audit annually (every 12 months)."
+    },
+    "ent_b": {
+      "name": "Overhead Crane 01 Log",
+      "type": "maintenance_log",
+      "description": "Serviced on 2023-08-15. Load testing next due 2024-08-15. Crane remains in active daily service."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "crane load certification schedule"
+  },
+  {
+    "pair_id": 26,
+    "ent_a": {
+      "name": "Crane Safety Standards",
+      "type": "regulation",
+      "description": "All overhead crane assemblies must receive a physical load certification audit annually (every 12 months)."
+    },
+    "ent_b": {
+      "name": "Overhead Crane 02 Log",
+      "type": "maintenance_log",
+      "description": "Serviced on 2026-04-10. Structural and load testing successfully certified on 2026-04-10. Status: Active."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "crane maintenance state"
+  },
+  {
+    "pair_id": 27,
+    "ent_a": {
+      "name": "HAZWOPER Standard",
+      "type": "regulation",
+      "description": "Requires 24 hours of training and annual refreshers for emergency responders dealing with hazmat spills."
+    },
+    "ent_b": {
+      "name": "Spill Management Plan P-60",
+      "type": "procedure",
+      "description": "Permits untrained warehouse operators to respond to chemical leaks after receiving a 1-hour briefing."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "emergency responder training"
+  },
+  {
+    "pair_id": 28,
+    "ent_a": {
+      "name": "HAZWOPER Standard",
+      "type": "regulation",
+      "description": "Requires 24 hours of training and annual refreshers for emergency responders dealing with hazmat spills."
+    },
+    "ent_b": {
+      "name": "Spill Response Procedure P-61",
+      "type": "procedure",
+      "description": "Mandates that only personnel with active, valid 24-hour HAZWOPER certifications may approach release sources."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "emergency response rules"
+  },
+  {
+    "pair_id": 29,
+    "ent_a": {
+      "name": "Pump P-102 Specifications",
+      "type": "equipment",
+      "description": "P-102 bearing housing requires synthetic lubricating oil Mobil SHC 626. Mixing with mineral oil is prohibited."
+    },
+    "ent_b": {
+      "name": "Pump P-102 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Serviced on 2026-01-12. Technician added 2 quarts of mineral-based Chevron Regal R&O 46 oil to reservoir."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "pump lube oil compatibility"
+  },
+  {
+    "pair_id": 30,
+    "ent_a": {
+      "name": "Pump P-102 Specifications",
+      "type": "equipment",
+      "description": "P-102 bearing housing requires synthetic lubricating oil Mobil SHC 626. Mixing with mineral oil is prohibited."
+    },
+    "ent_b": {
+      "name": "Pump P-101 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Serviced on 2026-06-15. Technician topped off reservoir using synthetic lubricant Mobil SHC 626."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "pump lube oil check"
+  },
+  {
+    "pair_id": 31,
+    "ent_a": {
+      "name": "Valve V-202 Limits",
+      "type": "equipment",
+      "description": "Bypass valve V-202 maximum design pressure limit is strictly 100 PSI."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-03",
+      "type": "procedure",
+      "description": "Startup sequence: adjust bypass valve V-202 pressure setpoint regulator to 0.8 MPa."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "unit pressure limit"
+  },
+  {
+    "pair_id": 32,
+    "ent_a": {
+      "name": "Valve V-202 Limits",
+      "type": "equipment",
+      "description": "Bypass valve V-202 maximum design pressure limit is strictly 100 PSI."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-04",
+      "type": "procedure",
+      "description": "Steady state running: adjust bypass valve V-202 regulator target to 0.55 MPa."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "unit pressure check"
+  },
+  {
+    "pair_id": 33,
+    "ent_a": {
+      "name": "Safety Regulation SR-13",
+      "type": "regulation",
+      "description": "Vessel T-301 maximum safe operating temperature limit is 150 C."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-05",
+      "type": "procedure",
+      "description": "Heavy oil startup: heat T-301 process steam coils to maintain vessel fluid at 320 F."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "unit temperature limit"
+  },
+  {
+    "pair_id": 34,
+    "ent_a": {
+      "name": "Safety Regulation SR-13",
+      "type": "regulation",
+      "description": "Vessel T-301 maximum safe operating temperature limit is 150 C."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-06",
+      "type": "procedure",
+      "description": "Water wash sequence: heat T-301 fluid to 250 F."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "unit temperature check"
+  },
+  {
+    "pair_id": 35,
+    "ent_a": {
+      "name": "Pump P-101 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Technician Sarah Connor scheduled for impeller inspection on Shift A, 06:00 to 14:00."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-08",
+      "type": "procedure",
+      "description": "Requires operations team to shut down pump P-101 for impeller check at 15:30 on Shift B."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "shift timeline overlap"
+  },
+  {
+    "pair_id": 36,
+    "ent_a": {
+      "name": "Pump P-101 Maintenance Log",
+      "type": "maintenance_log",
+      "description": "Technician Sarah Connor scheduled for impeller inspection on Shift A, 06:00 to 14:00."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-09",
+      "type": "procedure",
+      "description": "Shut down pump P-101 for mechanical inspection at 10:00 during shift A."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "shift timeline sync"
+  },
+  {
+    "pair_id": 37,
+    "ent_a": {
+      "name": "Shift Safety Standards",
+      "type": "regulation",
+      "description": "Technicians must not work more than 12 consecutive hours in safety critical areas to prevent fatigue errors."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-18",
+      "type": "procedure",
+      "description": "Directs safety watch lead John Doe to run continuous inspection shifts from 08:00 to 22:00."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "max consecutive hours limit"
+  },
+  {
+    "pair_id": 38,
+    "ent_a": {
+      "name": "Shift Safety Standards",
+      "type": "regulation",
+      "description": "Technicians must not work more than 12 consecutive hours in safety critical areas to prevent fatigue errors."
+    },
+    "ent_b": {
+      "name": "Operating Procedure P-19",
+      "type": "procedure",
+      "description": "Assigns safety watch lead John Doe to normal duties from 08:00 to 19:00."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "shift duration check"
+  },
+  {
+    "pair_id": 39,
+    "ent_a": {
+      "name": "Vessel T-301 Design specifications",
+      "type": "equipment",
+      "description": "T-301 is a Class A pressure vessel. Design pressure limit is 15 bar."
+    },
+    "ent_b": {
+      "name": "Testing Procedure P-24",
+      "type": "procedure",
+      "description": "Conduct structural pressure test on vessel T-301 at 18 bar, as required by Class A 1.2x design pressure testing protocols."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "multi-hop regulatory test pressure mismatch (requires 1.5x test pressure = 22.5 bar, not 1.2x)"
+  },
+  {
+    "pair_id": 40,
+    "ent_a": {
+      "name": "Vessel T-301 Design specifications",
+      "type": "equipment",
+      "description": "T-301 is a Class A pressure vessel. Design pressure limit is 15 bar."
+    },
+    "ent_b": {
+      "name": "Testing Procedure P-25",
+      "type": "procedure",
+      "description": "Conduct Class A pressure test on vessel T-301 at 22.5 bar, complying with 1.5x design pressure rules."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "multi-hop regulatory test pressure compliance"
+  },
+  {
+    "pair_id": 41,
+    "ent_a": {
+      "name": "Vessel V-202 Nitrogen service specifications",
+      "type": "equipment",
+      "description": "Vessel V-202 operates in toxic nitrogen gas purge service."
+    },
+    "ent_b": {
+      "name": "Entry Procedure P-28",
+      "type": "procedure",
+      "description": "Technicians entering vessel V-202 must close the single gate valve to isolate the nitrogen line."
+    },
+    "contradiction_expected": true,
+    "conflict_parameter": "multi-hop entry safety mismatch (toxic/nitrogen service requires double block and bleed, not single gate valve)"
+  },
+  {
+    "pair_id": 42,
+    "ent_a": {
+      "name": "Vessel V-202 Nitrogen service specifications",
+      "type": "equipment",
+      "description": "Vessel V-202 operates in toxic nitrogen gas purge service."
+    },
+    "ent_b": {
+      "name": "Entry Procedure P-29",
+      "type": "procedure",
+      "description": "Technicians entering V-202 must lock open the double block and bleed assembly to verify isolate nitrogen line."
+    },
+    "contradiction_expected": false,
+    "conflict_parameter": "multi-hop entry safety compliance"
+  }
+]

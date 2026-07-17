@@ -1,8 +1,67 @@
 # Vigil
 
-**Industrial Knowledge Intelligence Platform -- ET AI Hackathon PS 8**
+Vigil is an industrial knowledge intelligence platform that detects safety and compliance contradictions in engineering procedures, maintenance logs, and regulatory codes at the moment of ingestion.
 
-Industrial organizations manage thousands of fragmented documents: equipment datasheets, maintenance logs, P&IDs, regulatory codes (OSHA, EPA), scanned forms, and operational procedures. When an engineer updates a procedure or a new regulation arrives, no existing tool proactively checks whether the change introduces a safety or compliance conflict with the rest of the knowledge base. Vigil detects those contradictions the moment a document enters the system, not days later during an audit or after an incident.
+---
+
+## 📊 Empirical Evaluation & Performance Benchmarks
+
+### 1. Proactive Contradiction Detection Sweep (n=42 pairs)
+Evaluated against a dataset of 42 concept pairs (21 contradictory, 21 clean). The evaluation pairs were generated with AI assistance, and a subset of hard pairs (implicit, temporal, and multi-hop conflicts) was hand-written to mitigate construction bias.
+
+| Threshold Sweep | True Positives (TP) | False Positives (FP) | True Negatives (TN) | False Negatives (FN) | Precision | Recall | F1-Score |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **0.5** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+| **0.6** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+| **0.7** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | **0.7895** |
+| **0.8** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+
+*Threshold Analysis*: Classifier performance is completely insensitive to the threshold choice in the 0.5 to 0.8 range. This is due to the bimodal distribution of confidence scores, which cleanly separates contradictory vs clean specifications:
+- **Contradictory Cohort**: Average Confidence: **0.6995** (Median: **0.9500**)
+- **Clean Control Cohort**: Average Confidence: **0.0919** (Median: **0.0000**)
+
+We retain **0.7** as the default threshold to provide a robust safety margin against marginal model noise. See details in [docs/contradiction_benchmark_results.md](docs/contradiction_benchmark_results.md).
+
+### 2. QA RAG Performance & Safety Refusal (40-Question Split Benchmark)
+Evaluated against a 40-question golden QA dataset. The queries are split into 30 in-scope (answerable) questions and 10 out-of-scope (unanswerable) questions to evaluate safety-first grounding:
+
+- **QA Faithfulness (In-Scope, n=30)**: **0.8112** (factual grounding of responses)
+- **QA Answer Relevancy (In-Scope, n=30)**: **0.8307** (direct alignment with query intent)
+- **QA Context Precision (In-Scope, n=30)**: **0.7197** (relevance of retrieved directories)
+- **QA Context Recall (In-Scope, n=30)**: **0.7167** (retrieval rate of ground-truth facts)
+- **Correct-Refusal Rate (Out-of-Scope, n=10)**: **1.0000** (10/10 correct safety refusals)
+- **False-Refusal Rate (In-Scope, n=30)**: **0.0667** (2/30 human-verified false refusals)
+
+Full scores are in [docs/ragas_results.md](docs/ragas_results.md) and [docs/ragas_eval_results.csv](docs/ragas_eval_results.csv).
+
+### 3. Retrieval Ablation Study (Local Execution, n=30 questions)
+A local, zero-API-cost retrieval ablation study evaluating vector search quality with and without the FlashRank reranker module:
+
+| Retrieval Method | Hit@5 | MRR (Mean Reciprocal Rank) | Difference |
+| :--- | :---: | :---: | :---: |
+| **Without Reranking** | 0.9667 | 0.8944 | Baseline |
+| **With FlashRank Reranker** | 1.0000 | 0.9333 | MRR +0.0389 |
+
+Full scores are in [docs/retrieval_ablation_results.md](docs/retrieval_ablation_results.md).
+
+---
+
+## ⚠️ Known Limitations & Engineering Trade-offs
+
+1. **Failure Taxonomy on the 6 False Negatives (n=6)**:
+   - **explicit_numeric**: 0 misses out of 10 pairs.
+   - **unit_conversion**: 0 misses out of 2 pairs.
+   - **implicit_operational (Shift/Temporal logic)**: 3 misses out of 6 pairs (IDs: 25, 35, 37).
+   - **multi_hop (Cross-document chaining)**: 3 misses out of 3 pairs (IDs: 23, 39, 41).
+   - *Calibration Boundary*: Every missed pair scored exactly **0.00** confidence (rather than scoring near the 0.7 threshold). This shows the failure mode is non-detection, not miscalibration; no threshold adjustment can recover them. Detailed taxonomy is documented in [docs/contradiction_failure_analysis.md](docs/contradiction_failure_analysis.md).
+   - *Multi-hop Sample Warning*: A 3/3 miss rate on multi-hop is thin (n=3) to declare a category boundary, although it represents a clean qualitative limit.
+2. **The Unit Mismatch Bug (False Positives)**:
+   - The detector treats unit mismatch as a contradiction signal rather than converting the quantities. Clean control pairs 32 and 34 (Expected: Clean) were falsely flagged as contradictions with 0.95 and 0.98 confidence because they contained mixed units (PSI vs MPa, C vs F). Thus, the unit_conversion category has 2/2 recall but 0/2 correctly reasoned controls.
+3. **AI-Assisted Benchmark Bias**: The 42 contradiction pairs were constructed with AI assistance. A set of hard pairs was hand-written to mitigate construction bias. Independent evaluation remains future work.
+4. **Small Sample Size for Out-of-Scope Queries**: The correct-refusal rate of 100% is measured on a small cohort (n=10), yielding a wide statistical confidence interval. This indicates that the guardrails work effectively on this specific evaluation set, rather than proving a general 100% safety rate.
+5. **False Refusal Context Omission**: The 6.67% false-refusal rate (2/30) was human-verified and caused by two questions asking about detailed specifications that are absent from the indexed source files. While the agent correctly refused to answer to prevent hallucination, they are counted as false refusals since they are labeled in-scope.
+6. **Retrieval Ablation Scope**: Retrieval metrics were measured locally with zero LLM calls. Generation quality (Faithfulness, Relevancy) was not measured under this ablation.
+7. **Reranking Resource Trade-off**: Reranking is enabled in Docker/local environments. It is disabled on the free-tier deployment due to the 512MB RAM constraint to avoid out-of-memory crashes. The measured cost of this trade-off is the ablation delta: MRR drops from 0.9333 to 0.8944, and Hit@5 drops from 1.0000 to 0.9667.
 
 ---
 
@@ -17,17 +76,19 @@ If a contradiction exceeds a 0.7 confidence threshold, Vigil automatically gener
 
 This means an operator updating a maintenance bypass procedure that violates an OSHA pressure limit is stopped at ingestion time, not during an inspection.
 
+---
+
 ## Document Parsing Performance
 
 | File Type | Method Used | Approach | Notes |
 |:---|:---|:---|:---|
-| PDF (native/text) | PyMuPDF (primary), pdfplumber (fallback) | Direct text-layer extraction, no LLM call | Benchmarked 50-94% faster than pdfplumber alone across our test corpus |
-| PDF (scanned/image) | OpenRouter vision model | AI-powered OCR with layout understanding | Handles messy real-world scans (tested on a 1995 handwritten survey form with full accuracy) |
-| DOCX | python-docx | Direct XML structure parsing, no LLM call | Preserves headings and paragraph structure for citation accuracy |
-| XLSX / XLS | openpyxl / xlrd | Direct spreadsheet structure parsing, no LLM call | Automatically handles legacy .xls files misencoded as modern .xlsx |
-| CSV | Python csv module | Direct structured parsing, no LLM call | Zero-dependency, deterministic |
+| PDF (text-native) | PyMuPDF (primary), pdfplumber (fallback) | Direct text-layer extraction, no LLM call | PyMuPDF is 80% to 94% faster than pdfplumber |
+| PDF (scanned) | OpenRouter vision model | AI-powered OCR with layout understanding | Handles messy real-world scans |
+| DOCX | python-docx | Direct XML structure parsing | Preserves headings and paragraph structure |
+| XLSX / XLS | openpyxl / xlrd | Direct spreadsheet structure parsing | Handles legacy .xls files misencoded as modern .xlsx |
+| CSV | Python csv module | Direct structured parsing | Zero-dependency, deterministic |
 
-These benchmark times are real, measured results from running the test script [test_parsing.py](apps/backend/scripts/test_parsing.py) against our own local [test_documents/](test_documents/) corpus, rather than synthetic or third-party benchmarks.
+These benchmark times are real, measured results from running the test script [test_parsing.py](apps/backend/scripts/test_parsing.py) against our own local [test_documents/](test_documents/) corpus, rather than synthetic or third-party benchmarks:
 
 | Document | Previous (pdfplumber) | Current (PyMuPDF) | Improvement |
 |:---|:---:|:---:|:---:|
@@ -41,7 +102,7 @@ These benchmark times are real, measured results from running the test script [t
 
 ## Architecture Overview
 
-Full data flow from document ingestion through multi-agent query routing to the frontend dashboard. See [docs/architecture.md](docs/architecture.md) for a detailed breakdown of each step.
+Full data flow from document ingestion through sequential query routing and execution to the frontend dashboard. See [docs/architecture.md](docs/architecture.md) for a detailed breakdown of each step.
 
 ```mermaid
 flowchart TD
@@ -185,7 +246,7 @@ If you have P&ID diagram images and want to visually extract their physical conn
 
 ```bash
 # Extract tag nodes and flow edges from P&ID image
-python p&ID_topology_extractor.py --input test_documents/your_diagram.png
+python pid_topology_extractor.py --input test_documents/your_diagram.png
 ```
 
 Then compile and index the knowledge graph:
@@ -270,37 +331,30 @@ To guarantee high performance and stability on constrained instances (such as Re
 
 ---
 
-## RAGAS Evaluation Results
+## Running the Evaluation Suites
 
-Vigil can be evaluated against a 10-question benchmark spanning compliance, RCA, and copilot queries.
+To execute the performance evaluation suites locally. Note that the sample source documents in `test_documents/` are fully tracked in this repository to guarantee exact reproducibility of all runs.
 
-To execute the performance evaluation suite against the live running FastAPI server:
+1. **RAGAS QA Evaluation**:
+   Make sure the dependencies are installed and run the evaluation suite runner:
+   ```bash
+   python apps/backend/scripts/run_ragas_eval.py
+   ```
+   This will invoke the routed RAG QA pipeline for the 40 golden questions, compute split RAGAS metrics on the 30 in-scope queries, evaluate safety refusals on the 10 out-of-scope queries, and save results to `docs/ragas_results.md`.
 
-```bash
-# Make sure your FastAPI backend is running (e.g., python apps/backend/api.py)
-python evaluate_rag_performance.py
-```
+2. **Contradiction Detection Sweep**:
+   Run the contradiction detection threshold sweep benchmark:
+   ```bash
+   python apps/backend/scripts/run_contradiction_benchmark.py
+   ```
+   This will run pairwise checks on the 42 labeled concept pairs, compute Precision/Recall/F1-score for thresholds 0.5 to 0.8, and output results to `docs/contradiction_benchmark_results.md`.
 
-This will query the live endpoints, calculate metrics (Faithfulness, Relevancy, Precision), and compile a report `RAGAS_EVALUATION_REPORT.md` at the workspace root.
-
-Full pre-run results are in `docs/ragas_results.md` and `docs/ragas_eval_results.csv`.
-
-| Metric | Score |
-|:---|---|
-| Faithfulness | **0.781** |
-| Context Precision | **0.728** |
-| Context Recall | **0.900** |
-| Answer Relevancy | N/A (Pydantic adapter conflict in RAGAS) |
-
-**Honest framing of low scores**: Three questions scored 0.0 on individual metrics, but not because the system gave wrong answers. In each case, Vigil correctly refused to hallucinate:
-
-1. **Context Recall 0.0 on "Safety procedures for pump P-102"**: Vigil correctly reported that no P-102-specific operating manual existed in the knowledge base. RAGAS penalized this because the ground truth expected confirmation that P-102 falls under general PSM scope -- a gap that closes the moment a P-102 manual is ingested.
-
-2. **Context Precision 0.0 on "Maintenance history from P&ID documents"**: The raw P&ID text wasn't in the database (only title block specs), so Vigil correctly stated it couldn't answer from the P&ID. The retrieved contexts were legitimate maintenance logs instead, which RAGAS flagged as off-target.
-
-3. **Faithfulness 0.0 on "Standard format for P&ID equipment info"**: Vigil correctly answered "Equipment Title Blocks" with a citation. RAGAS scored it 0.0 because the LLM's phrasing structure differed from the raw OKF text, not because the answer was wrong.
-
-**8 out of 10 questions scored 1.0 on context recall**, meaning Vigil consistently retrieves the right documents. The system's safety-first design (refusing to answer when context is insufficient) is architecturally deliberate, not a bug.
+3. **Local Retrieval Ablation**:
+   Run the zero-API-cost retrieval ablation benchmark:
+   ```bash
+   python apps/backend/scripts/run_retrieval_ablation.py
+   ```
+   This runs local vector queries for the 30 in-scope questions, comparing Hit@5 and MRR with and without FlashRank reranking, and outputs findings to `docs/retrieval_ablation_results.md`.
 
 ---
 
@@ -330,7 +384,7 @@ vigil/
   AGENTS.md                 # Project constitution (tech stack, rules, conventions)
   .env / .env.example       # Environment variables
   test_agents.py            # CLI test harness for query agents
-  p&ID_topology_extractor.py # P&ID vision visual topology extractor
+  pid_topology_extractor.py # P&ID vision visual topology extractor
   evaluate_rag_performance.py # RAGAS performance evaluation suite (HTTP live API)
   dump_static_json.py       # Exporter utility dumping static json graph/alerts to frontend
   apps/

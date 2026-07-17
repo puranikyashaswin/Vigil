@@ -2,51 +2,241 @@
   {
     "question": "What safety procedures apply to pump P-102?",
     "ground_truth": "Pump P-102 handles process fluids and must comply with process safety management standards under 29 CFR 1910.119 and Clean Air Act Amendments.",
-    "category": "compliance"
+    "category": "compliance",
+    "in_scope": true
   },
   {
     "question": "Is there a calibration schedule conflict for any equipment?",
     "ground_truth": "No direct scheduling conflicts or timeline overlaps are present in the maintenance logs. However, pump P-102 is overdue for calibration, violating P&ID completeness and quality assurance requirements.",
-    "category": "rca"
+    "category": "rca",
+    "in_scope": true
   },
   {
     "question": "What does OSHA 1910.119 require for process safety management?",
     "ground_truth": "OSHA 1910.119 requires process safety management of highly hazardous chemicals to prevent or minimize the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals.",
-    "category": "compliance"
+    "category": "compliance",
+    "in_scope": true
   },
   {
-    "question": "Summarize maintenance history for equipment mentioned in the P&ID documents.",
+    "question": "Summarize the maintenance history for equipment (P-101, P-102, V-202, T-301) using the maintenance logs.",
     "ground_truth": "P-101 was serviced on 2026-06-15 (due 2026-09-15), P-102 was serviced on 2026-01-12 (due 2026-07-12), V-202 was serviced on 2026-05-10 (due 2026-11-10), and T-301 was serviced on 2026-04-20 (due 2026-10-20).",
-    "category": "rca"
+    "category": "rca",
+    "in_scope": true
   },
   {
     "question": "Are there any unresolved compliance alerts right now?",
     "ground_truth": "Yes, there is an active contradiction alert between Safety Regulation SR-12 and Process Procedure P-03, where P-03 specifies a bypass setpoint of 120 PSI, directly violating SR-12's maximum limit of 100 PSI for valve V-202.",
-    "category": "compliance"
+    "category": "compliance",
+    "in_scope": true
   },
   {
     "question": "What is the function of control loops in engineering diagrams?",
     "ground_truth": "Control loops maintain a process condition at a set value by adjusting devices based on feedback from instruments.",
-    "category": "copilot"
+    "category": "copilot",
+    "in_scope": true
   },
   {
     "question": "What standard defines the format for displaying equipment information on a P&ID?",
     "ground_truth": "Equipment Title Blocks define the standard format for displaying equipment information on a Piping and Instrumentation Diagram.",
-    "category": "copilot"
+    "category": "copilot",
+    "in_scope": true
   },
   {
     "question": "Who serviced the equipment T-301 and when is it next due?",
     "ground_truth": "T-301 was serviced by technician Marcus Wright on 2026-04-20, and is next due for service on 2026-10-20.",
-    "category": "rca"
+    "category": "rca",
+    "in_scope": true
   },
   {
     "question": "What is the purpose of the Hazard Communication Standard?",
     "ground_truth": "The Hazard Communication Standard is a standard for communicating hazards associated with chemicals in the workplace.",
-    "category": "compliance"
+    "category": "compliance",
+    "in_scope": true
   },
   {
     "question": "What does a Piping and Instrumentation Diagram (P&ID) show?",
     "ground_truth": "Piping and Instrumentation Diagrams (P&IDs) show the piping, instruments, and equipment in a process plant, defining their connections and configurations.",
-    "category": "copilot"
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "Why is process procedure P-03 in non-compliance with Safety Regulation SR-12?",
+    "ground_truth": "Process procedure P-03 directs setting the V-202 bypass to 120 PSI, which contradicts Safety Regulation SR-12's maximum allowable limit of 100 PSI for valve V-202.",
+    "category": "compliance",
+    "in_scope": true
+  },
+  {
+    "question": "What is the maintenance status of pump P-101 and who serviced it last?",
+    "ground_truth": "Pump P-101 was last serviced by technician Sarah Connor on 2026-06-15. Its current status is pending an impeller check.",
+    "category": "rca",
+    "in_scope": true
+  },
+  {
+    "question": "Is pump P-102 currently compliant with its calibration schedule?",
+    "ground_truth": "No, pump P-102 was last serviced on 2026-01-12 and was due for calibration on 2026-07-12. It is currently overdue for calibration.",
+    "category": "rca",
+    "in_scope": true
+  },
+  {
+    "question": "Which federal law established the Occupational Safety and Health Administration (OSHA)?",
+    "ground_truth": "The Occupational Safety and Health Act of 1970 is the federal law that established the Occupational Safety and Health Administration (OSHA).",
+    "category": "compliance",
+    "in_scope": true
+  },
+  {
+    "question": "What is the primary function of Piping and Instrumentation Diagrams (P&IDs)?",
+    "ground_truth": "P&IDs show the piping, instruments, and equipment in a process plant, defining their connections, configurations, and physical control schemes.",
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "What is the difference between PFDs and P&IDs?",
+    "ground_truth": "Process Flow Diagrams (PFDs) are simplified schematics showing general flow paths and primary equipment, which are used to develop the detailed Piping and Instrumentation Diagrams (P&IDs).",
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "What is the role of logic diagrams in industrial equipment?",
+    "ground_truth": "Logic diagrams describe the Boolean control loops and ladder logic systems used to configure automated interlocking safety controls on equipment.",
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "What does a SCADA network diagram show?",
+    "ground_truth": "SCADA network diagrams depict the overall block architecture of the supervisory control and data acquisition systems, showing remote monitoring links and network paths.",
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "Identify the technician who serviced valve V-202 and the last service date.",
+    "ground_truth": "Valve V-202 was serviced by technician John Doe on 2026-05-10, and the maintenance task was completed successfully.",
+    "category": "rca",
+    "in_scope": true
+  },
+  {
+    "question": "What does Clean Air Act Section 112(r) focus on?",
+    "ground_truth": "Clean Air Act Section 112(r) focuses on preventing accidental releases of hazardous chemicals and requires facilities to identify hazards and manage chemical safety.",
+    "category": "compliance",
+    "in_scope": true
+  },
+  {
+    "question": "What are the core requirements of 29 CFR 1910.119?",
+    "ground_truth": "29 CFR 1910.119 requires process safety management (PSM) plans covering employee participation, process safety information, process hazard analysis, and operating procedures for hazardous chemicals.",
+    "category": "compliance",
+    "in_scope": true
+  },
+  {
+    "question": "What parameters do instrument schematics show?",
+    "ground_truth": "Instrument schematics show detailed instrumentation drawing details, including physical location, wiring terminations, and terminal block points.",
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "What is the purpose of instrument loop elements in a P&ID?",
+    "ground_truth": "Instrument loop elements represent the combination of sensors, transmitters, and controllers that act together in a control loop to monitor or regulate parameters.",
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "Describe the format of wiring diagrams.",
+    "ground_truth": "Wiring diagrams show actual physical connections, wire routing, and terminals between electrical components in a control system.",
+    "category": "copilot",
+    "in_scope": true
+  },
+  {
+    "question": "How does the Hazard Communication Standard help employees?",
+    "ground_truth": "The Hazard Communication Standard requires chemical manufacturers and employers to classify chemical hazards and provide labels and safety data sheets (SDS) to workers.",
+    "category": "compliance",
+    "in_scope": true
+  },
+  {
+    "question": "What equipment tags are mentioned in the maintenance logs?",
+    "ground_truth": "The maintenance logs mention equipment tags P-101 (pump), P-102 (pump), V-202 (valve), and T-301 (tank).",
+    "category": "rca",
+    "in_scope": true
+  },
+  {
+    "question": "What is the maximum pressure permitted for valve V-202 under safety regulations?",
+    "ground_truth": "Under Safety Regulation SR-12, the maximum pressure permitted for bypass valve V-202 is 100 PSI under any operating condition.",
+    "category": "compliance",
+    "in_scope": true
+  },
+  {
+    "question": "Summarize the maintenance work completed on vessel T-301.",
+    "ground_truth": "Vessel T-301 was serviced on 2026-04-20 by technician Marcus Wright. The maintenance work was successfully completed with status nominal.",
+    "category": "rca",
+    "in_scope": true
+  },
+  {
+    "question": "Under what process safety standard does pump P-102 operate?",
+    "ground_truth": "Pump P-102 operates under process safety management standards under 29 CFR 1910.119 and Clean Air Act Amendments.",
+    "category": "compliance",
+    "in_scope": true
+  },
+  {
+    "question": "Are there any recurring valve setpoint contradictions in the procedures?",
+    "ground_truth": "Yes, a recurring contradiction occurs on valve V-202, where Operating Procedure P-03 directs setting the bypass to 120 PSI, violating Safety Regulation SR-12's 100 PSI maximum limit.",
+    "category": "lessons_learned",
+    "in_scope": true
+  },
+  {
+    "question": "What are the safety procedures for compressor C-401?",
+    "ground_truth": "Vigil should refuse this query because compressor C-401 is not documented in the local knowledge base.",
+    "category": "compliance",
+    "in_scope": false
+  },
+  {
+    "question": "Provide the wiring terminal layout for control panel CP-09.",
+    "ground_truth": "Vigil should refuse this query because control panel CP-09 is not documented in the local knowledge base.",
+    "category": "copilot",
+    "in_scope": false
+  },
+  {
+    "question": "Explain the emergency shutdown sequence for reactor R-501.",
+    "ground_truth": "Vigil should refuse this query because reactor R-501 is not documented in the local knowledge base.",
+    "category": "compliance",
+    "in_scope": false
+  },
+  {
+    "question": "Summarize the maintenance history of pump P-303.",
+    "ground_truth": "Vigil should refuse this query because pump P-303 is not documented in the local knowledge base.",
+    "category": "rca",
+    "in_scope": false
+  },
+  {
+    "question": "What standard regulates offshore drilling platform safety in Vigil's database?",
+    "ground_truth": "Vigil should refuse this query because offshore drilling platform safety standards are not documented in the local knowledge base.",
+    "category": "compliance",
+    "in_scope": false
+  },
+  {
+    "question": "How often must valve V-909 be inspected?",
+    "ground_truth": "Vigil should refuse this query because valve V-909 is not documented in the local knowledge base.",
+    "category": "rca",
+    "in_scope": false
+  },
+  {
+    "question": "What is the pressure limit of vessel T-901?",
+    "ground_truth": "Vigil should refuse this query because vessel T-901 is not documented in the local knowledge base.",
+    "category": "compliance",
+    "in_scope": false
+  },
+  {
+    "question": "Which contractor performed the pipeline repair on line L-900?",
+    "ground_truth": "Vigil should refuse this query because pipeline L-900 is not documented in the local knowledge base.",
+    "category": "rca",
+    "in_scope": false
+  },
+  {
+    "question": "What is the safety procedure for boiler B-101?",
+    "ground_truth": "Vigil should refuse this query because boiler B-101 is not documented in the local knowledge base.",
+    "category": "compliance",
+    "in_scope": false
+  },
+  {
+    "question": "Are there any active maintenance alerts for turbine T-800?",
+    "ground_truth": "Vigil should refuse this query because turbine T-800 is not documented in the local knowledge base.",
+    "category": "rca",
+    "in_scope": false
   }
 ]

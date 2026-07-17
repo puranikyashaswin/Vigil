@@ -30,7 +30,7 @@ export default function PipelineStatusOverlay({
             <div className="text-brand-mid-gray">
               {pipelineStep === 1 && "▶ [1/6] INTENT ROUTER: Classifying query intent..."}
               {pipelineStep === 2 && "▶ [2/6] VECTOR RETRIEVAL: Querying Qdrant points..."}
-              {pipelineStep === 3 && "▶ [3/6] FLASH-RANK: Reranking matching contexts..."}
+              {pipelineStep === 3 && "▶ [3/6] RERANK PROCESS: Optimizing context relevance..."}
               {pipelineStep === 4 && "▶ [4/6] CORE AGENT: Synthesizing response..."}
               {pipelineStep === 5 && "▶ [5/6] CONTRADICTION GUARD: Evaluating safety and conflicts..."}
               {pipelineStep === 6 && "▶ [6/6] TELEMETRY PIPELINE: Logging RAGAS metrics..."}

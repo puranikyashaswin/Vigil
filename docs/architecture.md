@@ -53,7 +53,7 @@ flowchart TD
 |:---|:---|
 | Type Detection | Examines file extension and MIME type; routes text-native documents to local parsers, scanned images to OpenRouter OCR or the Topology Extractor |
 | Local Parsers | `pdfplumber` (text PDFs), `python-docx`, `openpyxl`/`xlrd` (spreadsheets); structured table extraction into Markdown |
-| OpenRouter OCR | Free-tier vision models (`nvidia/nemotron-nano-12b-v2-vl:free`) with automatic fallback chain. P&ID images go through the `p&ID_topology_extractor.py` to extract connectivity networks (nodes and edges). |
+| OpenRouter OCR | Free-tier vision models (`nvidia/nemotron-nano-12b-v2-vl:free`) with automatic fallback chain. P&ID images go through the `pid_topology_extractor.py` to extract connectivity networks (nodes and edges). |
 | Entity Extraction | LLM extracts entities into Pydantic-validated JSON; self-repair retry on invalid schema; generic fallback concept on second failure |
 | OKF Writer | Writes Markdown files with YAML frontmatter to `knowledge_graph/` subdirectories; appends to `index.md` and `log.md` |
 | Contradiction Detection | Forward check (new concept vs. all it links to) + Reverse check (all concepts linking to the new one); LLM comparison at `temp=0.0` |

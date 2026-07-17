@@ -105,7 +105,7 @@ Vigil's architecture consists of one central Ingestion Pipeline and four distinc
 ## 5. Code Style & Conventions
 
 ### General Text & Formatting
-- **No Em Dashes**: Never use em dashes (—) anywhere in this project - not in code comments, docstrings, READMEs, commit messages, or any generated markdown documentation. Use regular hyphens, colons, or restructure the sentence instead.
+- **No Em Dashes**: Never use em dashes (—) anywhere in this project - not in code comments, docstrings, READMEs, commit messages, or any generated markdown documentation. Use regular hyphens, colons, or restructure the sentence instead. An exception is allowed for raw, verbatim external logs or LLM-generated outputs in logs/ or interactions.jsonl, which should not be modified.
 
 ### Python (Backend)
 - **Linting & Formatting**: Follow PEP 8 guidelines. Use `black` and `isort`.
