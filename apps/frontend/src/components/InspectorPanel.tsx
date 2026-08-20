@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Database, ExternalLink, Calendar, ShieldAlert, AlertTriangle, CheckCircle2, Clock, Play, Sparkles } from "lucide-react";
+import { Database, ExternalLink, AlertTriangle, CheckCircle2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Node } from "@/types";
 import InspectorTimeline from "./InspectorTimeline";

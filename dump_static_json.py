@@ -6,13 +6,16 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), "apps", "backend"))
 from api import get_graph_data, get_alerts
 
+
 def main() -> None:
     print("Reading and building graph data from knowledge_graph/...")
     try:
         graph_data = get_graph_data()
         alerts_data = get_alerts()
 
-        public_dir = os.path.join(os.path.dirname(__file__), "apps", "frontend", "public")
+        public_dir = os.path.join(
+            os.path.dirname(__file__), "apps", "frontend", "public"
+        )
         os.makedirs(public_dir, exist_ok=True)
 
         graph_path = os.path.join(public_dir, "mock_graph.json")
@@ -29,6 +32,7 @@ def main() -> None:
     except Exception as e:
         print(f"Error during export: {str(e)}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -278,60 +278,23 @@ def get_alerts() -> List[Dict[str, Any]]:
     return alerts
 
 
+from admin_utils import (
+    generate_compliance_zip,
+    perform_kg_indexing,
+    get_debug_collection_info,
+)
+
+
 @api.get("/api/compliance/export")
 def export_compliance_package() -> StreamingResponse:
     """
     Auto-generates a compliance evidence zip package containing checklist,
     ingested regulations, active procedures, and contradiction alerts.
     """
-    logger.info("Generating compliance evidence package...")
     kg_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
     )
-
-    zip_buffer = io.BytesIO()
-    try:
-        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-            # Generate audit checklist summary markdown
-            checklist_content = (
-                "# Vigil Compliance Audit & Evidence Package\n\n"
-                f"Generated on: {datetime.now().isoformat()}\n"
-                "This package serves as verifiable compliance evidence for audit evaluation.\n\n"
-                "## Summary of Active Concept Indexes:\n"
-            )
-
-            # Traverse directories and add OKF markdown files
-            if os.path.exists(kg_dir):
-                for root, _, files in os.walk(kg_dir):
-                    for file in files:
-                        if file.endswith(".md") and file not in ["index.md", "log.md"]:
-                            file_path = os.path.join(root, file)
-                            rel_path = os.path.relpath(file_path, kg_dir)
-                            zip_file.write(file_path, arcname=f"evidence/{rel_path}")
-
-                            # Parse title/description for checklist index
-                            try:
-                                with open(file_path, "r", encoding="utf-8") as f:
-                                    content = f.read()
-                                meta = parse_frontmatter(content)
-                                checklist_content += f"- **[{meta.get('type', 'concept').upper()}]** {meta.get('title', file)} (`{rel_path}`)\n"
-                                if meta.get("description"):
-                                    checklist_content += f"  - *Description*: {meta.get('description')}\n"
-                            except Exception as parse_err:
-                                logger.warning(
-                                    f"Could not parse frontmatter for {file}: {str(parse_err)}"
-                                )
-                                checklist_content += f"- `{rel_path}`\n"
-
-            # Write checklist file to zip
-            zip_file.writestr("evidence_checklist.md", checklist_content)
-    except Exception as e:
-        logger.error(f"Failed to compile compliance evidence ZIP: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate audit package: {str(e)}"
-        )
-
-    zip_buffer.seek(0)
+    zip_buffer = generate_compliance_zip(kg_dir, parse_frontmatter)
     return StreamingResponse(
         zip_buffer,
         media_type="application/x-zip-compressed",
@@ -347,88 +310,10 @@ def index_all_kg_documents() -> Dict[str, Any]:
     Reads all OKF files from the repository's knowledge_graph/ folder
     and indexes them into the Qdrant Cloud cluster.
     """
-    try:
-        from scripts.index_graph import (
-            load_okf_files,
-            get_qdrant_client,
-            COLLECTION_NAME,
-            chunk_text,
-        )
-        from retrieval import _embedding_model as embedding_model
-        from qdrant_client.http.models import Distance, VectorParams, PointStruct
-
-        kg_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
-        )
-        if not os.path.exists(kg_dir):
-            raise HTTPException(
-                status_code=404, detail="knowledge_graph folder not found on server"
-            )
-
-        documents = load_okf_files(kg_dir)
-        q_client = get_qdrant_client()
-
-        # Recreate collection
-        try:
-            q_client.delete_collection(COLLECTION_NAME)
-        except Exception:
-            pass
-
-        q_client.create_collection(
-            collection_name=COLLECTION_NAME,
-            vectors_config=VectorParams(size=384, distance=Distance.COSINE),
-        )
-
-        # Create keyword payload index on directory field for strict category filtering on Qdrant Cloud
-        from qdrant_client.http.models import PayloadSchemaType
-
-        q_client.create_payload_index(
-            collection_name=COLLECTION_NAME,
-            field_name="directory",
-            field_schema=PayloadSchemaType.KEYWORD,
-        )
-
-        all_chunks = []
-        for doc in documents:
-            chunks = chunk_text(doc["text"])
-            for chunk in chunks:
-                all_chunks.append(
-                    {
-                        "doc": doc,
-                        "chunk": chunk,
-                        "embed_text": f"Title: {doc['title']}\nType: {doc['type']}\nContent: {chunk}",
-                    }
-                )
-
-        embed_texts = [c["embed_text"] for c in all_chunks]
-        embeddings = list(embedding_model.embed(embed_texts, batch_size=32))
-
-        points = []
-        for idx, (c_info, vector) in enumerate(zip(all_chunks, embeddings), start=1):
-            doc = c_info["doc"]
-            payload = {
-                "file_path": doc["file_path"],
-                "directory": doc["directory"],
-                "text": c_info["chunk"],
-                "type": doc["type"],
-                "title": doc["title"],
-            }
-            points.append(PointStruct(id=idx, vector=list(vector), payload=payload))
-
-        # Batch upsert
-        BATCH_SIZE = 500
-        for i in range(0, len(points), BATCH_SIZE):
-            batch = points[i : i + BATCH_SIZE]
-            q_client.upsert(collection_name=COLLECTION_NAME, points=batch)
-
-        return {
-            "status": "success",
-            "indexed_documents": len(documents),
-            "vectors_count": len(points),
-        }
-    except Exception as e:
-        logger.error(f"Failed admin indexing: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    kg_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
+    )
+    return perform_kg_indexing(kg_dir)
 
 
 @api.on_event("startup")
@@ -464,32 +349,7 @@ def auto_seed_knowledge_graph_on_startup() -> None:
 @api.get("/api/admin/debug-qdrant")
 def debug_qdrant_collection() -> Dict[str, Any]:
     try:
-        from scripts.index_graph import get_qdrant_client, COLLECTION_NAME
-
-        q_client = get_qdrant_client()
-
-        # Get collection info
-        collection_info = q_client.get_collection(COLLECTION_NAME)
-
-        # Scroll points
-        points, _ = q_client.scroll(
-            collection_name=COLLECTION_NAME,
-            limit=5,
-            with_payload=True,
-            with_vectors=False,
-        )
-
-        points_debug = []
-        for p in points:
-            points_debug.append({"id": p.id, "payload": p.payload})
-
-        return {
-            "status": "success",
-            "collection_name": COLLECTION_NAME,
-            "points_count": collection_info.points_count,
-            "status_info": str(collection_info.status),
-            "sample_points": points_debug,
-        }
+        return get_debug_collection_info()
     except Exception as e:
         logger.error(f"Debug Qdrant failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -25,15 +25,13 @@ function useCardSize() {
 }
 
 function FlapCard({ target, cardSize }: { target: string; cardSize: { w: number; h: number; fontSize: string } }) {
-  const [char, setChar] = useState(" ");
+  const [char, setChar] = useState(() => CHARS[Math.floor(Math.random() * CHARS.length)]);
   const [prevChar, setPrevChar] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(true);
 
   useEffect(() => {
-    const startChar = CHARS[Math.floor(Math.random() * CHARS.length)];
-    setChar(startChar);
-    
-    let index = CHARS.indexOf(startChar);
+    const startChar = char;
+    const index = CHARS.indexOf(startChar);
     const tIndex = target === " " ? 0 : CHARS.indexOf(target);
     if (tIndex === -1) {
       setIsAnimating(false);

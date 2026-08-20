@@ -27,7 +27,7 @@ export function renderMarkdown(text: string): string {
   let inList = false;
   const processedLines = [];
   
-  for (let line of lines) {
+  for (const line of lines) {
     const listMatch = line.match(/^(\*|-)\s+(.+)$/);
     if (listMatch) {
       if (!inList) {

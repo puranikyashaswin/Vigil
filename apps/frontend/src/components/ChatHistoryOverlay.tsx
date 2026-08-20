@@ -77,7 +77,7 @@ export default function ChatHistoryOverlay({
           animate="animate"
           exit="exit"
           variants={variants}
-          transition={transition as any}
+          transition={transition}
           drag={isMobile ? "y" : false}
           dragConstraints={{ top: 0 }}
           dragElastic={{ top: 0.05, bottom: 0.8 }}

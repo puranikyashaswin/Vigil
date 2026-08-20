@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Eye, Cpu, ShieldAlert, Database, Play, X, CheckCircle2, Layers, Server, Activity, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { FileText, Eye, Cpu, ShieldAlert, Database, Play, X, Layers, Server, Activity } from "lucide-react";
 import PerformanceTelemetry from "./PerformanceTelemetry";
 import PipelineStepsGrid from "./PipelineStepsGrid";
 import DocumentSelector from "./DocumentSelector";

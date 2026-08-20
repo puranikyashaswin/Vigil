@@ -11,7 +11,7 @@ from pydantic import BaseModel
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("vigil.telemetry_mock")
 
@@ -26,6 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class TelemetryDataPoint(BaseModel):
     timestamp: str
     temperature_celsius: float
@@ -33,9 +34,11 @@ class TelemetryDataPoint(BaseModel):
     vibration_mm_s: float
     motor_rpm: float
 
+
 @app.get("/api/health")
 def health_check() -> Dict[str, str]:
     return {"status": "ok", "service": "telemetry_mock_server"}
+
 
 @app.get("/api/telemetry/{equipment_tag}")
 def get_telemetry(equipment_tag: str) -> List[TelemetryDataPoint]:
@@ -45,7 +48,7 @@ def get_telemetry(equipment_tag: str) -> List[TelemetryDataPoint]:
     """
     tag = equipment_tag.upper().strip()
     logger.info(f"Generating telemetry data for equipment tag: {tag}")
-    
+
     # Verify valid tag shape (e.g. P-101, V-202, T-301)
     if not tag:
         raise HTTPException(status_code=400, detail="Invalid equipment tag format.")
@@ -76,7 +79,7 @@ def get_telemetry(equipment_tag: str) -> List[TelemetryDataPoint]:
         if tag == "P-101" and hour <= 3:
             # Gradual climb over the last 4 hours (hour = 3, 2, 1, 0)
             severity_mult = 4 - hour  # 1 at 3 hours ago, 4 at current hour
-            
+
             # Pressure climbs from ~30 bar to ~48 bar (exceeding critical 45 bar threshold)
             press += severity_mult * 4.5
             # Temperature climbs from ~45C to ~67C
@@ -92,13 +95,15 @@ def get_telemetry(equipment_tag: str) -> List[TelemetryDataPoint]:
                 temperature_celsius=round(temp, 2),
                 pressure_bar=round(press, 2),
                 vibration_mm_s=round(vib, 2),
-                motor_rpm=round(rpm, 1)
+                motor_rpm=round(rpm, 1),
             )
         )
 
     return data_points
 
+
 if __name__ == "__main__":
     import uvicorn
+
     # Serve mock telemetry API on port 8001 to prevent conflicts with api.py on port 8000
     uvicorn.run(app, host="127.0.0.1", port=8001)
