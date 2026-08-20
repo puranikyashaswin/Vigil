@@ -87,12 +87,13 @@ def extract_entities_llm(text: str, self_repair_error: str = None) -> str:
     else:
         user_content = f"Raw text to analyze:\n---\n{text}\n---\n"
 
-    return call_llm(
+    result = call_llm(
         task="extraction",
         system_prompt=EXTRACTION_SYSTEM_PROMPT,
         user_content=user_content,
         temperature=0.0,
     )
+    return result.text
 
 
 def run_extraction_flow(text: str, fallback_title: str) -> ExtractedEntitiesList:

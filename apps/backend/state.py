@@ -1,13 +1,21 @@
 import os
 import logging
-from typing import TypedDict, List, Dict, Any, Optional
+from typing import TypedDict, List, Dict, Any, Optional, Annotated
 from qdrant_client import QdrantClient
 
-# Set up logging
 logger = logging.getLogger("vigil.state")
 
 
-# 1. State Schemas
+def merge_metadata(a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:
+    """Reducer for parallel node metadata writes. Merges dicts, concatenates trace lists."""
+    merged = {**a, **b}
+    if "trace" in a and "trace" in b:
+        merged["trace"] = a["trace"] + b["trace"]
+    if "node_metrics" in a and "node_metrics" in b:
+        merged["node_metrics"] = {**a["node_metrics"], **b["node_metrics"]}
+    return merged
+
+
 class RagasLog(TypedDict):
     question: str
     contexts: List[str]
@@ -27,13 +35,12 @@ class AgentState(TypedDict):
     citations: List[Citation]
     generated_response: str
     ragas_log: Optional[RagasLog]
-    metadata: Dict[str, Any]
+    metadata: Annotated[Dict[str, Any], merge_metadata]
 
 
 _global_qdrant_client: Optional[QdrantClient] = None
 
 
-# 2. Helpers for clients
 def get_qdrant_client() -> QdrantClient:
     global _global_qdrant_client
     if _global_qdrant_client is not None:

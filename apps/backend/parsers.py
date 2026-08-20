@@ -305,15 +305,15 @@ def parse_via_vision_ocr(file_path: str) -> Tuple[str, str]:
         if len(base64_images) > 1:
             logger.info(f"Transcribing page {idx+1}/{len(base64_images)}")
 
-        text = call_llm_vision(
+        result = call_llm_vision(
             task="ocr",
             system_prompt=system_prompt,
             image_base64=base64_image,
             media_type=media_type,
             text_prompt="Transcribe all text from this document image exactly.",
         )
-        transcriptions.append(text)
+        transcriptions.append(result.text)
 
-    model_used = "us.anthropic.claude-sonnet-4-6-v1"
+    model_used = "us.anthropic.claude-sonnet-4-6"
     logger.info(f"OCR completed using {model_used} for {len(base64_images)} page(s)")
     return "\n\n--- Page Break ---\n\n".join(transcriptions), model_used

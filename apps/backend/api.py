@@ -1,6 +1,8 @@
 import os
 import sys
+import json
 import logging
+from time import perf_counter
 from typing import Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -75,6 +77,214 @@ def run_query(request: QueryRequest) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error executing agent query: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api.post("/api/query/stream")
+def run_query_stream(request: QueryRequest):
+    """
+    Streaming version of /api/query. Returns Server-Sent Events:
+    - event: step (pipeline progress)
+    - event: token (generated text chunks)
+    - event: done (final metadata + citations)
+    """
+    from shared_utils import call_llm, is_bedrock_configured, _get_bedrock_client, MODEL_ROUTER, MAX_TOKENS_ROUTER, LLMResponse
+    from retrieval import retrieve_context_node, rerank_context_node, _embedding_model, COLLECTION_NAME, get_qdrant_client, compute_confidence
+    from nodes import route_query_intent, get_mock_telemetry_data, is_failed_generation, contradiction_guard_node
+    from state import AgentState
+    import re
+
+    def generate_sse():
+        t_start = perf_counter()
+        query = request.query
+
+        # Step 1: Route intent
+        yield f"event: step\ndata: {{\"step\": 1, \"label\": \"Classifying intent...\"}}\n\n"
+        state: AgentState = {
+            "query": query, "category": "", "retrieved_contexts": [],
+            "citations": [], "generated_response": "", "ragas_log": None, "metadata": {},
+        }
+        route_result = route_query_intent(state)
+        category = route_result["category"]
+        state["category"] = category
+        state["metadata"] = route_result["metadata"]
+
+        # Step 2: Retrieve
+        yield f"event: step\ndata: {{\"step\": 2, \"label\": \"Searching knowledge base...\"}}\n\n"
+        retrieve_result = retrieve_context_node(state)
+        state["retrieved_contexts"] = retrieve_result["retrieved_contexts"]
+        state["metadata"] = {**state["metadata"], **retrieve_result["metadata"]}
+        if "trace" in state["metadata"] and "trace" in retrieve_result["metadata"]:
+            state["metadata"]["trace"] = state["metadata"].get("trace", [])
+            if "retrieve_context" not in state["metadata"]["trace"]:
+                state["metadata"]["trace"].append("retrieve_context")
+
+        # Step 3: Rerank
+        yield f"event: step\ndata: {{\"step\": 3, \"label\": \"Ranking results...\"}}\n\n"
+        rerank_result = rerank_context_node(state)
+        state["citations"] = rerank_result["citations"]
+        state["retrieved_contexts"] = rerank_result["retrieved_contexts"]
+        for k, v in rerank_result.get("metadata", {}).items():
+            if k == "node_metrics":
+                state["metadata"].setdefault("node_metrics", {}).update(v)
+            elif k == "trace":
+                state["metadata"].setdefault("trace", []).extend(v)
+            else:
+                state["metadata"][k] = v
+
+        citations = state["citations"]
+        contexts = state["retrieved_contexts"]
+
+        # Step 4: Stream generation
+        yield f"event: step\ndata: {{\"step\": 4, \"label\": \"Generating response...\"}}\n\n"
+        yield f"event: category\ndata: {{\"category\": \"{category}\"}}\n\n"
+
+        # Build the prompt (same logic as synthesize_response_node)
+        if not contexts or (citations and max(c["score"] for c in citations) < 0.55):
+            system_prompt = (
+                "You are the Vigil Expert Agent. Explain that no relevant equipment specs, "
+                "procedures, regulations, or maintenance logs were found in the knowledge base. "
+                "Politely decline to hallucinate and advise the user to ingest relevant source documents."
+            )
+            user_prompt = query
+        else:
+            telemetry_block = ""
+            if category == "rca":
+                tag_match = re.search(r"\b[PVT]-[0-9]{3}\b", query.upper())
+                if tag_match:
+                    telemetry_block = get_mock_telemetry_data(tag_match.group(0))
+
+            context_block = "\n\n".join(
+                [f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(citations))]
+            )
+
+            if category == "copilot":
+                system_prompt = (
+                    "You are the Vigil Expert Copilot Agent. Answer the user's technical query using the provided context.\n\n"
+                    "RULES:\n- Ground your answer strictly in the sources. Cite specific documents by name.\n"
+                    "- Use markdown tables when comparing specifications.\n- Never hallucinate.\n\n"
+                    "FORMAT: Start with a 1-sentence summary, then detailed evidence."
+                )
+            elif category == "rca":
+                system_prompt = (
+                    "You are the Vigil Maintenance & RCA Agent.\n\nRULES:\n"
+                    "- Structure as: OBSERVATION -> ANALYSIS -> ROOT CAUSE -> RECOMMENDATION\n"
+                    "- Present readings in comparison tables. Cite log entries.\n- Never hallucinate."
+                )
+            elif category == "compliance":
+                system_prompt = (
+                    "You are the Vigil Compliance Agent.\n\nRULES:\n"
+                    "- Present as compliance matrix: | Requirement | Procedure | Status | Gap |\n"
+                    "- Status: COMPLIANT, NON-COMPLIANT, PARTIAL, UNVERIFIED\n"
+                    "- Start with overall score. Never hallucinate regulations."
+                )
+            else:
+                system_prompt = (
+                    "You are the Vigil Lessons-Learned Engine.\n\nRULES:\n"
+                    "- Summary table: | Pattern | Frequency | Severity | Fix |\n"
+                    "- Ground every pattern in 2+ citations. Never invent patterns."
+                )
+
+            user_prompt = f"Context:\n{context_block}\n\n"
+            if telemetry_block:
+                user_prompt += f"Real-Time Telemetry:\n{telemetry_block}\n\n"
+            user_prompt += f"Query: {query}"
+
+        # Stream tokens from Bedrock
+        full_response = ""
+        t_gen_start = perf_counter()
+        input_tokens = 0
+        output_tokens = 0
+
+        if is_bedrock_configured():
+            try:
+                client = _get_bedrock_client()
+                model = MODEL_ROUTER.get("generation", "us.anthropic.claude-sonnet-4-6")
+                max_tok = MAX_TOKENS_ROUTER.get("generation", 4096)
+
+                with client.messages.stream(
+                    model=model,
+                    max_tokens=max_tok,
+                    temperature=0.0,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": user_prompt}],
+                ) as stream:
+                    for text in stream.text_stream:
+                        full_response += text
+                        escaped = json.dumps(text)
+                        yield f"event: token\ndata: {{\"token\": {escaped}}}\n\n"
+
+                    final_message = stream.get_final_message()
+                    input_tokens = final_message.usage.input_tokens
+                    output_tokens = final_message.usage.output_tokens
+            except Exception as e:
+                logger.error(f"Streaming generation failed: {str(e)}")
+                full_response = "Error generating response. Please try again."
+                yield f"event: token\ndata: {{\"token\": {json.dumps(full_response)}}}\n\n"
+        else:
+            try:
+                result = call_llm(task="generation", system_prompt=system_prompt, user_content=user_prompt, temperature=0.0)
+                full_response = result.text
+                input_tokens = result.input_tokens
+                output_tokens = result.output_tokens
+                yield f"event: token\ndata: {{\"token\": {json.dumps(full_response)}}}\n\n"
+            except Exception as e:
+                full_response = "Error generating response."
+                yield f"event: token\ndata: {{\"token\": {json.dumps(full_response)}}}\n\n"
+
+        gen_latency = round((perf_counter() - t_gen_start) * 1000, 1)
+
+        # Step 5: Contradiction guard (skip logic inline)
+        yield f"event: step\ndata: {{\"step\": 5, \"label\": \"Safety check...\"}}\n\n"
+        confidence = state["metadata"].get("confidence", {})
+        guard_skipped = True
+        if (contexts and confidence.get("score", 0) <= 0.85
+            and len(full_response.split()) >= 50
+            and not any(p in full_response.lower() for p in ["no relevant", "falls outside", "outside the scope"])):
+            guard_skipped = False
+            try:
+                guard_result = call_llm(
+                    task="contradiction_guard",
+                    system_prompt="Compare the AI answer against source documents. Output 'SAFE' if aligned, else brief explanation.",
+                    user_content=f"AI Answer:\n{full_response}\n\nSources:\n{chr(10).join(contexts[:5])}",
+                    temperature=0.0,
+                )
+                guard_text = guard_result.text.strip()
+                first_word = re.findall(r"\b[a-zA-Z]+\b", guard_text)
+                if first_word and first_word[0].upper() != "SAFE":
+                    warning = f"⚠️ [SAFETY WARNING: Potential Contradiction Detected]\n{guard_text}\n\n"
+                    full_response = warning + full_response
+                    yield f"event: warning\ndata: {{\"warning\": {json.dumps(guard_text)}}}\n\n"
+            except Exception:
+                pass
+
+        # Step 6: Done
+        yield f"event: step\ndata: {{\"step\": 6, \"label\": \"Complete\"}}\n\n"
+
+        total_latency = round((perf_counter() - t_start) * 1000, 1)
+
+        done_payload = {
+            "generated_response": full_response,
+            "category": category,
+            "citations": citations,
+            "metadata": {
+                **state["metadata"],
+                "trace": state["metadata"].get("trace", []) + ["synthesize_response", "contradiction_guard", "log_metrics"],
+                "node_metrics": {
+                    **state["metadata"].get("node_metrics", {}),
+                    "synthesize_response": {"latency_ms": gen_latency, "input_tokens": input_tokens, "output_tokens": output_tokens},
+                    "contradiction_guard": {"skipped": guard_skipped},
+                },
+                "total_latency_ms": total_latency,
+                "total_tokens": {"input": input_tokens, "output": output_tokens},
+            },
+        }
+        yield f"event: done\ndata: {json.dumps(done_payload)}\n\n"
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 def parse_frontmatter(content: str) -> Dict[str, Any]:

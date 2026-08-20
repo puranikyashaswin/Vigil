@@ -50,13 +50,13 @@ def check_contradiction(ent_a: Dict[str, Any], ent_b: Dict[str, Any]) -> Dict[st
     )
 
     try:
-        content = call_llm(
+        result = call_llm(
             task="contradiction",
             system_prompt=system_prompt,
             user_content=user_prompt,
             temperature=0.0,
         )
-        content = clean_json_string(content)
+        content = clean_json_string(result.text)
         return json.loads(content)
     except Exception as e:
         logger.warning(

@@ -203,28 +203,116 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/query`, {
+      const res = await fetch(`${API_BASE_URL}/api/query/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: userMsg })
       });
-      const data = await res.json();
-      const next = [...updated, { 
-        role: "assistant", 
-        content: data.generated_response, 
-        category: data.category, 
-        citations: data.citations,
-        metadata: data.metadata
-      } as ChatMessage];
-      setMessages(next);
-      updateConversationMessages(currentConversationId, next);
-      setShowHistory(true); // Automatically open the full screen chat history
+
+      if (!res.ok || !res.body) {
+        throw new Error("Stream connection failed");
+      }
+
+      clearInterval(stepInterval);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let streamedContent = "";
+      let streamCategory = "";
+      let streamCitations: { source_file: string; excerpt: string; score: number }[] = [];
+      let streamMetadata: { trace?: string[] } = {};
+      let buffer = "";
+
+      // Add placeholder assistant message for streaming
+      const streamingMsg: ChatMessage = { role: "assistant", content: "", category: "" };
+      const withPlaceholder = [...updated, streamingMsg];
+      setMessages(withPlaceholder);
+      setShowHistory(true);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            const eventType = line.slice(7);
+            continue;
+          }
+          if (line.startsWith("data: ")) {
+            const rawData = line.slice(6);
+            try {
+              const data = JSON.parse(rawData);
+
+              if ("step" in data) {
+                setPipelineStep(data.step);
+              } else if ("token" in data) {
+                streamedContent += data.token;
+                setIsTyping(false);
+                setMessages(prev => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = { ...copy[copy.length - 1], content: streamedContent };
+                  return copy;
+                });
+              } else if ("category" in data && !("generated_response" in data)) {
+                streamCategory = data.category;
+                setMessages(prev => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = { ...copy[copy.length - 1], category: data.category };
+                  return copy;
+                });
+              } else if ("warning" in data) {
+                streamedContent = `⚠️ [SAFETY WARNING: Potential Contradiction Detected]\n${data.warning}\n\n` + streamedContent;
+                setMessages(prev => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = { ...copy[copy.length - 1], content: streamedContent };
+                  return copy;
+                });
+              } else if ("generated_response" in data) {
+                // Final done event
+                streamCitations = data.citations || [];
+                streamMetadata = data.metadata || {};
+                streamCategory = data.category || streamCategory;
+                const finalContent = data.generated_response || streamedContent;
+                const finalMsg: ChatMessage = {
+                  role: "assistant",
+                  content: finalContent,
+                  category: streamCategory,
+                  citations: streamCitations,
+                  metadata: streamMetadata,
+                };
+                const finalMessages = [...updated, finalMsg];
+                setMessages(finalMessages);
+                updateConversationMessages(currentConversationId, finalMessages);
+              }
+            } catch {
+              // skip malformed JSON lines
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error("Chat error:", err);
-      const errMsgs = [...updated, { role: "assistant", content: "Error: Connection to backend query service failed." } as ChatMessage];
-      setMessages(errMsgs);
-      updateConversationMessages(currentConversationId, errMsgs);
-      setShowHistory(true); // Automatically open the full screen chat history to show the error
+      // Fallback to non-streaming endpoint
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: userMsg })
+        });
+        const data = await res.json();
+        const next = [...updated, { role: "assistant", content: data.generated_response, category: data.category, citations: data.citations, metadata: data.metadata } as ChatMessage];
+        setMessages(next);
+        updateConversationMessages(currentConversationId, next);
+        setShowHistory(true);
+      } catch {
+        const errMsgs = [...updated, { role: "assistant", content: "Error: Connection to backend query service failed." } as ChatMessage];
+        setMessages(errMsgs);
+        updateConversationMessages(currentConversationId, errMsgs);
+        setShowHistory(true);
+      }
     } finally {
       setIsTyping(false);
       setPipelineStep(0);

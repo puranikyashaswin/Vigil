@@ -106,7 +106,7 @@ def fetch_topology_from_llm(image_b64: str, media_type: str = "image/png") -> To
     )
 
     logger.info("Querying Claude Opus (Bedrock) for P&ID topology extraction...")
-    raw_text = call_llm_vision(
+    result = call_llm_vision(
         task="topology",
         system_prompt=system_prompt,
         image_base64=image_b64,
@@ -115,10 +115,10 @@ def fetch_topology_from_llm(image_b64: str, media_type: str = "image/png") -> To
         temperature=0.0,
     )
 
-    if not raw_text:
+    if not result.text:
         raise ValueError("Received empty response from Vision LLM.")
 
-    cleaned_json = clean_json_string(raw_text)
+    cleaned_json = clean_json_string(result.text)
 
     # Validate structure using Pydantic
     parsed_graph = TopologyGraph.model_validate_json(cleaned_json)

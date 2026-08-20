@@ -1,17 +1,25 @@
 import os
-import re
 import logging
-from typing import Tuple, Optional, List, Dict, Any
+from dataclasses import dataclass
+from time import perf_counter
+from typing import Optional, Any
 
 logger = logging.getLogger("vigil.shared_utils")
 
 _bedrock_client = None
 
 
+@dataclass
+class LLMResponse:
+    text: str
+    input_tokens: int
+    output_tokens: int
+    model: str
+    latency_ms: float
+
+
 def _get_bedrock_client():
-    """
-    Returns a singleton AnthropicBedrock client using AWS credentials from env.
-    """
+    """Returns a singleton AnthropicBedrock client."""
     global _bedrock_client
     if _bedrock_client is not None:
         return _bedrock_client
@@ -26,7 +34,6 @@ def _get_bedrock_client():
     return _bedrock_client
 
 
-# Model routing table — maps task to the cheapest model that handles it well
 MODEL_ROUTER = {
     "route_intent": "us.anthropic.claude-sonnet-4-6",
     "extraction": "us.anthropic.claude-sonnet-4-6",
@@ -37,7 +44,6 @@ MODEL_ROUTER = {
     "topology": "us.anthropic.claude-opus-4-6-v1",
 }
 
-# Max tokens per task — controls cost tightly
 MAX_TOKENS_ROUTER = {
     "route_intent": 20,
     "extraction": 4096,
@@ -50,7 +56,6 @@ MAX_TOKENS_ROUTER = {
 
 
 def is_bedrock_configured() -> bool:
-    """Check if AWS Bedrock credentials are present."""
     key = os.getenv("AWS_ACCESS_KEY_ID")
     secret = os.getenv("AWS_SECRET_ACCESS_KEY")
     return bool(key and secret and "your_" not in key)
@@ -62,26 +67,47 @@ def call_llm(
     user_content: Any,
     temperature: float = 0.0,
     max_tokens: Optional[int] = None,
-) -> str:
+) -> LLMResponse:
     """
-    Unified LLM gateway. Routes to Bedrock (Claude) if configured, else falls back to OpenRouter.
-
-    Args:
-        task: One of the MODEL_ROUTER keys — determines which model and token budget to use
-        system_prompt: The system instruction
-        user_content: Either a string (text-only) or a list of content blocks (for vision)
-        temperature: LLM temperature (default 0.0 for deterministic)
-        max_tokens: Override the default max tokens for this task
-
-    Returns:
-        The text response from the model
+    Unified LLM gateway. Returns LLMResponse with text, token usage, and timing.
     """
     tokens = max_tokens or MAX_TOKENS_ROUTER.get(task, 4096)
+    start = perf_counter()
 
     if is_bedrock_configured():
-        return _call_bedrock(task, system_prompt, user_content, temperature, tokens)
+        client = _get_bedrock_client()
+        model = MODEL_ROUTER.get(task, "us.anthropic.claude-sonnet-4-6")
+
+        if isinstance(user_content, str):
+            messages = [{"role": "user", "content": user_content}]
+        else:
+            messages = [{"role": "user", "content": user_content}]
+
+        response = client.messages.create(
+            model=model,
+            max_tokens=tokens,
+            temperature=temperature,
+            system=system_prompt,
+            messages=messages,
+        )
+        elapsed = (perf_counter() - start) * 1000
+        return LLMResponse(
+            text=response.content[0].text,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            model=model,
+            latency_ms=round(elapsed, 1),
+        )
     else:
-        return _call_openrouter_fallback(system_prompt, user_content, temperature)
+        text = _call_openrouter_fallback(system_prompt, user_content, temperature)
+        elapsed = (perf_counter() - start) * 1000
+        return LLMResponse(
+            text=text,
+            input_tokens=0,
+            output_tokens=0,
+            model="meta-llama/llama-3.3-70b-instruct",
+            latency_ms=round(elapsed, 1),
+        )
 
 
 def call_llm_vision(
@@ -92,23 +118,10 @@ def call_llm_vision(
     text_prompt: Optional[str] = None,
     temperature: float = 0.0,
     max_tokens: Optional[int] = None,
-) -> str:
-    """
-    Vision-specific LLM call. Handles image content blocks for Bedrock.
-
-    Args:
-        task: MODEL_ROUTER key (e.g., "ocr" or "topology")
-        system_prompt: System instruction
-        image_base64: Base64-encoded image data
-        media_type: MIME type of the image
-        text_prompt: Optional additional text prompt alongside the image
-        temperature: LLM temperature
-        max_tokens: Override token limit
-
-    Returns:
-        The text response from the model
-    """
+) -> LLMResponse:
+    """Vision-specific LLM call. Returns LLMResponse with text, token usage, and timing."""
     tokens = max_tokens or MAX_TOKENS_ROUTER.get(task, 4096)
+    start = perf_counter()
 
     if is_bedrock_configured():
         client = _get_bedrock_client()
@@ -133,44 +146,31 @@ def call_llm_vision(
             system=system_prompt,
             messages=[{"role": "user", "content": content_blocks}],
         )
-        return response.content[0].text
+        elapsed = (perf_counter() - start) * 1000
+        return LLMResponse(
+            text=response.content[0].text,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            model=model,
+            latency_ms=round(elapsed, 1),
+        )
     else:
-        return _call_openrouter_vision_fallback(
+        text = _call_openrouter_vision_fallback(
             system_prompt, image_base64, media_type, text_prompt, temperature
         )
-
-
-def _call_bedrock(
-    task: str,
-    system_prompt: str,
-    user_content: Any,
-    temperature: float,
-    max_tokens: int,
-) -> str:
-    """Dispatches to Bedrock via the Anthropic SDK."""
-    client = _get_bedrock_client()
-    model = MODEL_ROUTER.get(task, "us.anthropic.claude-sonnet-4-6")
-
-    # Build messages — user_content can be a string or list of content blocks
-    if isinstance(user_content, str):
-        messages = [{"role": "user", "content": user_content}]
-    else:
-        messages = [{"role": "user", "content": user_content}]
-
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        system=system_prompt,
-        messages=messages,
-    )
-    return response.content[0].text
+        elapsed = (perf_counter() - start) * 1000
+        return LLMResponse(
+            text=text,
+            input_tokens=0,
+            output_tokens=0,
+            model="openrouter-vision-fallback",
+            latency_ms=round(elapsed, 1),
+        )
 
 
 def _call_openrouter_fallback(
     system_prompt: str, user_content: Any, temperature: float
 ) -> str:
-    """Fallback to OpenRouter when Bedrock is not configured."""
     from openai import OpenAI
 
     openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
@@ -181,11 +181,9 @@ def _call_openrouter_fallback(
         )
 
     client = OpenAI(api_key=openrouter_api_key, base_url="https://openrouter.ai/api/v1")
-    model = "meta-llama/llama-3.3-70b-instruct"
-
     content = user_content if isinstance(user_content, str) else str(user_content)
     response = client.chat.completions.create(
-        model=model,
+        model="meta-llama/llama-3.3-70b-instruct",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": content},
@@ -202,7 +200,6 @@ def _call_openrouter_vision_fallback(
     text_prompt: Optional[str],
     temperature: float,
 ) -> str:
-    """Fallback vision call via OpenRouter."""
     import httpx
 
     api_key = os.getenv("OPENROUTER_API_KEY")
@@ -238,9 +235,6 @@ def _call_openrouter_vision_fallback(
 
 
 def clean_json_string(s: str) -> str:
-    """
-    Cleans raw markdown block wrappers from a JSON string returned by LLM.
-    """
     s = s.strip()
     if s.startswith("```"):
         lines = s.splitlines()

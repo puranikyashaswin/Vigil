@@ -2,15 +2,16 @@ import os
 import re
 import json
 import logging
+from time import perf_counter
 from typing import Dict, Any
 from state import AgentState, RagasLog, Citation
-from shared_utils import call_llm
+from shared_utils import call_llm, LLMResponse
 
 logger = logging.getLogger("vigil.nodes")
 
 
-# Node 1: Intent Routing Node
 def route_query_intent(state: AgentState) -> Dict[str, Any]:
+    t0 = perf_counter()
     query = state["query"]
 
     system_prompt = (
@@ -24,32 +25,40 @@ def route_query_intent(state: AgentState) -> Dict[str, Any]:
     )
 
     try:
-        response = call_llm(
+        result = call_llm(
             task="route_intent",
             system_prompt=system_prompt,
             user_content=query,
             temperature=0.0,
         )
-        category = response.strip().lower()
+        category = result.text.strip().lower()
         if category not in ["copilot", "rca", "compliance", "lessons_learned"]:
             category = "copilot"
     except Exception as e:
         logger.error(f"Intent routing failed: {str(e)}. Defaulting to copilot.")
         category = "copilot"
+        result = LLMResponse(text="copilot", input_tokens=0, output_tokens=0, model="fallback", latency_ms=0)
 
+    elapsed = round((perf_counter() - t0) * 1000, 1)
     logger.info(f"Routed query intent: '{query}' -> [{category}]")
 
-    metadata = state.get("metadata") or {}
-    trace = ["route_intent"]
-
-    return {"category": category, "metadata": {**metadata, "trace": trace}}
+    return {
+        "category": category,
+        "metadata": {
+            "trace": ["route_intent"],
+            "node_metrics": {
+                "route_intent": {
+                    "latency_ms": elapsed,
+                    "input_tokens": result.input_tokens,
+                    "output_tokens": result.output_tokens,
+                    "model": result.model,
+                }
+            },
+        },
+    }
 
 
 def get_mock_telemetry_data(tag: str) -> str:
-    """
-    Queries simulated live telemetry from mock server on port 8001.
-    Falls back to local generation if telemetry server is unreachable.
-    """
     tag = tag.upper().strip()
     import httpx
     from datetime import datetime
@@ -60,8 +69,8 @@ def get_mock_telemetry_data(tag: str) -> str:
             data = response.json()
             points = data[-6:]
 
-            table = f"\n### Real-time Telemetry (Last 6 Hours) from IoT Mock Server for {tag}:\n"
-            table += "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
+            table = f"\n### Real-time Telemetry (Last 6 Hours) for {tag}:\n"
+            table += "| Timestamp | Temp (C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
             table += "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
 
             for pt in points:
@@ -87,20 +96,14 @@ def get_mock_telemetry_data(tag: str) -> str:
 
                 table += f"| {time_label} | {temp:.2f} | {press:.2f} | {vib:.2f} | {rpm:.1f} | {status} |\n"
 
-            logger.info(
-                f"RCA Agent: Successfully fetched live telemetry for {tag} from mock server."
-            )
             return table
     except Exception as e:
-        logger.warning(
-            f"Mock telemetry server unreachable ({str(e)}). Falling back to in-memory generation."
-        )
+        logger.warning(f"Mock telemetry server unreachable ({str(e)}). Falling back to local.")
 
-    # Local fallback
     if tag == "P-101":
         return (
-            f"\n### Real-time Telemetry (Last 6 Hours) [LOCAL FALLBACK] for {tag}:\n"
-            "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
+            f"\n### Real-time Telemetry (Last 6 Hours) for {tag}:\n"
+            "| Timestamp | Temp (C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
             "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
             "| 09:00 | 44.80 | 29.80 | 1.35 | 1450.5 | Normal |\n"
             "| 10:00 | 45.20 | 30.10 | 1.45 | 1451.2 | Normal |\n"
@@ -111,8 +114,8 @@ def get_mock_telemetry_data(tag: str) -> str:
         )
     elif tag == "P-102":
         return (
-            f"\n### Real-time Telemetry (Last 6 Hours) [LOCAL FALLBACK] for {tag}:\n"
-            "| Timestamp | Temp (°C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
+            f"\n### Real-time Telemetry (Last 6 Hours) for {tag}:\n"
+            "| Timestamp | Temp (C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n"
             "| :--- | :---: | :---: | :---: | :---: | :--- |\n"
             "| 09:00 | 43.20 | 28.50 | 1.22 | 1448.0 | Normal |\n"
             "| 10:00 | 43.50 | 28.80 | 1.25 | 1449.1 | Normal |\n"
@@ -121,52 +124,27 @@ def get_mock_telemetry_data(tag: str) -> str:
             "| 13:00 | 44.30 | 29.50 | 1.31 | 1449.8 | Normal |\n"
             "| 14:00 | 44.50 | 29.70 | 1.33 | 1450.4 | Normal |\n"
         )
-    return f"Real-time sensor telemetry for {tag} shows all metrics are operating within nominal baseline parameters."
+    return f"Real-time sensor telemetry for {tag} shows all metrics within nominal baseline parameters."
 
 
-# Node 4: Synthesize Agent Response Node
 def is_failed_generation(ans: str, query: str) -> bool:
     ans_clean = ans.strip()
-
-    if ans_clean.lower().startswith("user safety:") or ans_clean.lower() in (
-        "safe",
-        "unsafe",
-    ):
+    if ans_clean.lower().startswith("user safety:") or ans_clean.lower() in ("safe", "unsafe"):
         return True
-
-    words = ans_clean.split()
-    if len(words) < 20:
+    if len(ans_clean.split()) < 15:
         return True
-
-    stopwords = {
-        "what",
-        "whats",
-        "the",
-        "for",
-        "and",
-        "are",
-        "but",
-        "not",
-        "you",
-        "your",
-        "this",
-        "that",
-        "with",
-        "from",
-    }
+    stopwords = {"what", "whats", "the", "for", "and", "are", "but", "not", "you", "your", "this", "that", "with", "from"}
     query_words = re.findall(r"\b[a-zA-Z0-9_-]+\b", query.lower())
     query_terms = [w for w in query_words if len(w) > 2 and w not in stopwords]
-
     if query_terms:
         ans_lower = ans_clean.lower()
         if not any(term in ans_lower for term in query_terms):
             return True
-
     return False
 
 
-# Node 4: Synthesize Agent Response Node
 def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
+    t0 = perf_counter()
     query = state["query"]
     category = state["category"]
     contexts = state["retrieved_contexts"]
@@ -180,21 +158,31 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
             "Politely decline to hallucinate and advise the user to ingest relevant source documents."
         )
         try:
-            ans = call_llm(
-                task="generation",
-                system_prompt=greeting_prompt,
-                user_content=query,
-                temperature=0.7,
-            )
+            result = call_llm(task="generation", system_prompt=greeting_prompt, user_content=query, temperature=0.7)
+            ans = result.text
         except Exception:
             ans = (
                 "Based on the provided sources, there is no information regarding the requested "
                 "equipment or parameters in the ingested documents. Please ensure the relevant source "
                 "documents are ingested into the database."
             )
+            result = LLMResponse(text=ans, input_tokens=0, output_tokens=0, model="fallback", latency_ms=0)
 
-        trace = metadata.get("trace", []) + ["synthesize_response"]
-        return {"generated_response": ans, "metadata": {**metadata, "trace": trace}}
+        elapsed = round((perf_counter() - t0) * 1000, 1)
+        return {
+            "generated_response": ans,
+            "metadata": {
+                "trace": ["synthesize_response"],
+                "node_metrics": {
+                    "synthesize_response": {
+                        "latency_ms": elapsed,
+                        "input_tokens": result.input_tokens,
+                        "output_tokens": result.output_tokens,
+                        "model": result.model,
+                    }
+                },
+            },
+        }
 
     telemetry_block = ""
     if category == "rca":
@@ -202,26 +190,34 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
         if tag_match:
             tag = tag_match.group(0)
             telemetry_block = get_mock_telemetry_data(tag)
-            logger.info(f"RCA Agent: Fused in-memory live telemetry for tag {tag}")
+            logger.info(f"RCA Agent: Fused live telemetry for tag {tag}")
 
     context_block = "\n\n".join(
-        [
-            f"Source [{citations[i]['source_file']}]: {contexts[i]}"
-            for i in range(len(citations))
-        ]
+        [f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(citations))]
     )
 
     if category == "copilot":
         system_prompt = (
-            "You are the Vigil Expert Copilot Agent. Answer the user's technical query using the provided context. "
-            "Ground your answer strictly in the sources. Cite specific documents and parameters. Do not hallucinate."
+            "You are the Vigil Expert Copilot Agent. Answer the user's technical query using the provided context.\n\n"
+            "RULES:\n"
+            "- Ground your answer strictly in the sources. Cite specific documents by name.\n"
+            "- Use markdown tables when comparing specifications, parameters, or setpoints.\n"
+            "- Use bullet points for procedural steps.\n"
+            "- If multiple sources provide different values for the same parameter, present them in a comparison table.\n"
+            "- Never hallucinate values not present in the sources.\n\n"
+            "FORMAT: Start with a 1-sentence summary, then provide detailed evidence with section headers."
         )
         user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
     elif category == "rca":
         system_prompt = (
-            "You are the Vigil Maintenance & RCA Agent. Analyze the maintenance logs, specifications, and "
-            "any real-time IoT sensor telemetry data provided to determine root causes, asset conditions, or anomalous events. "
-            "Ground your analysis strictly in the sources (both static logs and live sensor telemetry tables). Do not hallucinate."
+            "You are the Vigil Maintenance & RCA Agent. Perform root cause analysis using the provided evidence.\n\n"
+            "RULES:\n"
+            "- Structure your response as: OBSERVATION -> ANALYSIS -> ROOT CAUSE -> RECOMMENDATION\n"
+            "- Present sensor readings and thresholds in a comparison table (actual vs. nominal).\n"
+            "- Identify the timeline of degradation from maintenance logs.\n"
+            "- Cite specific log entries and telemetry timestamps as evidence.\n"
+            "- Never hallucinate failure modes not supported by the data.\n\n"
+            "FORMAT: Use the 4-section structure above with markdown headers."
         )
         user_prompt = f"Historical Context:\n{context_block}\n\n"
         if telemetry_block:
@@ -229,39 +225,43 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
         user_prompt += f"Query: {query}"
     elif category == "compliance":
         system_prompt = (
-            "You are the Vigil Compliance Agent. Compare active operating procedures against safety/operational regulations. "
-            "Identify violations or discrepancies. Ground your analysis strictly in the sources. Do not hallucinate."
+            "You are the Vigil Compliance Agent. Audit operational procedures against safety regulations.\n\n"
+            "RULES:\n"
+            "- Present findings as a compliance matrix table: | Requirement | Procedure | Status | Gap |\n"
+            "- Status values: COMPLIANT, NON-COMPLIANT, PARTIAL, UNVERIFIED\n"
+            "- Cite the specific regulation clause and procedure section for each finding.\n"
+            "- Provide severity (Critical/Major/Minor) for each non-compliance.\n"
+            "- Never hallucinate regulations or requirements not in the sources.\n\n"
+            "FORMAT: Start with overall compliance score (X/Y requirements met), then detail table."
         )
         user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
     else:
         system_prompt = (
-            "You are the Vigil Lessons-Learned Engine. Review the maintenance logs, alert histories, and recurring issues. "
-            "Synthesize generalized optimization rules or design lessons. Ground your analysis strictly in the sources."
+            "You are the Vigil Lessons-Learned Engine. Synthesize recurring patterns from historical data.\n\n"
+            "RULES:\n"
+            "- Identify recurring patterns with frequency (e.g., '3 occurrences in 6 months').\n"
+            "- Present as: PATTERN -> EVIDENCE -> DESIGN LESSON -> RECOMMENDED ACTION\n"
+            "- Use a summary table: | Pattern | Frequency | Severity | Recommended Fix |\n"
+            "- Ground every pattern in at least 2 source citations.\n"
+            "- Never invent patterns not supported by multiple data points.\n\n"
+            "FORMAT: Lead with the pattern summary table, then expand each row."
         )
         user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
 
     try:
-        ans = call_llm(
-            task="generation",
-            system_prompt=system_prompt,
-            user_content=user_prompt,
-            temperature=0.0,
-        )
+        result = call_llm(task="generation", system_prompt=system_prompt, user_content=user_prompt, temperature=0.0)
+        ans = result.text
     except Exception as e:
         logger.error(f"Generation call failed: {str(e)}")
         ans = ""
+        result = LLMResponse(text="", input_tokens=0, output_tokens=0, model="error", latency_ms=0)
 
     if not ans or is_failed_generation(ans, query):
-        logger.warning("Synthesis failed validation. Retrying with slight temperature...")
+        logger.warning("Synthesis failed validation. Retrying...")
         try:
-            ans = call_llm(
-                task="generation",
-                system_prompt=system_prompt,
-                user_content=user_prompt,
-                temperature=0.2,
-            )
-        except Exception as retry_err:
-            logger.error(f"Retry synthesis failed: {retry_err}")
+            result = call_llm(task="generation", system_prompt=system_prompt, user_content=user_prompt, temperature=0.2)
+            ans = result.text
+        except Exception:
             ans = ""
 
         if not ans or is_failed_generation(ans, query):
@@ -272,29 +272,58 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
             )
 
     final_contexts = contexts + [telemetry_block] if telemetry_block else contexts
-    trace = metadata.get("trace", []) + ["synthesize_response"]
+    elapsed = round((perf_counter() - t0) * 1000, 1)
 
     return {
         "generated_response": ans,
         "retrieved_contexts": final_contexts,
-        "metadata": {**metadata, "trace": trace},
+        "metadata": {
+            "trace": ["synthesize_response"],
+            "node_metrics": {
+                "synthesize_response": {
+                    "latency_ms": elapsed,
+                    "input_tokens": result.input_tokens,
+                    "output_tokens": result.output_tokens,
+                    "model": result.model,
+                }
+            },
+        },
     }
 
 
-# Node 5: Contradiction Guard Node
 def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
+    t0 = perf_counter()
     generated_response = state["generated_response"]
     contexts = state["retrieved_contexts"]
     metadata = state.get("metadata") or {}
+    confidence = metadata.get("confidence", {})
 
-    if (
-        not contexts
-        or "no relevant equipment" in generated_response.lower()
-        or "insufficient" in generated_response.lower()
-    ):
-        trace = metadata.get("trace", []) + ["contradiction_guard"]
-        return {"metadata": {**metadata, "trace": trace}}
+    # Smart skip conditions
+    skip_reason = None
+    if not contexts:
+        skip_reason = "no_contexts"
+    elif any(phrase in generated_response.lower() for phrase in [
+        "no relevant equipment", "insufficient", "no information regarding",
+        "please ensure the relevant source", "outside the scope", "outside my knowledge",
+        "falls outside", "not within my knowledge"
+    ]):
+        skip_reason = "refusal_response"
+    elif confidence.get("score", 0) > 0.85 and confidence.get("consensus", 0) > 0.9:
+        skip_reason = "high_confidence"
+    elif len(generated_response.split()) < 50:
+        skip_reason = "short_response"
 
+    if skip_reason:
+        elapsed = round((perf_counter() - t0) * 1000, 1)
+        logger.info(f"Contradiction guard skipped: {skip_reason}")
+        return {
+            "metadata": {
+                "trace": [f"contradiction_guard:skipped:{skip_reason}"],
+                "node_metrics": {"contradiction_guard": {"latency_ms": elapsed, "skipped": skip_reason}},
+            }
+        }
+
+    # Run the guard
     context_block = "\n\n".join([f"Document Chunk: {c}" for c in contexts[:5]])
 
     system_prompt = (
@@ -305,31 +334,41 @@ def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
     )
 
     try:
-        guard_output = call_llm(
+        result = call_llm(
             task="contradiction_guard",
             system_prompt=system_prompt,
             user_content=f"AI Answer:\n{generated_response}\n\nSource Documents:\n{context_block}",
             temperature=0.0,
         )
-        guard_output = guard_output.strip()
+        guard_output = result.text.strip()
 
         first_word = re.findall(r"\b[a-zA-Z]+\b", guard_output)
         first_word_upper = first_word[0].upper() if first_word else ""
 
         if first_word_upper != "SAFE":
-            logger.warning(f"Contradiction Guard Flagged Conflict: {guard_output}")
+            logger.warning(f"Contradiction Guard Flagged: {guard_output}")
             generated_response = f"⚠️ [SAFETY WARNING: Potential Contradiction Detected]\n{guard_output}\n\n{generated_response}"
     except Exception as e:
         logger.error(f"Contradiction Guard check failed: {str(e)}")
+        result = LLMResponse(text="", input_tokens=0, output_tokens=0, model="error", latency_ms=0)
 
-    trace = metadata.get("trace", []) + ["contradiction_guard"]
+    elapsed = round((perf_counter() - t0) * 1000, 1)
     return {
         "generated_response": generated_response,
-        "metadata": {**metadata, "trace": trace},
+        "metadata": {
+            "trace": ["contradiction_guard"],
+            "node_metrics": {
+                "contradiction_guard": {
+                    "latency_ms": elapsed,
+                    "input_tokens": result.input_tokens,
+                    "output_tokens": result.output_tokens,
+                    "model": result.model,
+                }
+            },
+        },
     }
 
 
-# Node 6: Log Ragas Metrics Node
 def log_ragas_metrics_node(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
     contexts = state["retrieved_contexts"]
@@ -342,13 +381,14 @@ def log_ragas_metrics_node(state: AgentState) -> Dict[str, Any]:
         "answer": generated_response,
     }
 
-    trace = metadata.get("trace", []) + ["log_metrics"]
-    new_metadata = {**metadata, "trace": trace}
+    # Aggregate total metrics
+    node_metrics = metadata.get("node_metrics", {})
+    total_latency = sum(m.get("latency_ms", 0) for m in node_metrics.values())
+    total_input = sum(m.get("input_tokens", 0) for m in node_metrics.values())
+    total_output = sum(m.get("output_tokens", 0) for m in node_metrics.values())
 
     try:
-        project_root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..")
-        )
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         log_dir = os.path.join(project_root, "logs", "ragas")
         os.makedirs(log_dir, exist_ok=True)
         log_path = os.path.join(log_dir, "interactions.jsonl")
@@ -357,11 +397,15 @@ def log_ragas_metrics_node(state: AgentState) -> Dict[str, Any]:
         import json
 
         with open(log_path, "a", encoding="utf-8") as lf:
-            lf.write(
-                json.dumps({**ragas_log, "timestamp": datetime.now().isoformat()})
-                + "\n"
-            )
+            lf.write(json.dumps({**ragas_log, "timestamp": datetime.now().isoformat()}) + "\n")
     except Exception as e:
         logger.error(f"Failed to log Ragas metrics to disk: {str(e)}")
 
-    return {"ragas_log": ragas_log, "metadata": new_metadata}
+    return {
+        "ragas_log": ragas_log,
+        "metadata": {
+            "trace": ["log_metrics"],
+            "total_latency_ms": round(total_latency, 1),
+            "total_tokens": {"input": total_input, "output": total_output},
+        },
+    }

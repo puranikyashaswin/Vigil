@@ -1,5 +1,7 @@
 import os
+import math
 import logging
+from time import perf_counter
 from typing import List, Dict, Any, Tuple
 from fastembed import TextEmbedding
 from state import AgentState, Citation, get_qdrant_client
@@ -7,7 +9,6 @@ from state import AgentState, Citation, get_qdrant_client
 logger = logging.getLogger("vigil.retrieval")
 COLLECTION_NAME = "vigil_okf"
 
-# Initialize ONNX embedding model globally once on application startup
 logger.info("Initializing global TextEmbedding model: BAAI/bge-small-en-v1.5...")
 _embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
@@ -20,18 +21,50 @@ def get_reranker():
         from flashrank import Ranker
 
         logger.info("Initializing FlashRank Ranker...")
-        # ms-marco-MiniLM-L-12-v2 is the default model name
         _reranker = Ranker(model_name="ms-marco-MiniLM-L-12-v2")
     return _reranker
 
 
-# 3. Retrieval layer with semantic filtering & rerank
+def compute_confidence(scores: List[float]) -> Dict[str, Any]:
+    """
+    3-component confidence model:
+      relevance  = harmonic mean of scores (penalizes weak outliers)
+      consensus  = sigmoid-smoothed fraction of scores above 0.55
+      coverage   = unique source diversity (set externally; defaults to 1.0 here)
+      final      = 0.5*relevance + 0.3*consensus + 0.2*coverage
+    """
+    if not scores:
+        return {"score": 0.0, "relevance": 0.0, "consensus": 0.0, "coverage": 0.0, "formula": "0.5R+0.3C+0.2V"}
+
+    # Relevance: harmonic mean (handles zeros gracefully)
+    safe_scores = [max(s, 0.01) for s in scores]
+    relevance = len(safe_scores) / sum(1.0 / s for s in safe_scores)
+
+    # Consensus: sigmoid-smoothed fraction above threshold
+    ratio = sum(1 for s in scores if s > 0.55) / len(scores)
+    consensus = 1.0 / (1.0 + math.exp(-5.0 * (ratio - 0.5)))
+
+    # Coverage: placeholder (set by caller with unique source count)
+    coverage = 1.0
+
+    final = 0.5 * relevance + 0.3 * consensus + 0.2 * coverage
+
+    return {
+        "score": round(final, 4),
+        "relevance": round(relevance, 4),
+        "consensus": round(consensus, 4),
+        "coverage": round(coverage, 4),
+        "formula": "0.5R+0.3C+0.2V",
+    }
+
+
+# --- BENCHMARK-ONLY FUNCTION (used by scripts/run_retrieval_ablation.py) ---
 def retrieve_contexts(
     query: str, dirs: List[str] = None
 ) -> Tuple[List[str], List[Citation]]:
     """
-    Performs vector search in Qdrant with optional directory filter.
-    Applies FlashRank reranker for Copilot if ENABLE_RERANKING=true.
+    BENCHMARK ONLY — not used in the production LangGraph pipeline.
+    Used by scripts/run_retrieval_ablation.py for local retrieval quality measurements.
     """
     try:
         q_client = get_qdrant_client()
@@ -62,7 +95,6 @@ def retrieve_contexts(
 
         enable_reranking = os.getenv("ENABLE_RERANKING", "false").lower() == "true"
 
-        # If broad search (Copilot) and reranking enabled
         if enable_reranking and not dirs:
             try:
                 from flashrank import RerankRequest
@@ -99,25 +131,9 @@ def retrieve_contexts(
             except Exception as re_err:
                 logger.error(f"FlashRank reranking failed, falling back: {re_err}")
 
-        # Simple/fallback ranking
-        if not dirs:
-            contexts = []
-            citations = []
-            for hit in search_results[:5]:
-                contexts.append(hit.payload["text"])
-                citations.append(
-                    {
-                        "source_file": hit.payload["file_path"],
-                        "excerpt": hit.payload["text"][:150] + "...",
-                        "score": float(hit.score),
-                    }
-                )
-            return contexts, citations
-
-        # Standard directory query
         contexts = []
         citations = []
-        for hit in search_results:
+        for hit in search_results[:5]:
             contexts.append(hit.payload["text"])
             citations.append(
                 {
@@ -133,41 +149,25 @@ def retrieve_contexts(
         return [], []
 
 
-# Node 2: Retrieve Context Node
-def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
-    query = state["query"]
-    category = state["category"]
+# --- PRODUCTION PIPELINE NODES ---
 
-    # Map category to directories
-    dirs = None
-    if category == "rca":
-        dirs = ["equipment", "maintenance"]
-    elif category == "compliance":
-        dirs = ["procedures", "regulations", "alerts"]
-    elif category == "lessons_learned":
-        dirs = ["maintenance", "alerts"]
+def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
+    """
+    Node 2: Broad vector retrieval (no directory filter).
+    Runs in PARALLEL with route_intent — does not depend on category.
+    """
+    t0 = perf_counter()
+    query = state["query"]
 
     try:
         q_client = get_qdrant_client()
         query_vector = list(next(_embedding_model.embed([query])))
 
-        query_filter = None
-        if dirs:
-            from qdrant_client.http import models
-
-            query_filter = models.Filter(
-                must=[
-                    models.FieldCondition(
-                        key="directory", match=models.MatchAny(any=dirs)
-                    )
-                ]
-            )
-
         search_response = q_client.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
-            query_filter=query_filter,
-            limit=10 if not dirs else 5,
+            query_filter=None,
+            limit=10,
         )
         search_results = search_response.points
 
@@ -177,6 +177,7 @@ def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
                 {
                     "text": hit.payload["text"],
                     "file_path": hit.payload["file_path"],
+                    "directory": hit.payload.get("directory", ""),
                     "score": float(hit.score),
                     "title": hit.payload["title"],
                 }
@@ -185,43 +186,74 @@ def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
         logger.error(f"Vector search failed: {str(e)}")
         raw_hits = []
 
-    metadata = state.get("metadata") or {}
-    trace = metadata.get("trace", []) + ["retrieve_context"]
-    new_metadata = {**metadata, "trace": trace, "raw_hits": raw_hits}
+    elapsed = round((perf_counter() - t0) * 1000, 1)
 
     return {
-        "metadata": new_metadata,
         "retrieved_contexts": [h["text"] for h in raw_hits],
+        "metadata": {
+            "trace": ["retrieve_context"],
+            "raw_hits": raw_hits,
+            "node_metrics": {
+                "retrieve_context": {"latency_ms": elapsed, "vector_hits": len(raw_hits)}
+            },
+        },
     }
 
 
-# Node 3: Rerank Context Node
 def rerank_context_node(state: AgentState) -> Dict[str, Any]:
+    """
+    Node 3: Directory filtering + optional FlashRank reranking + confidence scoring.
+    Runs AFTER both route_intent and retrieve_context complete (fan-in).
+    """
+    t0 = perf_counter()
     query = state["query"]
     category = state["category"]
     metadata = state.get("metadata") or {}
     raw_hits = metadata.get("raw_hits", [])
 
+    # Directory filter based on routed category
+    dir_filter = None
+    if category == "rca":
+        dir_filter = ["equipment", "maintenance"]
+    elif category == "compliance":
+        dir_filter = ["procedures", "regulations", "alerts"]
+    elif category == "lessons_learned":
+        dir_filter = ["maintenance", "alerts"]
+
+    # Apply directory post-filter
+    if dir_filter:
+        filtered_hits = [h for h in raw_hits if h.get("directory") in dir_filter]
+        if not filtered_hits:
+            filtered_hits = raw_hits[:5]
+    else:
+        filtered_hits = raw_hits
+
     contexts = []
     citations = []
 
-    if not raw_hits:
-        trace = metadata.get("trace", []) + ["rerank_context"]
+    if not filtered_hits:
+        elapsed = round((perf_counter() - t0) * 1000, 1)
+        confidence = compute_confidence([])
         return {
             "citations": [],
             "retrieved_contexts": [],
-            "metadata": {**metadata, "trace": trace, "confidence_score": 0.0},
+            "metadata": {
+                "trace": ["rerank_context"],
+                "confidence_score": 0.0,
+                "confidence": confidence,
+                "node_metrics": {"rerank_context": {"latency_ms": elapsed, "filtered_count": 0}},
+            },
         }
 
     enable_reranking = os.getenv("ENABLE_RERANKING", "false").lower() == "true"
 
-    if enable_reranking and category == "copilot" and raw_hits:
+    if enable_reranking and category == "copilot" and filtered_hits:
         try:
             from flashrank import RerankRequest
 
             ranker = get_reranker()
             passages = []
-            for i, hit in enumerate(raw_hits):
+            for i, hit in enumerate(filtered_hits):
                 passages.append(
                     {
                         "id": i,
@@ -247,7 +279,7 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
                 )
         except Exception as re_err:
             logger.error(f"FlashRank reranking failed in node, falling back: {re_err}")
-            for hit in raw_hits[:5]:
+            for hit in filtered_hits[:5]:
                 contexts.append(hit["text"])
                 citations.append(
                     {
@@ -257,8 +289,8 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
                     }
                 )
     else:
-        limit = 5 if category == "copilot" else len(raw_hits)
-        for hit in raw_hits[:limit]:
+        limit = 5
+        for hit in filtered_hits[:limit]:
             contexts.append(hit["text"])
             citations.append(
                 {
@@ -268,19 +300,27 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
                 }
             )
 
-    if citations:
-        avg_score = sum(c["score"] for c in citations) / len(citations)
-        high_scores = sum(1 for c in citations if c["score"] > 0.6)
-        consensus = min(1.0, 0.5 + 0.5 * (high_scores / len(citations)))
-        confidence_score = float(avg_score * consensus)
-    else:
-        confidence_score = 0.0
+    # Confidence scoring
+    scores = [c["score"] for c in citations]
+    confidence = compute_confidence(scores)
 
-    trace = metadata.get("trace", []) + ["rerank_context"]
-    new_metadata = {**metadata, "trace": trace, "confidence_score": confidence_score}
+    # Adjust coverage with source diversity
+    unique_sources = len(set(c["source_file"] for c in citations))
+    coverage = min(1.0, unique_sources / max(len(citations), 1))
+    confidence["coverage"] = round(coverage, 4)
+    confidence["score"] = round(
+        0.5 * confidence["relevance"] + 0.3 * confidence["consensus"] + 0.2 * coverage, 4
+    )
+
+    elapsed = round((perf_counter() - t0) * 1000, 1)
 
     return {
         "citations": citations,
         "retrieved_contexts": contexts,
-        "metadata": new_metadata,
+        "metadata": {
+            "trace": ["rerank_context"],
+            "confidence_score": confidence["score"],
+            "confidence": confidence,
+            "node_metrics": {"rerank_context": {"latency_ms": elapsed, "filtered_count": len(citations)}},
+        },
     }
