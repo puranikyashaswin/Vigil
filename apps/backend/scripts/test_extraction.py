@@ -7,10 +7,9 @@ import logging
 from typing import List, Tuple
 from pydantic import BaseModel, Field, ValidationError
 from dotenv import load_dotenv
-from openai import OpenAI
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from shared_utils import get_client, clean_json_string
+from shared_utils import call_llm, clean_json_string
 
 # Set up logging
 logging.basicConfig(
@@ -50,73 +49,59 @@ class ExtractedEntitiesList(BaseModel):
     entities: List[ExtractedEntity]
 
 
-def extract_entities_llm(
-    client: OpenAI, model: str, text: str, self_repair_error: str = None
-) -> str:
+EXTRACTION_SYSTEM_PROMPT = (
+    "You are an expert industrial knowledge parser. Analyze the raw text and extract all primary entities. "
+    "Return a valid JSON object matching this schema exactly:\n"
+    "{\n"
+    '  "entities": [\n'
+    "    {\n"
+    '      "name": "Formal name of the entity",\n'
+    '      "type": "concept" | "procedure" | "regulation" | "maintenance_log" | "drawing",\n'
+    '      "description": "Summary of the entity\'s purpose, parameters, or specifications",\n'
+    '      "equipment_tags": ["list of standard equipment ID tags present in the raw text, otherwise []"],\n'
+    '      "regulatory_references": ["list of regulatory standard references present in the raw text, otherwise []"],\n'
+    '      "linked_concepts": ["Titles/names of other entities mentioned in this text to create markdown links to"],\n'
+    '      "tags": ["descriptive classification tags"]\n'
+    "    }\n"
+    "  ]\n"
+    "}\n\n"
+    "Strict Grounding Rules:\n"
+    "1. DO NOT extract or include any equipment tags, regulatory references, or linked concepts unless they are LITERALLY mentioned in the provided raw text.\n"
+    "2. DO NOT use example values (like 'V-202' or 'P-101') unless they are explicitly present in the input text.\n"
+    "3. If no tags or references are found, return empty lists [].\n"
+    "4. Return pure raw JSON without any explanations or markdown block wrappers."
+)
+
+
+def extract_entities_llm(text: str, self_repair_error: str = None) -> str:
     """
     Calls the LLM to extract entities in JSON format.
-    If self_repair_error is provided, appends it as instruction.
+    If self_repair_error is provided, includes it as repair instruction.
     """
-    system_prompt = (
-        "You are an expert industrial knowledge parser. Analyze the raw text and extract all primary entities. "
-        "Return a valid JSON object matching this schema exactly:\n"
-        "{\n"
-        '  "entities": [\n'
-        "    {\n"
-        '      "name": "Formal name of the entity",\n'
-        '      "type": "concept" | "procedure" | "regulation" | "maintenance_log" | "drawing",\n'
-        '      "description": "Summary of the entity\'s purpose, parameters, or specifications",\n'
-        '      "equipment_tags": ["list of standard equipment ID tags present in the raw text, otherwise []"],\n'
-        '      "regulatory_references": ["list of regulatory standard references present in the raw text, otherwise []"],\n'
-        '      "linked_concepts": ["Titles/names of other entities mentioned in this text to create markdown links to"],\n'
-        '      "tags": ["descriptive classification tags"]\n'
-        "    }\n"
-        "  ]\n"
-        "}\n\n"
-        "Strict Grounding Rules:\n"
-        "1. DO NOT extract or include any equipment tags, regulatory references, or linked concepts unless they are LITERALLY mentioned in the provided raw text.\n"
-        "2. DO NOT use example values (like 'V-202' or 'P-101') unless they are explicitly present in the input text.\n"
-        "3. If no tags or references are found, return empty lists [].\n"
-        "4. Return pure raw JSON without any explanations or markdown block wrappers."
-    )
-
-    messages = [{"role": "system", "content": system_prompt}]
-
     if self_repair_error:
-        messages.append(
-            {"role": "user", "content": f"Here is the raw text:\n---\n{text}\n---\n"}
-        )
-        messages.append(
-            {"role": "assistant", "content": "I apologize, let me fix the formatting."}
-        )
-        messages.append(
-            {
-                "role": "user",
-                "content": f"The previous extraction failed validation with error:\n{self_repair_error}\n\nPlease output the corrected, complete, and valid JSON matching the schema.",
-            }
+        user_content = (
+            f"Here is the raw text:\n---\n{text}\n---\n\n"
+            f"The previous extraction failed validation with error:\n{self_repair_error}\n\n"
+            "Please output the corrected, complete, and valid JSON matching the schema."
         )
     else:
-        messages.append(
-            {"role": "user", "content": f"Raw text to analyze:\n---\n{text}\n---\n"}
-        )
+        user_content = f"Raw text to analyze:\n---\n{text}\n---\n"
 
-    completion = client.chat.completions.create(
-        model=model, messages=messages, temperature=0.0
+    return call_llm(
+        task="extraction",
+        system_prompt=EXTRACTION_SYSTEM_PROMPT,
+        user_content=user_content,
+        temperature=0.0,
     )
 
-    return completion.choices[0].message.content
 
-
-def run_extraction_flow(
-    client: OpenAI, model: str, text: str, fallback_title: str
-) -> ExtractedEntitiesList:
+def run_extraction_flow(text: str, fallback_title: str) -> ExtractedEntitiesList:
     """
     Executes the extraction and runs self-repair loop if validation fails.
     """
     raw_json = ""
     try:
-        raw_json = extract_entities_llm(client, model, text)
-        # Attempt to clean up JSON blocks if the model wrapped it in ```json ... ```
+        raw_json = extract_entities_llm(text)
         raw_json = clean_json_string(raw_json)
         return ExtractedEntitiesList.model_validate_json(raw_json)
     except Exception as e:
@@ -124,17 +109,13 @@ def run_extraction_flow(
             f"Initial validation failed: {str(e)}. Attempting self-repair on JSON..."
         )
         try:
-            # Self-repair iteration
-            raw_json = extract_entities_llm(
-                client, model, text, self_repair_error=str(e)
-            )
+            raw_json = extract_entities_llm(text, self_repair_error=str(e))
             raw_json = clean_json_string(raw_json)
             return ExtractedEntitiesList.model_validate_json(raw_json)
         except Exception as e_repair:
             logger.error(
                 f"Self-repair validation failed: {str(e_repair)}. Applying generic fallback."
             )
-            # Standard generic fallback
             fallback_entity = ExtractedEntity(
                 name=fallback_title,
                 type="concept",
@@ -182,15 +163,7 @@ def main():
         logger.warning(f"No parsed text files found in {input_dir}")
         sys.exit(0)
 
-    logger.info(f"Initializing LLM client...")
-    try:
-        client, model = get_client()
-        logger.info(f"Using model: {model}")
-    except Exception as e:
-        logger.error(f"Failed to initialize client: {str(e)}")
-        sys.exit(1)
-
-    logger.info(f"Starting entity extraction on {len(files)} files...")
+    logger.info(f"Starting entity extraction on {len(files)} files (Bedrock/Claude Sonnet)...")
     results = []
 
     for filename in sorted(files):
@@ -212,7 +185,7 @@ def main():
             # Fallback title is file basename without extension
             fallback_title = os.path.splitext(os.path.splitext(filename)[0])[0]
 
-            entities_list = run_extraction_flow(client, model, text, fallback_title)
+            entities_list = run_extraction_flow(text, fallback_title)
             entities_count = len(entities_list.entities)
 
             # Write to output folder

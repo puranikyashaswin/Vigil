@@ -3,17 +3,15 @@ import json
 import logging
 from collections import defaultdict
 from typing import List, Dict, Any, Tuple
-from openai import OpenAI
-from okf_utils import slugify
+from shared_utils import call_llm, clean_json_string
 
 logger = logging.getLogger("vigil.build_graph")
 
 
-def check_contradiction(
-    client: OpenAI, model: str, ent_a: Dict[str, Any], ent_b: Dict[str, Any]
-) -> Dict[str, Any]:
+def check_contradiction(ent_a: Dict[str, Any], ent_b: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Queries LLM to check if two entities contradict or conflict on safety-critical parameters or rules.
+    Queries Claude Opus via Bedrock to check if two entities contradict or conflict
+    on safety-critical parameters or rules.
     """
     system_prompt = (
         "You are a safety-critical industrial compliance auditor. Compare the contents of these two industrial entities "
@@ -52,24 +50,13 @@ def check_contradiction(
     )
 
     try:
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+        content = call_llm(
+            task="contradiction",
+            system_prompt=system_prompt,
+            user_content=user_prompt,
             temperature=0.0,
         )
-        content = completion.choices[0].message.content.strip()
-        # Clean markdown codeblocks
-        if content.startswith("```"):
-            lines = content.splitlines()
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines[-1].startswith("```"):
-                lines = lines[:-1]
-            content = "\n".join(lines).strip()
-
+        content = clean_json_string(content)
         return json.loads(content)
     except Exception as e:
         logger.warning(
@@ -90,6 +77,8 @@ def find_pairs_to_check(
     Finds candidates for contradiction checks across regulation, procedure, and maintenance directories.
     Optimized with lookup indices to avoid nested O(N^2) iterations.
     """
+    from okf_utils import slugify
+
     by_tag = defaultdict(list)
     by_ref = defaultdict(list)
     by_type = defaultdict(list)

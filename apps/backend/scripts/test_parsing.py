@@ -83,13 +83,9 @@ def main():
 
             # 2. Route to appropriate parser
             if category == "image" or category == "scanned_pdf":
-                route = "OpenRouter OCR"
-                if not api_key:
-                    raise Exception("Missing OPENROUTER_API_KEY in .env. OCR required.")
-                logger.info(f"Routing to OpenRouter OCR fallback chain...")
-                parsed_text, model_used = parsers.parse_via_openrouter_ocr(
-                    file_path, api_key
-                )
+                route = "Vision OCR (Bedrock)"
+                logger.info(f"Routing to Claude Vision OCR...")
+                parsed_text, model_used = parsers.parse_via_vision_ocr(file_path)
                 details = f"Model: {model_used}"
 
             elif category == "text_native_pdf":

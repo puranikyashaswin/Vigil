@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 # Setup python path to import backend modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from shared_utils import get_client
 from scripts.contradiction import check_contradiction
 
 logging.basicConfig(
@@ -38,9 +37,7 @@ def run_benchmark():
         benchmark_cases = json.load(f)
 
     logger.info(f"Loaded {len(benchmark_cases)} contradiction benchmark cases.")
-
-    client, model = get_client()
-    logger.info(f"Using LLM: {model} via configured gateway.")
+    logger.info("Using Claude Opus via Bedrock for contradiction detection.")
 
     # Run evaluation and cache raw outputs
     cached_results = []
@@ -56,7 +53,7 @@ def run_benchmark():
         )
 
         # Invoke contradiction checker
-        res = check_contradiction(client, model, ent_a, ent_b)
+        res = check_contradiction(ent_a, ent_b)
 
         detected = res.get("contradiction_detected", False)
         score = res.get("confidence_score", 0.0)

@@ -1,16 +1,12 @@
 import os
 import sys
-import json
 import logging
 from typing import Dict, Any, List
-from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import zipfile
-import io
 
 # Add current path and apps/backend to sys.path
 sys.path.append(os.path.dirname(__file__))
@@ -42,10 +38,6 @@ api.add_middleware(
 # In-memory graph cache
 _graph_cache: Dict[str, Any] = {}
 _graph_cache_valid: bool = False
-
-RAGAS_LOG_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "logs", "ragas")
-)
 
 
 class QueryRequest(BaseModel):
@@ -79,18 +71,6 @@ def run_query(request: QueryRequest) -> Dict[str, Any]:
 
     try:
         final_state = graph_app.invoke(initial_state)
-
-        # RAGAS structured logging
-        ragas_entry = final_state.get("ragas_log")
-        if ragas_entry:
-            os.makedirs(RAGAS_LOG_DIR, exist_ok=True)
-            log_path = os.path.join(RAGAS_LOG_DIR, "interactions.jsonl")
-            with open(log_path, "a", encoding="utf-8") as lf:
-                lf.write(
-                    json.dumps({**ragas_entry, "timestamp": datetime.now().isoformat()})
-                    + "\n"
-                )
-
         return final_state
     except Exception as e:
         logger.error(f"Error executing agent query: {str(e)}")
@@ -310,10 +290,13 @@ def index_all_kg_documents() -> Dict[str, Any]:
     Reads all OKF files from the repository's knowledge_graph/ folder
     and indexes them into the Qdrant Cloud cluster.
     """
+    global _graph_cache_valid
     kg_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
     )
-    return perform_kg_indexing(kg_dir)
+    result = perform_kg_indexing(kg_dir)
+    _graph_cache_valid = False
+    return result
 
 
 @api.on_event("startup")

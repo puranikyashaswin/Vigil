@@ -8,14 +8,12 @@ import asyncio
 from datetime import datetime
 from typing import List, Dict, Any, Tuple
 from dotenv import load_dotenv
-from openai import OpenAI
 
 # Add parent and script paths to sys.path
 sys.path.append(os.path.dirname(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from okf_utils import slugify, init_okf_dir, append_to_index, append_to_log
 from contradiction import check_contradiction, find_pairs_to_check
-from shared_utils import get_client
 
 # Set up logging
 logging.basicConfig(
@@ -37,8 +35,6 @@ DIR_MAP = {
 
 
 async def check_contradiction_async(
-    client: OpenAI,
-    model: str,
     ent_a: Dict[str, Any],
     ent_b: Dict[str, Any],
     semaphore: asyncio.Semaphore,
@@ -46,16 +42,16 @@ async def check_contradiction_async(
     async with semaphore:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
-            None, check_contradiction, client, model, ent_a, ent_b
+            None, check_contradiction, ent_a, ent_b
         )
 
 
 async def run_contradiction_checks(
-    client: OpenAI, model: str, pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]]
+    pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]]
 ) -> List[Dict[str, Any]]:
-    semaphore = asyncio.Semaphore(5)  # Max 5 concurrent calls to OpenAI
+    semaphore = asyncio.Semaphore(5)  # Max 5 concurrent calls to Bedrock
     tasks = [
-        check_contradiction_async(client, model, a, b, semaphore) for a, b in pairs
+        check_contradiction_async(a, b, semaphore) for a, b in pairs
     ]
     return await asyncio.gather(*tasks)
 
@@ -222,13 +218,7 @@ def main():
                         ent.setdefault("linked_concepts", []).append(label)
 
     # 3. Contradiction Detection Step
-    logger.info("Initializing LLM for contradiction checks...")
-    try:
-        client, model = get_client()
-        logger.info(f"Using client model: {model}")
-    except Exception as e:
-        logger.error(f"Failed to initialize client: {str(e)}")
-        sys.exit(1)
+    logger.info("Initializing contradiction detection pipeline (Bedrock/Claude Opus)...")
 
     logger.info(
         "Running pairwise contradiction detection on candidate safety intersections..."
@@ -241,7 +231,7 @@ def main():
     )
 
     # Run async checks in parallel
-    results = asyncio.run(run_contradiction_checks(client, model, pairs_to_check))
+    results = asyncio.run(run_contradiction_checks(pairs_to_check))
 
     for (ent, target_ent), res in zip(pairs_to_check, results):
         if res.get("contradiction_detected") and res.get("confidence_score", 0) > 0.7:

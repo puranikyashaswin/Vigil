@@ -6,17 +6,10 @@ import logging
 import argparse
 from typing import List, Dict, Any
 from dotenv import load_dotenv
-from openai import OpenAI
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "apps", "backend"))
-from shared_utils import clean_json_string
+from shared_utils import call_llm_vision, clean_json_string
 from pydantic import BaseModel, Field
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
 
 # Set up logging
 logging.basicConfig(
@@ -71,18 +64,10 @@ def encode_image(image_path: str) -> str:
         return base64.b64encode(img_file.read()).decode("utf-8")
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=2, min=2, max=10),
-    retry=retry_if_exception_type((json.JSONDecodeError, ValueError, Exception)),
-    reraise=True,
-)
-def fetch_topology_from_llm(
-    client: OpenAI, model_slug: str, image_b64: str
-) -> TopologyGraph:
+def fetch_topology_from_llm(image_b64: str, media_type: str = "image/png") -> TopologyGraph:
     """
-    Dispatches image and system instructions to OpenRouter and validates output against Pydantic schema.
-    Includes tenacity retry handling on JSON or parsing failures.
+    Dispatches image to Claude Opus via Bedrock and validates output against Pydantic schema.
+    Uses Opus for superior spatial reasoning on complex diagrams.
     """
     system_prompt = (
         "You are an expert industrial instrumentation and piping systems designer.\n"
@@ -113,25 +98,23 @@ def fetch_topology_from_llm(
         "- Do not wrap the JSON output in markdown codeblock wrappers. Output raw JSON only."
     )
 
-    logger.info(f"Querying Vision LLM ({model_slug}) via OpenRouter...")
-    response = client.chat.completions.create(
-        model=model_slug,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": system_prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{image_b64}"},
-                    },
-                ],
-            }
-        ],
+    text_prompt = (
+        "Analyze this P&ID (Piping and Instrumentation Diagram). "
+        "Extract all equipment nodes with their tag IDs, types, and descriptions, "
+        "and all piping connections as edges with source, target, and relation type. "
+        "Return valid JSON only."
+    )
+
+    logger.info("Querying Claude Opus (Bedrock) for P&ID topology extraction...")
+    raw_text = call_llm_vision(
+        task="topology",
+        system_prompt=system_prompt,
+        image_base64=image_b64,
+        media_type=media_type,
+        text_prompt=text_prompt,
         temperature=0.0,
     )
 
-    raw_text = response.choices[0].message.content
     if not raw_text:
         raise ValueError("Received empty response from Vision LLM.")
 
@@ -197,42 +180,37 @@ def parse_arguments() -> argparse.Namespace:
         default="results_entities",
         help="Directory to save the generated entities JSON file",
     )
-    parser.add_argument(
-        "--model",
-        default="google/gemini-2.5-flash",
-        help="OpenRouter Vision model slug (defaults to google/gemini-2.5-flash)",
-    )
     return parser.parse_args()
 
 
 def main() -> None:
     load_dotenv()
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if not api_key:
-        logger.error("Missing OPENROUTER_API_KEY environment variable.")
-        sys.exit(1)
 
     args = parse_arguments()
+
+    # Determine media type
+    _, ext = os.path.splitext(args.input)
+    ext = ext.lower()
+    media_type = "image/png"
+    if ext in [".jpg", ".jpeg"]:
+        media_type = "image/jpeg"
 
     try:
         # 1. Base64 encode diagram image
         logger.info(f"Encoding P&ID image: {args.input}")
         img_b64 = encode_image(args.input)
 
-        # 2. Initialize OpenRouter client
-        client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
-
-        # 3. Vision API Call with Pydantic validation
-        topology = fetch_topology_from_llm(client, args.model, img_b64)
+        # 2. Vision API Call with Pydantic validation (Opus via Bedrock)
+        topology = fetch_topology_from_llm(img_b64, media_type)
         logger.info(
             f"Successfully extracted {len(topology.nodes)} nodes and {len(topology.edges)} edges."
         )
 
-        # 4. Convert to OKF format compatible with build_graph.py
+        # 3. Convert to OKF format compatible with build_graph.py
         source_basename = os.path.basename(args.input)
         okf_data = convert_to_okf_entities(topology, source_basename)
 
-        # 5. Save output file
+        # 4. Save output file
         os.makedirs(args.output_dir, exist_ok=True)
         output_filename = f"{source_basename}.json"
         output_filepath = os.path.join(args.output_dir, output_filename)

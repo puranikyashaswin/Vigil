@@ -19,15 +19,9 @@ import xlrd
 import csv
 from io import BytesIO
 from PIL import Image
+from shared_utils import call_llm_vision
 
 logger = logging.getLogger("vigil.parsers")
-
-# OpenRouter Free Vision Models Fallback Chain
-OCR_MODEL_FALLBACKS = [
-    "nvidia/nemotron-nano-12b-v2-vl:free",
-    "google/gemma-4-26b-a4b-it:free",
-    "openrouter/free",
-]
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
 
@@ -267,17 +261,11 @@ def parse_unstructured_local(file_path: str) -> str:
         raise Exception(f"Unstructured extraction fallback failed: {str(e)}")
 
 
-def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
+def parse_via_vision_ocr(file_path: str) -> Tuple[str, str]:
     """
-    Parses scanned image files or PDFs using the OpenRouter Vision API.
-    Attempts model fallback sequence.
+    Parses scanned image files or PDFs using Claude Vision via Bedrock.
     Returns (transcription, model_used).
     """
-    if not api_key:
-        raise Exception(
-            "OpenRouter API key is missing. Set OPENROUTER_API_KEY in .env."
-        )
-
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
 
@@ -289,7 +277,7 @@ def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
         except Exception as e:
             raise Exception(f"Failed to open scanned PDF for OCR: {str(e)}")
         for i, page in enumerate(doc):
-            bitmap = page.render(scale=2)  # Scale=2 for clear OCR
+            bitmap = page.render(scale=2)
             pil_img = bitmap.to_pil()
             buffered = BytesIO()
             pil_img.save(buffered, format="PNG")
@@ -300,72 +288,32 @@ def parse_via_openrouter_ocr(file_path: str, api_key: str) -> Tuple[str, str]:
             img_b64 = base64.b64encode(image_file.read()).decode("utf-8")
             base64_images.append(img_b64)
 
-    # 2. Call OpenRouter with fallback models
-    last_error = None
-    for model in OCR_MODEL_FALLBACKS:
-        try:
-            logger.info(f"Attempting OCR using model: {model}")
-            transcriptions = []
+    # Determine media type
+    media_type = "image/png"
+    if ext in [".jpg", ".jpeg"]:
+        media_type = "image/jpeg"
 
-            for idx, base64_image in enumerate(base64_images):
-                if len(base64_images) > 1:
-                    logger.info(f"Transcribing page {idx+1}/{len(base64_images)}")
+    # 2. Transcribe each page via Claude Vision
+    system_prompt = (
+        "You are an expert document transcriber. Your task is to extract ALL text "
+        "from this image exactly as written. Preserve formatting, tables, layouts, "
+        "headers, and structure. Output the transcription directly with no commentary."
+    )
 
-                # Execute API request with backoff
-                text = run_api_ocr_request(base64_image, model, api_key)
-                transcriptions.append(text)
+    transcriptions = []
+    for idx, base64_image in enumerate(base64_images):
+        if len(base64_images) > 1:
+            logger.info(f"Transcribing page {idx+1}/{len(base64_images)}")
 
-            return "\n\n--- Page Break ---\n\n".join(transcriptions), model
-
-        except Exception as e:
-            logger.warning(
-                f"Model {model} failed: {str(e)}. Attempting next fallback model..."
-            )
-            last_error = e
-            continue
-
-    raise Exception(f"All OCR fallback models failed. Last error: {str(last_error)}")
-
-
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=2, min=2, max=16),
-    retry=retry_if_exception_type(Exception),
-    reraise=True,
-)
-def run_api_ocr_request(base64_image: str, model_slug: str, api_key: str) -> str:
-    """
-    Dispatches the base64 encoded image to OpenRouter with automatic exponential backoff retry.
-    """
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    payload = {
-        "model": model_slug,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Transcribe all text from this image exactly. Keep formatting, tables, and layouts intact where possible. Output direct transcripts only.",
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{base64_image}"},
-                    },
-                ],
-            }
-        ],
-    }
-    with httpx.Client(timeout=90.0) as client:
-        response = client.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=payload,
+        text = call_llm_vision(
+            task="ocr",
+            system_prompt=system_prompt,
+            image_base64=base64_image,
+            media_type=media_type,
+            text_prompt="Transcribe all text from this document image exactly.",
         )
-        if response.status_code == 200:
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-        elif response.status_code == 429:
-            raise Exception("Rate limited (429). Will retry...")
-        else:
-            raise Exception(f"HTTP {response.status_code}: {response.text}")
+        transcriptions.append(text)
+
+    model_used = "us.anthropic.claude-sonnet-4-6-v1"
+    logger.info(f"OCR completed using {model_used} for {len(base64_images)} page(s)")
+    return "\n\n--- Page Break ---\n\n".join(transcriptions), model_used

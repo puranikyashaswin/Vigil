@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Dict, Any
 from state import AgentState, RagasLog, Citation
-from shared_utils import get_client
+from shared_utils import call_llm
 
 logger = logging.getLogger("vigil.nodes")
 
@@ -12,7 +12,6 @@ logger = logging.getLogger("vigil.nodes")
 # Node 1: Intent Routing Node
 def route_query_intent(state: AgentState) -> Dict[str, Any]:
     query = state["query"]
-    client, model = get_client()
 
     system_prompt = (
         "You are an intent router for an industrial knowledge base query engine.\n"
@@ -25,15 +24,13 @@ def route_query_intent(state: AgentState) -> Dict[str, Any]:
     )
 
     try:
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query},
-            ],
+        response = call_llm(
+            task="route_intent",
+            system_prompt=system_prompt,
+            user_content=query,
             temperature=0.0,
         )
-        category = completion.choices[0].message.content.strip().lower()
+        category = response.strip().lower()
         if category not in ["copilot", "rca", "compliance", "lessons_learned"]:
             category = "copilot"
     except Exception as e:
@@ -131,19 +128,16 @@ def get_mock_telemetry_data(tag: str) -> str:
 def is_failed_generation(ans: str, query: str) -> bool:
     ans_clean = ans.strip()
 
-    # 1. Matches known moderation-verdict patterns
     if ans_clean.lower().startswith("user safety:") or ans_clean.lower() in (
         "safe",
         "unsafe",
     ):
         return True
 
-    # 2. Answer is under 20 words
     words = ans_clean.split()
     if len(words) < 20:
         return True
 
-    # 3. Doesn't reference any query terms
     stopwords = {
         "what",
         "whats",
@@ -179,54 +173,25 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
     citations = state["citations"]
     metadata = state.get("metadata") or {}
 
-    client, model = get_client()
-
     if not contexts or (citations and max(c["score"] for c in citations) < 0.55):
         greeting_prompt = (
             "You are the Vigil Expert Agent. Explain that no relevant equipment specs, "
             "procedures, regulations, or maintenance logs were found in the knowledge base. "
             "Politely decline to hallucinate and advise the user to ingest relevant source documents."
         )
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": greeting_prompt},
-                {"role": "user", "content": query},
-            ],
-            temperature=0.7,
-        )
-        ans = completion.choices[0].message.content
-
-        # Check if returned moderation-verdict patterns
-        if ans.strip().lower().startswith("user safety:") or ans.strip().lower() in (
-            "safe",
-            "unsafe",
-        ):
-            logger.warning(
-                "Path 1 synthesis returned a safety verdict. Retrying once..."
+        try:
+            ans = call_llm(
+                task="generation",
+                system_prompt=greeting_prompt,
+                user_content=query,
+                temperature=0.7,
             )
-            try:
-                completion = client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": greeting_prompt},
-                        {"role": "user", "content": query},
-                    ],
-                    temperature=0.7,
-                )
-                ans = completion.choices[0].message.content
-            except Exception:
-                ans = ""
-            if (
-                not ans
-                or ans.strip().lower().startswith("user safety:")
-                or ans.strip().lower() in ("safe", "unsafe")
-            ):
-                ans = (
-                    "Based on the provided sources, there is no information regarding the requested "
-                    "equipment or parameters in the ingested documents. Please ensure the relevant source "
-                    "documents are ingested into the database."
-                )
+        except Exception:
+            ans = (
+                "Based on the provided sources, there is no information regarding the requested "
+                "equipment or parameters in the ingested documents. Please ensure the relevant source "
+                "documents are ingested into the database."
+            )
 
         trace = metadata.get("trace", []) + ["synthesize_response"]
         return {"generated_response": ans, "metadata": {**metadata, "trace": trace}}
@@ -275,36 +240,31 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
         )
         user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
 
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.0,
-    )
-    ans = completion.choices[0].message.content
+    try:
+        ans = call_llm(
+            task="generation",
+            system_prompt=system_prompt,
+            user_content=user_prompt,
+            temperature=0.0,
+        )
+    except Exception as e:
+        logger.error(f"Generation call failed: {str(e)}")
+        ans = ""
 
-    if is_failed_generation(ans, query):
-        logger.warning("Path 2 synthesis failed validation checks. Retrying once...")
+    if not ans or is_failed_generation(ans, query):
+        logger.warning("Synthesis failed validation. Retrying with slight temperature...")
         try:
-            completion = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
+            ans = call_llm(
+                task="generation",
+                system_prompt=system_prompt,
+                user_content=user_prompt,
                 temperature=0.2,
             )
-            ans = completion.choices[0].message.content
         except Exception as retry_err:
             logger.error(f"Retry synthesis failed: {retry_err}")
             ans = ""
 
         if not ans or is_failed_generation(ans, query):
-            logger.warning(
-                "Path 2 synthesis failed retry validation. Falling back to default 'not found' response."
-            )
             ans = (
                 "Based on the provided sources, there is no information regarding the requested "
                 "equipment or parameters in the ingested documents. Please ensure the relevant source "
@@ -335,8 +295,7 @@ def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
         trace = metadata.get("trace", []) + ["contradiction_guard"]
         return {"metadata": {**metadata, "trace": trace}}
 
-    client, model = get_client()
-    context_block = "\n\n".join([f"Document Chunk: {c}" for c in contexts[:3]])
+    context_block = "\n\n".join([f"Document Chunk: {c}" for c in contexts[:5]])
 
     system_prompt = (
         "You are the Vigil Contradiction Guard. Compare the generated AI answer against the source document chunks "
@@ -346,20 +305,14 @@ def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
     )
 
     try:
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": f"AI Answer:\n{generated_response}\n\nSource Documents:\n{context_block}",
-                },
-            ],
+        guard_output = call_llm(
+            task="contradiction_guard",
+            system_prompt=system_prompt,
+            user_content=f"AI Answer:\n{generated_response}\n\nSource Documents:\n{context_block}",
             temperature=0.0,
         )
-        guard_output = completion.choices[0].message.content.strip()
+        guard_output = guard_output.strip()
 
-        # Clean any punctuation or wrapping and check the first word
         first_word = re.findall(r"\b[a-zA-Z]+\b", guard_output)
         first_word_upper = first_word[0].upper() if first_word else ""
 
