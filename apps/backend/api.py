@@ -388,25 +388,32 @@ def index_all_kg_documents() -> Dict[str, Any]:
             field_schema=PayloadSchemaType.KEYWORD,
         )
 
-        points = []
-        point_id = 1
-
+        all_chunks = []
         for doc in documents:
             chunks = chunk_text(doc["text"])
             for chunk in chunks:
-                embed_text = (
-                    f"Title: {doc['title']}\nType: {doc['type']}\nContent: {chunk}"
+                all_chunks.append(
+                    {
+                        "doc": doc,
+                        "chunk": chunk,
+                        "embed_text": f"Title: {doc['title']}\nType: {doc['type']}\nContent: {chunk}",
+                    }
                 )
-                vector = list(next(embedding_model.embed([embed_text])))
-                payload = {
-                    "file_path": doc["file_path"],
-                    "directory": doc["directory"],
-                    "text": chunk,
-                    "type": doc["type"],
-                    "title": doc["title"],
-                }
-                points.append(PointStruct(id=point_id, vector=vector, payload=payload))
-                point_id += 1
+
+        embed_texts = [c["embed_text"] for c in all_chunks]
+        embeddings = list(embedding_model.embed(embed_texts, batch_size=32))
+
+        points = []
+        for idx, (c_info, vector) in enumerate(zip(all_chunks, embeddings), start=1):
+            doc = c_info["doc"]
+            payload = {
+                "file_path": doc["file_path"],
+                "directory": doc["directory"],
+                "text": c_info["chunk"],
+                "type": doc["type"],
+                "title": doc["title"],
+            }
+            points.append(PointStruct(id=idx, vector=list(vector), payload=payload))
 
         # Batch upsert
         BATCH_SIZE = 500
@@ -422,6 +429,36 @@ def index_all_kg_documents() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed admin indexing: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api.on_event("startup")
+def auto_seed_knowledge_graph_on_startup() -> None:
+    """
+    Ensures that Qdrant is populated with OKF concept embeddings on server boot.
+    """
+    try:
+        from state import get_qdrant_client
+        from scripts.index_graph import COLLECTION_NAME
+
+        q_client = get_qdrant_client()
+        has_points = False
+        try:
+            info = q_client.get_collection(COLLECTION_NAME)
+            if (info.points_count or 0) > 0:
+                has_points = True
+        except Exception:
+            has_points = False
+
+        if not has_points:
+            logger.info(
+                "Qdrant collection empty on startup. Auto-indexing knowledge graph..."
+            )
+            index_all_kg_documents()
+            logger.info("Auto-indexing on startup completed successfully.")
+    except Exception as e:
+        logger.warning(
+            f"Auto-seeding knowledge graph on startup failed (non-fatal): {str(e)}"
+        )
 
 
 @api.get("/api/admin/debug-qdrant")

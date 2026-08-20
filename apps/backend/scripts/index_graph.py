@@ -18,7 +18,14 @@ logger = logging.getLogger("vigil.index_graph")
 COLLECTION_NAME = "vigil_okf"
 
 
+_global_index_qdrant_client = None
+
+
 def get_qdrant_client() -> QdrantClient:
+    global _global_index_qdrant_client
+    if _global_index_qdrant_client is not None:
+        return _global_index_qdrant_client
+
     url = os.getenv("QDRANT_URL")
     api_key = os.getenv("QDRANT_API_KEY")
 
@@ -30,8 +37,10 @@ def get_qdrant_client() -> QdrantClient:
         logger.info(
             f"Using local persistent Qdrant database ({db_path}) because Qdrant URL is a placeholder."
         )
-        return QdrantClient(path=db_path)
-    return QdrantClient(url=url, api_key=api_key)
+        _global_index_qdrant_client = QdrantClient(path=db_path)
+    else:
+        _global_index_qdrant_client = QdrantClient(url=url, api_key=api_key)
+    return _global_index_qdrant_client
 
 
 def load_okf_files(kg_dir: str) -> List[Dict[str, Any]]:
