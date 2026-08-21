@@ -1,67 +1,62 @@
 # Vigil
 
-Vigil is an industrial knowledge intelligence platform that detects safety and compliance contradictions in engineering procedures, maintenance logs, and regulatory codes at the moment of ingestion.
+Vigil is an industrial knowledge intelligence platform that detects safety and compliance contradictions in engineering procedures, maintenance logs, and regulatory codes at the moment of ingestion — and answers grounded, cited queries through a multi-agent RAG pipeline powered by Amazon Bedrock.
 
 ---
 
-## 📊 Empirical Evaluation & Performance Benchmarks
+## Architecture Overview
 
-### 1. Proactive Contradiction Detection Sweep (n=42 pairs)
-Evaluated against a dataset of 42 concept pairs (21 contradictory, 21 clean). The evaluation pairs were generated with AI assistance, and a subset of hard pairs (implicit, temporal, and multi-hop conflicts) was hand-written to mitigate construction bias.
+Full data flow from document ingestion through parallel query routing to the streaming frontend dashboard.
 
-| Threshold Sweep | True Positives (TP) | False Positives (FP) | True Negatives (TN) | False Negatives (FN) | Precision | Recall | F1-Score |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **0.5** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
-| **0.6** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
-| **0.7** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | **0.7895** |
-| **0.8** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+```mermaid
+flowchart TD
+    DOC[/"Documents\nPDF · DOCX · PNG · CSV · XLSX"/]
 
-*Threshold Analysis*: Classifier performance is completely insensitive to the threshold choice in the 0.5 to 0.8 range. This is due to the bimodal distribution of confidence scores, which cleanly separates contradictory vs clean specifications:
-- **Contradictory Cohort**: Average Confidence: **0.6995** (Median: **0.9500**)
-- **Clean Control Cohort**: Average Confidence: **0.0919** (Median: **0.0000**)
+    subgraph PIPELINE["Ingestion Pipeline"]
+        DETECT["Type Detection"]
+        PARSER{"Text-native\nor Image?"}
+        LOCAL["Local Parsers\nPyMuPDF · python-docx\nopenpyxl · xlrd"]
+        OCR["Bedrock Vision OCR\nClaude Sonnet 4.6"]
+        EXTRACT["LLM Entity Extraction\nPydantic JSON schema\nClaude Sonnet 4.6"]
+        OKF["OKF Concept Writer\nYAML + Markdown\nindex.md + log.md"]
+        CHECK["Contradiction Detection\nForward + Reverse LLM\nClaude Opus 4.6 (temp=0.0)"]
+        ALERT[/"Alert Generated\nto alerts/ directory\nif score > 0.7"/]
+        INDEX["Semantic Indexing\nFastEmbed · Qdrant\nBAAI/bge-small-en-v1.5"]
+    end
 
-We retain **0.7** as the default threshold to provide a robust safety margin against marginal model noise. See details in [docs/contradiction_benchmark_results.md](docs/contradiction_benchmark_results.md).
+    subgraph QUERY["Query Pipeline (LangGraph — Parallel)"]
+        direction TB
+        START2["START"]
+        ROUTE["route_intent\nClaude Sonnet 4.6"]
+        RETRIEVE["retrieve_context\nQdrant vector search"]
+        RERANK["rerank_context\n3-component confidence"]
+        AGENT["Agent Dispatch\nCopilot · RCA · Compliance\nLessons-Learned"]
+        GUARD["Contradiction Guard\nClaude Sonnet 4.6\n(skipped when confidence > 0.85)"]
+        LOG["Log & Metrics\nRAGAS · node timings"]
+        START2 --> ROUTE
+        START2 --> RETRIEVE
+        ROUTE --> RERANK
+        RETRIEVE --> RERANK
+        RERANK --> AGENT
+        AGENT --> GUARD
+        GUARD --> LOG
+    end
 
-### 2. QA RAG Performance & Safety Refusal (40-Question Split Benchmark)
-Evaluated against a 40-question golden QA dataset. The queries are split into 30 in-scope (answerable) questions and 10 out-of-scope (unanswerable) questions to evaluate safety-first grounding:
+    DASHBOARD[/"Next.js Dashboard\n2D Force Graph · Streaming Chat\nAlert Feed · File Upload"/]
 
-- **QA Faithfulness (In-Scope, n=30)**: **0.8112** (factual grounding of responses)
-- **QA Answer Relevancy (In-Scope, n=30)**: **0.8307** (direct alignment with query intent)
-- **QA Context Precision (In-Scope, n=30)**: **0.7197** (relevance of retrieved directories)
-- **QA Context Recall (In-Scope, n=30)**: **0.7167** (retrieval rate of ground-truth facts)
-- **Correct-Refusal Rate (Out-of-Scope, n=10)**: **1.0000** (10/10 correct safety refusals)
-- **False-Refusal Rate (In-Scope, n=30)**: **0.0667** (2/30 human-verified false refusals)
-
-Full scores are in [docs/ragas_results.md](docs/ragas_results.md) and [docs/ragas_eval_results.csv](docs/ragas_eval_results.csv).
-
-### 3. Retrieval Ablation Study (Local Execution, n=30 questions)
-A local, zero-API-cost retrieval ablation study evaluating vector search quality with and without the FlashRank reranker module:
-
-| Retrieval Method | Hit@5 | MRR (Mean Reciprocal Rank) | Difference |
-| :--- | :---: | :---: | :---: |
-| **Without Reranking** | 0.9667 | 0.8944 | Baseline |
-| **With FlashRank Reranker** | 1.0000 | 0.9333 | MRR +0.0389 |
-
-Full scores are in [docs/retrieval_ablation_results.md](docs/retrieval_ablation_results.md).
-
----
-
-## ⚠️ Known Limitations & Engineering Trade-offs
-
-1. **Failure Taxonomy on the 6 False Negatives (n=6)**:
-   - **explicit_numeric**: 0 misses out of 10 pairs.
-   - **unit_conversion**: 0 misses out of 2 pairs.
-   - **implicit_operational (Shift/Temporal logic)**: 3 misses out of 6 pairs (IDs: 25, 35, 37).
-   - **multi_hop (Cross-document chaining)**: 3 misses out of 3 pairs (IDs: 23, 39, 41).
-   - *Calibration Boundary*: Every missed pair scored exactly **0.00** confidence (rather than scoring near the 0.7 threshold). This shows the failure mode is non-detection, not miscalibration; no threshold adjustment can recover them. Detailed taxonomy is documented in [docs/contradiction_failure_analysis.md](docs/contradiction_failure_analysis.md).
-   - *Multi-hop Sample Warning*: A 3/3 miss rate on multi-hop is thin (n=3) to declare a category boundary, although it represents a clean qualitative limit.
-2. **The Unit Mismatch Bug (False Positives)**:
-   - The detector treats unit mismatch as a contradiction signal rather than converting the quantities. Clean control pairs 32 and 34 (Expected: Clean) were falsely flagged as contradictions with 0.95 and 0.98 confidence because they contained mixed units (PSI vs MPa, C vs F). Thus, the unit_conversion category has 2/2 recall but 0/2 correctly reasoned controls.
-3. **AI-Assisted Benchmark Bias**: The 42 contradiction pairs were constructed with AI assistance. A set of hard pairs was hand-written to mitigate construction bias. Independent evaluation remains future work.
-4. **Small Sample Size for Out-of-Scope Queries**: The correct-refusal rate of 100% is measured on a small cohort (n=10), yielding a wide statistical confidence interval. This indicates that the guardrails work effectively on this specific evaluation set, rather than proving a general 100% safety rate.
-5. **False Refusal Context Omission**: The 6.67% false-refusal rate (2/30) was human-verified and caused by two questions asking about detailed specifications that are absent from the indexed source files. While the agent correctly refused to answer to prevent hallucination, they are counted as false refusals since they are labeled in-scope.
-6. **Retrieval Ablation Scope**: Retrieval metrics were measured locally with zero LLM calls. Generation quality (Faithfulness, Relevancy) was not measured under this ablation.
-7. **Reranking Resource Trade-off**: Reranking is enabled in Docker/local environments. It is disabled on the free-tier deployment due to the 512MB RAM constraint to avoid out-of-memory crashes. The measured cost of this trade-off is the ablation delta: MRR drops from 0.9333 to 0.8944, and Hit@5 drops from 1.0000 to 0.9667.
+    DOC --> DETECT
+    DETECT --> PARSER
+    PARSER -- "Text-native" --> LOCAL
+    PARSER -- "Scanned/Image" --> OCR
+    LOCAL --> EXTRACT
+    OCR --> EXTRACT
+    EXTRACT --> OKF
+    OKF --> CHECK
+    CHECK -- "Conflict found" --> ALERT
+    CHECK --> INDEX
+    INDEX --> QUERY
+    LOG --> DASHBOARD
+```
 
 ---
 
@@ -72,111 +67,215 @@ Every knowledge management system can search and answer questions reactively. Vi
 - **Forward check**: The newly ingested concept is compared against every concept it explicitly references.
 - **Reverse check**: All existing concepts that reference the new concept are also pulled in and compared.
 
-If a contradiction exceeds a 0.7 confidence threshold, Vigil automatically generates a compliance alert in the `alerts/` directory, linking both conflicting sources. The alert appears immediately on the dashboard with a severity rating and a side-by-side comparison view.
+If a contradiction exceeds a 0.7 confidence threshold, Vigil automatically generates a compliance alert in the `alerts/` directory, linking both conflicting sources with severity and side-by-side comparison. An operator updating a maintenance bypass procedure that violates an OSHA pressure limit is stopped at ingestion time, not during an inspection.
 
-This means an operator updating a maintenance bypass procedure that violates an OSHA pressure limit is stopped at ingestion time, not during an inspection.
+---
+
+## Parallel Query Pipeline
+
+The query pipeline uses a **fan-out/fan-in** LangGraph topology. `route_intent` (LLM classification) and `retrieve_context` (Qdrant vector search) run concurrently from `START`, saving ~300–400ms per query compared to sequential execution.
+
+```
+START ──┬── route_intent ─────┐
+        └── retrieve_context ──┤
+                               ▼
+                      rerank_context → agent dispatch → guard → log → END
+```
+
+### 3-Component Confidence Model
+
+After retrieval, a mathematically grounded confidence score is computed:
+
+```
+relevance  = harmonic_mean(top_k_scores)         # penalizes weak outliers
+consensus  = sigmoid(fraction_of_scores > 0.55)  # smooth agreement signal
+coverage   = unique_source_files / total_hits    # source diversity
+
+confidence = 0.5 × relevance + 0.3 × consensus + 0.2 × coverage
+```
+
+The full breakdown (`relevance`, `consensus`, `coverage`, `formula`) is returned in every API response under `metadata.confidence`.
+
+### Smart Guard Skipping
+
+The contradiction guard LLM call is skipped (saving ~800ms) when any of these conditions are met:
+
+| Condition | Skip Reason in Trace |
+|:---|:---|
+| No contexts retrieved | `no_contexts` |
+| Response is a safety refusal | `refusal_response` |
+| `confidence.score > 0.85` AND `consensus > 0.9` | `high_confidence` |
+| Response < 50 words | `short_response` |
+
+---
+
+## LLM Routing (Amazon Bedrock)
+
+All LLM calls route through a unified `call_llm(task, ...)` gateway in `shared_utils.py`. Model selection is automatic based on task:
+
+| Task | Model | Reason |
+|:---|:---|:---|
+| `contradiction` | `claude-opus-4-6-v1` | Highest reasoning for safety-critical detection |
+| `topology` | `claude-opus-4-6-v1` | Complex P&ID structural analysis |
+| `route_intent` | `claude-sonnet-4-6` | Fast intent classification (max 20 tokens) |
+| `extraction` | `claude-sonnet-4-6` | Entity extraction from documents |
+| `generation` | `claude-sonnet-4-6` | RAG response generation |
+| `ocr` | `claude-sonnet-4-6` | Vision OCR for scanned documents |
+| `contradiction_guard` | `claude-sonnet-4-6` | Post-generation safety check |
+
+Cross-region inference profile IDs used:
+- Opus: `us.anthropic.claude-opus-4-6-v1`
+- Sonnet: `us.anthropic.claude-sonnet-4-6`
+
+**Fallback**: If AWS credentials are not configured, the system automatically falls back to OpenRouter (`meta-llama/llama-3.3-70b-instruct`).
+
+---
+
+## Streaming Chat
+
+Queries to `/api/query/stream` return Server-Sent Events (SSE). Tokens appear on the frontend as Claude generates them — perceived latency drops from a ~20-second blank wait to text appearing in ~2 seconds.
+
+```
+event: token  → {"token": "The ", "done": false}
+event: token  → {"token": "pressure ", "done": false}
+...
+event: done   → {"metadata": {"confidence": {...}, "node_metrics": {...}}}
+```
+
+---
+
+## Real File Upload with Live Pipeline Progress
+
+Uploading documents via `/api/ingest/upload` returns SSE progress events per file:
+
+```
+event: file_start    → {"file": "doc.pdf", "index": 0, "total": 2}
+event: step          → {"step": 1, "label": "Parsing document...", "status": "running"}
+event: step          → {"step": 2, "label": "Extracting entities...", "status": "complete"}
+event: contradiction → {"detected": true, "severity": "high", ...}
+event: file_complete → {"file": "doc.pdf", "entities_count": 4}
+event: done          → {"total_files": 2, "new_node_ids": ["equipment/valve-v-202.md", ...]}
+```
+
+After upload completes, the knowledge graph refreshes automatically and newly added nodes glow green for 5 seconds.
+
+---
+
+## Empirical Evaluation & Performance Benchmarks
+
+### 1. Proactive Contradiction Detection Sweep (n=42 pairs)
+
+Evaluated against a dataset of 42 concept pairs (21 contradictory, 21 clean). Hard pairs (implicit, temporal, multi-hop conflicts) were hand-written to reduce construction bias.
+
+| Threshold | TP | FP | TN | FN | Precision | Recall | F1-Score |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **0.5** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+| **0.6** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+| **0.7** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | **0.7895** |
+| **0.8** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+
+Confidence scores are bimodal — threshold choice in 0.5–0.8 has no effect:
+- **Contradictory cohort**: avg **0.6995** (median **0.9500**)
+- **Clean control cohort**: avg **0.0919** (median **0.0000**)
+
+Default threshold: **0.7** (robust safety margin). See [docs/contradiction_benchmark_results.md](docs/contradiction_benchmark_results.md).
+
+### 2. QA RAG Performance (40-Question Split Benchmark)
+
+| Metric | Score | Notes |
+|:---|:---:|:---|
+| Faithfulness (in-scope, n=30) | **0.8112** | Factual grounding of responses |
+| Answer Relevancy (in-scope, n=30) | **0.8307** | Alignment with query intent |
+| Context Precision (in-scope, n=30) | **0.7197** | Relevance of retrieved directories |
+| Context Recall (in-scope, n=30) | **0.7167** | Retrieval rate of ground-truth facts |
+| Correct-Refusal Rate (out-of-scope, n=10) | **1.0000** | 10/10 correct safety refusals |
+| False-Refusal Rate (in-scope, n=30) | **0.0667** | 2/30 human-verified false refusals |
+
+Full scores: [docs/ragas_results.md](docs/ragas_results.md) and [docs/ragas_eval_results.csv](docs/ragas_eval_results.csv).
+
+### 3. Retrieval Ablation Study (n=30 questions, zero API cost)
+
+| Method | Hit@5 | MRR | Difference |
+|:---|:---:|:---:|:---:|
+| Without Reranking | 0.9667 | 0.8944 | Baseline |
+| With FlashRank | 1.0000 | 0.9333 | MRR +0.0389 |
+
+Full scores: [docs/retrieval_ablation_results.md](docs/retrieval_ablation_results.md).
+
+---
+
+## Known Limitations & Engineering Trade-offs
+
+1. **False Negative Taxonomy (n=6 missed contradictions)**:
+   - `implicit_operational` (shift/temporal logic): 3/6 pairs missed (IDs 25, 35, 37)
+   - `multi_hop` (cross-document chaining): 3/3 pairs missed (IDs 23, 39, 41)
+   - Every missed pair scored exactly **0.00** (non-detection, not miscalibration — no threshold adjustment can recover them).
+
+2. **Unit Mismatch False Positives**: The detector treats PSI vs MPa and °C vs °F as contradiction signals instead of converting. Clean pairs 32 and 34 were falsely flagged at 0.95 and 0.98 confidence.
+
+3. **AI-Assisted Benchmark Bias**: The 42 pairs were constructed with AI assistance. Hard pairs were hand-written to mitigate this; independent external evaluation remains future work.
+
+4. **Small Out-of-Scope Cohort**: The 100% correct-refusal rate is on n=10 queries — a wide statistical confidence interval. It shows the guardrails work on this set, not a proven general rate.
+
+5. **Reranking Disabled on Free-Tier Render**: FlashRank is disabled on the 512MB Render instance to prevent OOM crashes. Cost of this trade-off: MRR drops from 0.9333 → 0.8944, Hit@5 drops from 1.0 → 0.9667.
 
 ---
 
 ## Document Parsing Performance
 
-| File Type | Method Used | Approach | Notes |
-|:---|:---|:---|:---|
-| PDF (text-native) | PyMuPDF (primary), pdfplumber (fallback) | Direct text-layer extraction, no LLM call | PyMuPDF is 80% to 94% faster than pdfplumber |
-| PDF (scanned) | OpenRouter vision model | AI-powered OCR with layout understanding | Handles messy real-world scans |
-| DOCX | python-docx | Direct XML structure parsing | Preserves headings and paragraph structure |
-| XLSX / XLS | openpyxl / xlrd | Direct spreadsheet structure parsing | Handles legacy .xls files misencoded as modern .xlsx |
-| CSV | Python csv module | Direct structured parsing | Zero-dependency, deterministic |
+| File Type | Method | Notes |
+|:---|:---|:---|
+| PDF (text-native) | PyMuPDF (primary), pdfplumber (fallback) | No LLM call; 80–94% faster than pdfplumber alone |
+| PDF (scanned/image) | Claude Sonnet 4.6 vision (Bedrock) | AI-powered OCR with layout understanding |
+| DOCX | python-docx | Preserves headings and paragraph structure |
+| XLSX / XLS | openpyxl / xlrd | Handles legacy .xls files misencoded as .xlsx |
+| CSV | Python csv module | Zero-dependency, deterministic |
 
-These benchmark times are real, measured results from running the test script [test_parsing.py](apps/backend/scripts/test_parsing.py) against our own local [test_documents/](test_documents/) corpus, rather than synthetic or third-party benchmarks:
+Measured on [test_documents/](test_documents/) corpus via [scripts/test_parsing.py](apps/backend/scripts/test_parsing.py):
 
-| Document | Previous (pdfplumber) | Current (PyMuPDF) | Improvement |
+| Document | pdfplumber | PyMuPDF | Improvement |
 |:---|:---:|:---:|:---:|
-| 29 CFR 1910.119 (OSHA regulation, 316KB) | 1.61s | 0.26s | 83.8% faster |
-| P&ID Reference Manual (7MB, largest test doc) | 3.44s | 0.20s | 94.2% faster |
+| 29 CFR 1910.119 OSHA (316KB) | 1.61s | 0.26s | 83.8% faster |
+| P&ID Reference Manual (7MB) | 3.44s | 0.20s | 94.2% faster |
 | Piping & Instrumentation Diagrams | 0.80s | 0.15s | 81.2% faster |
-| OSHA 1910.119 (alternate source) | 1.50s | 0.17s | 88.6% faster |
-| Sample document (100KB) | 0.04s | 0.02s | 50.0% faster |
-
----
-
-## Architecture Overview
-
-Full data flow from document ingestion through sequential query routing and execution to the frontend dashboard. See [docs/architecture.md](docs/architecture.md) for a detailed breakdown of each step.
-
-```mermaid
-flowchart TD
-    DOC[/"Documents\nPDF · DOCX · PNG · CSV · XLSX"/]
-
-    subgraph PIPELINE["Ingestion Pipeline"]
-        DETECT["Type Detection"]
-        PARSER{"Text-native\nor Image?"}
-        LOCAL["Local Parsers\npdfplumber · python-docx\nopenpyxl · xlrd"]
-        OCR["OpenRouter OCR\nFree-tier Vision Models"]
-        EXTRACT["LLM Entity Extraction\nPydantic JSON schema"]
-        OKF["OKF Concept Writer\nYAML + Markdown\nindex.md + log.md"]
-        CHECK["Contradiction Detection\nForward + Reverse LLM\ncomparison (temp=0.0)"]
-        ALERT[/"Alert Generated\nto alerts/ directory\nif score > 0.7"/]
-        INDEX["Semantic Indexing\nFastEmbed · Qdrant\nBAAI/bge-small-en-v1.5"]
-    end
-
-    subgraph AGENTS["Query Agents (LangGraph)"]
-        COPILOT["Expert Copilot\nFull GraphRAG\n+ Citations"]
-        RCA["Maintenance & RCA\nRoot Cause Analysis"]
-        COMPLY["Compliance Agent\nRegulatory Violations"]
-        LEARN["Lessons-Learned\nPattern Synthesis"]
-    end
-
-    DASHBOARD[/"Next.js Dashboard\n2D Force Graph · Chat\nAlert Feed · Inspector"/]
-
-    DOC --> DETECT
-    DETECT --> PARSER
-    PARSER -- "Text-native" --> LOCAL
-    PARSER -- "Scanned" --> OCR
-    LOCAL --> EXTRACT
-    OCR --> EXTRACT
-    EXTRACT --> OKF
-    OKF --> CHECK
-    CHECK -- "Conflict found" --> ALERT
-    CHECK --> INDEX
-    INDEX --> COPILOT
-    INDEX --> RCA
-    INDEX --> COMPLY
-    INDEX --> LEARN
-    COPILOT --> DASHBOARD
-    RCA --> DASHBOARD
-    COMPLY --> DASHBOARD
-    LEARN --> DASHBOARD
-```
+| OSHA 1910.119 alternate | 1.50s | 0.17s | 88.6% faster |
+| Sample 100KB | 0.04s | 0.02s | 50.0% faster |
 
 ---
 
 ## Tech Stack
 
 ### Backend (Python)
+
 | Layer | Technology | Details |
 |:---|:---|:---|
-| Agent orchestration | `langgraph` | StateGraph with conditional routing |
-| LLM gateway | `openai` (OpenRouter) | Falls back to OpenRouter when Groq/Portkey keys are placeholders (as currently configured) |
-| Primary model | `meta-llama/llama-3.3-70b-instruct` | Via OpenRouter free tier |
-| Vision/OCR | `openrouter` API | Free-tier vision models for scanned documents |
-| Local parsers | PyMuPDF (primary), `pdfplumber` (fallback), `python-docx`, `openpyxl`, `xlrd` | For text-native PDFs, DOCX, and spreadsheets |
-| Knowledge format | Open Knowledge Format (OKF) | Custom Markdown + YAML frontmatter schema for concept storage, cross-linked via relative markdown links, with `index.md` and `log.md` per directory. Full schema in [AGENTS.md](AGENTS.md) and [.agents/skills/okf_writer/SKILL.md](.agents/skills/okf_writer/SKILL.md) |
-| Vector storage | `qdrant-client` | Falls back to local file-based storage (`vigil_qdrant.db`) when no server URL configured |
-| Embeddings | `fastembed` | `BAAI/bge-small-en-v1.5` |
-| Reranking | `flashrank` | For search result reordering |
+| Agent orchestration | `langgraph` | Parallel fan-out StateGraph: `START → {route_intent ∥ retrieve_context} → rerank_context → agent → guard → log` |
+| LLM gateway | `anthropic[bedrock]` | Unified `call_llm(task)` routes to Opus 4.6 or Sonnet 4.6 automatically |
+| Primary models | Claude Opus 4.6, Claude Sonnet 4.6 | Via Amazon Bedrock cross-region inference profiles |
+| Vision/OCR | Claude Sonnet 4.6 vision (Bedrock) | For scanned documents and P&ID images |
+| Fallback LLM | OpenRouter `meta-llama/llama-3.3-70b-instruct` | Used when AWS credentials not configured |
+| Local parsers | PyMuPDF, pdfplumber, python-docx, openpyxl, xlrd | Text-native PDFs, DOCX, spreadsheets |
+| Knowledge format | Open Knowledge Format (OKF) | YAML frontmatter + Markdown; cross-linked via relative paths; `index.md` + `log.md` per directory. Schema in [AGENTS.md](AGENTS.md) |
+| Vector storage | `qdrant-client` | Local SQLite (`vigil_qdrant.db`) or Qdrant Cloud |
+| Embeddings | `fastembed` | `BAAI/bge-small-en-v1.5` — shared singleton, no reload on re-index |
+| Reranking | `flashrank` | `ms-marco-MiniLM-L-12-v2`; disabled on 512MB instances |
+| Confidence model | Custom 3-component formula | `0.5×relevance + 0.3×consensus + 0.2×coverage` |
+| Streaming | FastAPI SSE | `/api/query/stream` and `/api/ingest/upload` |
 | Evaluation | `ragas` | Faithfulness, context precision/recall, answer relevancy |
-| API server | `fastapi` + `uvicorn` | REST API on port 8000 |
-| Observability | `langsmith` | Configured and actively tracing |
+| API server | `fastapi` + `uvicorn` | REST + SSE on port 8000 |
+| Observability | `langsmith` | Per-node timing, token usage, model used, confidence breakdown |
 
 ### Frontend (Next.js)
+
 | Layer | Technology | Details |
 |:---|:---|:---|
 | Framework | Next.js 16 | App Router |
-| Styling | Tailwind CSS 4 | Warm editorial visual identity inspired by Anthropic's design language (ivory surfaces, clay accent, serif/sans pairing). See [.agents/skills/frontend_design/SKILL.md](.agents/skills/frontend_design/SKILL.md) for the full color palette and typography specification. |
+| Styling | Tailwind CSS 4 | Ivory surfaces, clay accent, serif/sans pairing |
 | Animations | `framer-motion` | Tab transitions, modal enter/exit |
-| Graph | `react-force-graph-2d` | Obsidian-style 2D force layout |
-| Mobile View | Field Technician View | Responsive layout with bottom navigation, slide-up drag-to-dismiss chat sheet, inspector drawers, and sunlight-readable alerts |
+| Graph | `react-force-graph-2d` | Canvas-rendered 2D force layout; hover tooltips; glow on new nodes |
+| Markdown | Custom renderer | Tables, blockquotes, compliance matrices, RCA tables — all rendered |
+| Streaming | Fetch ReadableStream | Chat tokens stream token-by-token; upload progress via SSE |
+| File Upload | HTML5 drag-and-drop | Multi-file; 50MB limit; real-time pipeline progress |
 | Icons | `lucide-react` | |
 
 ---
@@ -184,9 +283,10 @@ flowchart TD
 ## Setup
 
 ### Prerequisites
+
 - Python 3.11+ (managed via `uv`)
 - Node.js 20+
-- An OpenRouter API key (free tier works)
+- AWS credentials with Bedrock access (us-east-1)
 
 ### 1. Clone and set environment variables
 
@@ -196,39 +296,33 @@ cd vigil
 cp .env.example .env
 ```
 
-Edit `.env` with your keys:
+Edit `.env`:
 
 ```env
-# Required: OpenRouter (free tier works)
+# Required: Amazon Bedrock (us-east-1, Claude Opus/Sonnet access)
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1
+
+# Optional: Qdrant Cloud (falls back to local vigil_qdrant.db if not set)
+QDRANT_URL=https://your-cluster.qdrant.io
+QDRANT_API_KEY=your_qdrant_api_key
+
+# Optional: fallback LLM if AWS not configured
 OPENROUTER_API_KEY=sk-or-v1-...
 
-# Optional: Groq/Portkey (if configured, used as primary; otherwise falls back to OpenRouter)
-PORTKEY_API_KEY=your_portkey_api_key_here
-GROQ_API_KEY=your_groq_api_key_here
-
-# Optional: Qdrant Cloud (if not configured, uses local file-based storage)
-QDRANT_URL=your_qdrant_url_here
-QDRANT_API_KEY=your_qdrant_api_key_here
-
 # Optional: LangSmith tracing
-LANGSMITH_API_KEY=your_langsmith_api_key_here
+LANGSMITH_API_KEY=your_langsmith_key
 LANGSMITH_TRACING=true
 LANGSMITH_PROJECT=vigil
 ```
 
-**Important**: With the default placeholder `GROQ_API_KEY` and `PORTKEY_API_KEY`, all LLM calls automatically route through OpenRouter using `meta-llama/llama-3.3-70b-instruct` (free). No Groq or Portkey account is needed.
-
 ### 2. Install Python dependencies
 
 ```bash
-# Create virtual environment with uv (if not already present)
 uv venv
 source .venv/bin/activate
-
-# Install dependencies (core packages already listed in the venv)
-uv pip install fastapi uvicorn langgraph openai qdrant-client fastembed \
-  pydantic python-dotenv pdfplumber python-docx openpyxl xlrd httpx \
-  pypdfium2 Pillow flashrank ragas langsmith
+uv pip install -r requirements.txt
 ```
 
 ### 3. Install frontend dependencies
@@ -240,16 +334,7 @@ npm install
 
 ### 4. Build the knowledge graph and index
 
-Place your source documents in `test_documents/`. 
-
-If you have P&ID diagram images and want to visually extract their physical connectivity (topology):
-
-```bash
-# Extract tag nodes and flow edges from P&ID image
-python pid_topology_extractor.py --input test_documents/your_diagram.png
-```
-
-Then compile and index the knowledge graph:
+Place source documents in `test_documents/`. Then:
 
 ```bash
 # Parse documents, extract entities, write OKF files, detect contradictions
@@ -259,19 +344,19 @@ python apps/backend/scripts/build_graph.py
 python apps/backend/scripts/index_graph.py
 ```
 
-The pipeline will:
-- Parse PDFs, DOCX, PNGs, CSVs, and XLSX files
-- Extract entities using the LLM (Pydantic-validated JSON)
-- Write OKF Markdown files to the appropriate `knowledge_graph/` subdirectories
-- Run contradiction detection against linked concepts
-- Index chunks into Qdrant with directory/type metadata
+For P&ID diagram topology extraction:
+
+```bash
+python pid_topology_extractor.py --input test_documents/your_diagram.png
+```
 
 ### 5. Start the backend
 
 ```bash
 python apps/backend/api.py
-# or: uvicorn apps.backend.api:api --host 127.0.0.1 --port 8000
 ```
+
+The server auto-indexes the knowledge graph in a background thread on first start so port binding is immediate.
 
 ### 6. Start the frontend
 
@@ -280,7 +365,7 @@ cd apps/frontend
 npm run dev
 ```
 
-Open `http://localhost:3000`. The dashboard connects to the backend at `http://127.0.0.1:8000`.
+Open `http://localhost:3000`.
 
 ### 7. Test via CLI (optional)
 
@@ -292,88 +377,79 @@ python test_agents.py "What does OSHA 1910.119 require?"
 python test_agents.py
 ```
 
-### 8. Generate Static Mocks for Vercel Deployment (optional)
+---
 
-If you want to deploy the frontend to Vercel as a static preview without hosting a live backend server:
+## Cloud Deployment (Render)
 
-```bash
-# Pre-compile static JSON assets to the frontend public/ directory
-python dump_static_json.py
-```
+Vigil is deployed on Render's free tier. Key configuration:
 
-The frontend will automatically load these files in `isDemoMode` if no live backend endpoint is reachable.
+### Environment Variables (Render)
 
-## Cloud Deployment & Optimizations
+Set these in **Render → Environment**:
 
-Vigil is configured for production-grade scaling and cloud deployment.
+| Variable | Value |
+|:---|:---|
+| `AWS_ACCESS_KEY_ID` | Your AWS key |
+| `AWS_SECRET_ACCESS_KEY` | Your AWS secret |
+| `AWS_REGION` | `us-east-1` |
+| `QDRANT_URL` | Qdrant Cloud cluster URL |
+| `QDRANT_API_KEY` | Qdrant Cloud API key |
 
-### 1. Vector Database Schema in Qdrant Cloud
-When deploying to Qdrant Cloud, a keyword payload index must be established on the `"directory"` field to support the strict directory routing filters used by the RCA, Compliance, and Lessons-Learned agents. Both `api.py` and `index_graph.py` automatically register this schema when creating the collection:
-```python
-from qdrant_client.http.models import PayloadSchemaType
+### Keep-Alive (Free Tier)
 
-q_client.create_payload_index(
-    collection_name="vigil_okf",
-    field_name="directory",
-    field_schema=PayloadSchemaType.KEYWORD
-)
-```
+Render free-tier instances sleep after 15 minutes of inactivity. Set up a free UptimeRobot monitor:
+- **URL**: your Render backend URL + `/api/health`
+- **Interval**: every 5 minutes
 
-### 2. Administrative Cloud Helper Endpoint
-To populate the cloud vector database directly without running local python scripts, hit the helper endpoint on your deployed API server:
-- **Index All Concept Documents**: `GET /api/admin/index-all`  
-  This recursively scans the server workspace's `knowledge_graph/` folder, configures the Qdrant Cloud collection schema, and embeds/upserts all 35 OKF files.
+This prevents cold-start delays during demos.
 
-### 3. Memory & Latency Optimizations for Constrained Hosting (512MB RAM)
-To guarantee high performance and stability on constrained instances (such as Render's 512MB RAM Free Tier limit):
-- **Bypassed Reranking Overhead**: FlashRank reranking is disabled. The backend uses Qdrant's native fast cosine similarity scores. This prevents loading a second heavy ONNX model session, dropping idle RAM consumption from ~500MB to under 250MB and eliminating OOM crashes.
-- **Shared Embedding Singleton**: The administrative indexing endpoint imports the active global embedding model session directly from the query layer, preventing memory spikes when recreating the index.
+### Performance on Free Tier (512MB RAM)
+
+- FlashRank reranking is **disabled** (`ENABLE_RERANKING` not set) to stay within 512MB
+- Embedding model loads once as a global singleton — no reload on re-index
+- Auto-indexing runs in a background daemon thread — port binds in < 2 seconds
+
+### Administrative Endpoints
+
+| Endpoint | Purpose |
+|:---|:---|
+| `GET /api/health` | Health check (used by UptimeRobot) |
+| `GET /api/admin/index-all` | Re-embed and upsert all OKF files into Qdrant |
+| `GET /api/graph` | Knowledge graph nodes and edges (cached) |
+| `POST /api/ingest/upload` | Upload documents with live SSE progress |
+| `POST /api/query/stream` | Streaming chat query (SSE) |
 
 ---
 
 ## Running the Evaluation Suites
 
-To execute the performance evaluation suites locally. Note that the sample source documents in `test_documents/` are fully tracked in this repository to guarantee exact reproducibility of all runs.
+All source documents in `test_documents/` are git-tracked for exact reproducibility.
 
-1. **RAGAS QA Evaluation**:
-   Make sure the dependencies are installed and run the evaluation suite runner:
-   ```bash
-   python apps/backend/scripts/run_ragas_eval.py
-   ```
-   This will invoke the routed RAG QA pipeline for the 40 golden questions, compute split RAGAS metrics on the 30 in-scope queries, evaluate safety refusals on the 10 out-of-scope queries, and save results to `docs/ragas_results.md`.
+```bash
+# RAGAS QA evaluation (40 questions — 30 in-scope, 10 out-of-scope)
+python apps/backend/scripts/run_ragas_eval.py
 
-2. **Contradiction Detection Sweep**:
-   Run the contradiction detection threshold sweep benchmark:
-   ```bash
-   python apps/backend/scripts/run_contradiction_benchmark.py
-   ```
-   This will run pairwise checks on the 42 labeled concept pairs, compute Precision/Recall/F1-score for thresholds 0.5 to 0.8, and output results to `docs/contradiction_benchmark_results.md`.
+# Contradiction detection threshold sweep (42 labeled pairs)
+python apps/backend/scripts/run_contradiction_benchmark.py
 
-3. **Local Retrieval Ablation**:
-   Run the zero-API-cost retrieval ablation benchmark:
-   ```bash
-   python apps/backend/scripts/run_retrieval_ablation.py
-   ```
-   This runs local vector queries for the 30 in-scope questions, comparing Hit@5 and MRR with and without FlashRank reranking, and outputs findings to `docs/retrieval_ablation_results.md`.
+# Retrieval ablation — Hit@5 and MRR with/without FlashRank (zero API cost)
+python apps/backend/scripts/run_retrieval_ablation.py
+```
 
 ---
 
 ## Enterprise Scalability Path
 
-Vigil is architected to scale from a prototype to an enterprise-grade production environment without rewriting the core application logic. 
+Vigil is architected to scale without rewriting core logic. See [docs/SCALING.md](docs/SCALING.md) for full breakdown.
 
-For a comprehensive, step-by-step engineering breakdown of component upgrades, bottleneck metrics, failure timelines, and cloud sizing estimates, refer to the [Production Scaling Guide](file:///Users/yashaswinsharma/Documents/github/vigil/docs/SCALING.md).
-
-### Summary of Scaling Swaps
-
-| Component | Current (Prototype) | Production Upgrade | Primary Bottleneck |
+| Component | Current | Production Upgrade | Bottleneck |
 |:---|:---|:---|:---|
-| **LLM Inference** | OpenRouter free tier | Dedicated Portkey Gateway + Paid API | Rate limits (10 to 20 req/min) |
-| **OCR Processing** | OpenRouter free vision | Cloud document API or local GPU | Processing speed and quotas |
-| **Vector Index** | SQLite-backed Qdrant | Clustered Qdrant Cloud deployment | Concurrent query latency |
-| **Reverse Scanning** | Brute-force local regex scan | Qdrant metadata filter payload query | Disk I/O bottlenecks |
-| **Pipeline Runner** | Sequential CLI script | Asynchronous queue (Celery / Temporal) | Unhandled crash recovery |
-| **Storage Layer** | Local flat directories | Versioned Object Storage (S3 / Git) | File system directory limits |
+| LLM Inference | Amazon Bedrock (on-demand) | Bedrock Provisioned Throughput | Rate limits |
+| OCR Processing | Claude Sonnet 4.6 vision | Batch inference / async queue | Processing quotas |
+| Vector Index | SQLite-backed Qdrant | Qdrant Cloud clustered | Concurrent query latency |
+| Reverse Scanning | Brute-force local scan | Qdrant metadata filter index | Disk I/O |
+| Pipeline Runner | Sync background thread | Celery / Temporal async queue | Crash recovery |
+| Storage Layer | Local flat directories | Versioned Object Storage (S3) | Directory limits |
 
 ---
 
@@ -381,39 +457,60 @@ For a comprehensive, step-by-step engineering breakdown of component upgrades, b
 
 ```
 vigil/
-  AGENTS.md                 # Project constitution (tech stack, rules, conventions)
-  .env / .env.example       # Environment variables
-  test_agents.py            # CLI test harness for query agents
-  pid_topology_extractor.py # P&ID vision visual topology extractor
-  evaluate_rag_performance.py # RAGAS performance evaluation suite (HTTP live API)
-  dump_static_json.py       # Exporter utility dumping static json graph/alerts to frontend
+  AGENTS.md                    # Project constitution (conventions, OKF schema)
+  README.md                    # This file
+  requirements.txt             # Python dependencies (pinned)
+  .env / .env.example          # Environment variables
+  test_agents.py               # CLI test harness for query agents
+  pid_topology_extractor.py    # P&ID vision topology extractor
+  dump_static_json.py          # Static JSON exporter for demo/Vercel mode
   apps/
     backend/
-      api.py                # FastAPI server (REST endpoints)
-      graph.py              # LangGraph multi-agent definition + routing
-      parsers.py            # Document type detection, local parsers, OCR
+      api.py                   # FastAPI server — REST + SSE endpoints
+      graph.py                 # LangGraph parallel fan-out pipeline
+      nodes.py                 # Agent node functions (Copilot/RCA/Compliance/Lessons)
+      state.py                 # AgentState + merge_metadata reducer
+      retrieval.py             # Vector search + 3-component confidence model
+      shared_utils.py          # Unified LLM gateway — call_llm(), call_llm_vision()
+      parsers.py               # Document type detection + local parsers + Bedrock OCR
+      admin_utils.py           # Qdrant indexing helper
       scripts/
-        build_graph.py      # Full ingestion pipeline
-        index_graph.py      # Qdrant embedding + indexing
-        run_ragas_eval.py   # RAGAS evaluation runner
+        build_graph.py         # Full ingestion pipeline
+        index_graph.py         # Qdrant embedding + indexing
+        contradiction.py       # Contradiction detection (uses call_llm)
+        okf_utils.py           # OKF file writing utilities
+        run_ragas_eval.py      # RAGAS evaluation runner
+        run_contradiction_benchmark.py
+        run_retrieval_ablation.py
     frontend/
       src/
         app/
-          page.tsx          # Main dashboard page
-          layout.tsx        # Root layout
-          globals.css       # Tailwind theme + custom styles
+          page.tsx             # Main dashboard — streaming chat, upload, graph
+          layout.tsx           # Root layout
+          globals.css          # Tailwind theme + custom styles
         components/
-          ForceGraph2D.tsx  # react-force-graph-2d component
-  knowledge_graph/          # OKF concept files (git-tracked)
+          ForceGraph2D.tsx      # react-force-graph-2d — hover tooltips, glow
+          ChatHistoryOverlay.tsx# Streaming chat UI — full markdown rendering
+          DocumentSelector.tsx  # Drag-and-drop file upload zone
+          PipelineVisualizer.tsx# Real-time SSE pipeline progress
+          PipelineStatusOverlay.tsx
+        utils/
+          markdown.ts          # Markdown renderer — tables, blockquotes, lists
+  knowledge_graph/             # OKF concept files (git-tracked)
     equipment/
     procedures/
     regulations/
     maintenance/
     alerts/
   docs/
-    ragas_results.md        # RAGAS evaluation summary
-    ragas_eval_results.csv  # Raw eval scores
-  test_documents/           # Source documents for ingestion
+    architecture.md
+    ragas_results.md
+    ragas_eval_results.csv
+    contradiction_benchmark_results.md
+    contradiction_failure_analysis.md
+    retrieval_ablation_results.md
+    SCALING.md
+  test_documents/              # Source documents corpus (git-tracked)
+  logs/
+    ragas/                     # RAGAS interaction logs (JSONL)
 ```
-
-

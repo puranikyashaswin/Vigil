@@ -4,7 +4,7 @@ title: "Valve Specification"
 description: "Details about valve type, size, and other characteristics"
 resource: "test_documents/artofthepid-aiche-rbt11-15-19.pdf"
 tags: ['valve specification', 'valves']
-timestamp: 2026-07-07T20:03:22.982709
+timestamp: 2026-08-21T14:14:29.237000
 ---
 
 # Valve Specification

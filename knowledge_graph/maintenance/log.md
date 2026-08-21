@@ -50,3 +50,15 @@ Record of ingest, link, and modification actions:
 
 ### 2026-07-07
 **INGEST**: Ingested entity P-102 Maintenance Log from source test_documents/maintenance_schedule.csv (2026-07-07T20:03:22.983900)
+
+### 2026-08-21
+**INGEST**: Ingested entity P-101 Maintenance Log from source test_documents/maintenance_schedule.csv (2026-08-21T14:14:29.237491)
+
+### 2026-08-21
+**INGEST**: Ingested entity V-202 Maintenance Log from source test_documents/maintenance_schedule.csv (2026-08-21T14:14:29.237926)
+
+### 2026-08-21
+**INGEST**: Ingested entity T-301 Maintenance Log from source test_documents/maintenance_schedule.csv (2026-08-21T14:14:29.238109)
+
+### 2026-08-21
+**INGEST**: Ingested entity P-102 Maintenance Log from source test_documents/maintenance_schedule.csv (2026-08-21T14:14:29.238305)

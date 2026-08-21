@@ -4,7 +4,7 @@ title: "Process Flow Diagrams (PFDs)"
 description: "Drawings with lines for piping and symbols for major components, used to create P&IDs."
 resource: "test_documents/462-Piping-and-Instrumentation-Diagrams.pdf"
 tags: ['engineering', 'diagrams', 'process flow']
-timestamp: 2026-07-07T20:03:22.979325
+timestamp: 2026-08-21T14:14:29.232813
 ---
 
 # Process Flow Diagrams (PFDs)

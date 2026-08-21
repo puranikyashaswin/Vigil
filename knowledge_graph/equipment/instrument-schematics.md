@@ -4,7 +4,7 @@ title: "Instrument Schematics"
 description: "Detailed drawings for particular instruments, showing wiring details and control logic notes."
 resource: "test_documents/462-Piping-and-Instrumentation-Diagrams.pdf"
 tags: ['engineering', 'diagrams', 'instruments']
-timestamp: 2026-07-07T20:03:22.979483
+timestamp: 2026-08-21T14:14:29.233065
 ---
 
 # Instrument Schematics

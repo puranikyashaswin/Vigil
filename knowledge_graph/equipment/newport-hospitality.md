@@ -4,7 +4,7 @@ title: "Newport Hospitality"
 description: "The hospitality services provided by Newport during the racing event"
 resource: "test_documents/scanned_form_1.png"
 tags: ['hospitality services']
-timestamp: 2026-07-07T20:03:22.985349
+timestamp: 2026-08-21T14:14:29.240154
 ---
 
 # Newport Hospitality

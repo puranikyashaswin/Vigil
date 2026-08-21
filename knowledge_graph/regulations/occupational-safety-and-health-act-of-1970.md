@@ -4,7 +4,7 @@ title: "Occupational Safety and Health Act of 1970"
 description: "A federal law that regulates workplace safety and health"
 resource: "test_documents/osha_1910_119.pdf"
 tags: ['occupational safety', 'health regulation']
-timestamp: 2026-07-07T20:03:22.984380
+timestamp: 2026-08-21T14:14:29.239243
 ---
 
 # Occupational Safety and Health Act of 1970

@@ -38,3 +38,9 @@ Record of ingest, link, and modification actions:
 
 ### 2026-07-17
 **INGEST**: Manually created process safety procedure for Pump P-102 (2026-07-17T08:46:00)
+
+### 2026-08-21
+**INGEST**: Ingested entity P&ID Drafting Procedure from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-08-21T14:14:29.234901)
+
+### 2026-08-21
+**INGEST**: Ingested entity Newport Racing Event Survey from source test_documents/scanned_form_1.png (2026-08-21T14:14:29.239907)

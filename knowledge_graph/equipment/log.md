@@ -254,3 +254,60 @@ Record of ingest, link, and modification actions:
 
 ### 2026-07-07
 **INGEST**: Ingested entity Newport Hospitality from source test_documents/scanned_form_1.png (2026-07-07T20:03:22.985454)
+
+### 2026-08-21
+**INGEST**: Ingested entity Process Safety Management from source test_documents/29 CFR 1910.119 (up to date as of 7-01-2026).pdf (2026-08-21T14:14:29.231769)
+
+### 2026-08-21
+**INGEST**: Ingested entity Occupational Safety and Health Administration (OSHA) from source test_documents/29 CFR 1910.119 (up to date as of 7-01-2026).pdf (2026-08-21T14:14:29.232135)
+
+### 2026-08-21
+**INGEST**: Ingested entity Piping and Instrumentation Diagrams (P&IDs) from source test_documents/462-Piping-and-Instrumentation-Diagrams.pdf (2026-08-21T14:14:29.232755)
+
+### 2026-08-21
+**INGEST**: Ingested entity Process Flow Diagrams (PFDs) from source test_documents/462-Piping-and-Instrumentation-Diagrams.pdf (2026-08-21T14:14:29.232994)
+
+### 2026-08-21
+**INGEST**: Ingested entity Instrument Schematics from source test_documents/462-Piping-and-Instrumentation-Diagrams.pdf (2026-08-21T14:14:29.233207)
+
+### 2026-08-21
+**INGEST**: Ingested entity Wiring Diagrams from source test_documents/462-Piping-and-Instrumentation-Diagrams.pdf (2026-08-21T14:14:29.233428)
+
+### 2026-08-21
+**INGEST**: Ingested entity SCADA Network Diagrams from source test_documents/462-Piping-and-Instrumentation-Diagrams.pdf (2026-08-21T14:14:29.233564)
+
+### 2026-08-21
+**INGEST**: Ingested entity Logic Diagrams from source test_documents/462-Piping-and-Instrumentation-Diagrams.pdf (2026-08-21T14:14:29.233705)
+
+### 2026-08-21
+**INGEST**: Ingested entity Control Loops from source test_documents/462-Piping-and-Instrumentation-Diagrams.pdf (2026-08-21T14:14:29.234111)
+
+### 2026-08-21
+**INGEST**: Ingested entity Project Management Data from source test_documents/Project-Management-Sample-Data.xlsx (2026-08-21T14:14:29.234245)
+
+### 2026-08-21
+**INGEST**: Ingested entity P&ID from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-08-21T14:14:29.234385)
+
+### 2026-08-21
+**INGEST**: Ingested entity Equipment Title Blocks from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-08-21T14:14:29.236310)
+
+### 2026-08-21
+**INGEST**: Ingested entity Instrument Loop Elements from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-08-21T14:14:29.236669)
+
+### 2026-08-21
+**INGEST**: Ingested entity Pipe Specifications from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-08-21T14:14:29.236918)
+
+### 2026-08-21
+**INGEST**: Ingested entity Valve Specification from source test_documents/artofthepid-aiche-rbt11-15-19.pdf (2026-08-21T14:14:29.237104)
+
+### 2026-08-21
+**INGEST**: Ingested entity OSHA from source test_documents/osha_1910_119.pdf (2026-08-21T14:14:29.239550)
+
+### 2026-08-21
+**INGEST**: Ingested entity Sheet1 from source test_documents/preventive-maintenance-schedule-excel-template.xls (2026-08-21T14:14:29.239748)
+
+### 2026-08-21
+**INGEST**: Ingested entity Leguna Seca Racing Event from source test_documents/scanned_form_1.png (2026-08-21T14:14:29.240083)
+
+### 2026-08-21
+**INGEST**: Ingested entity Newport Hospitality from source test_documents/scanned_form_1.png (2026-08-21T14:14:29.240283)
