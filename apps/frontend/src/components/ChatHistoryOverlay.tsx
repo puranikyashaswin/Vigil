@@ -13,6 +13,8 @@ interface ChatHistoryOverlayProps {
   onCreateNewChat: () => void; onSelectConversation: (conv: Conversation) => void;
   onDeleteChat: (convId: string, e: React.MouseEvent) => void;
   onSendMessage: (e: React.FormEvent) => void; onInputChange: (value: string) => void;
+  onOpenDocument?: (filepath: string) => void;
+  onSendFollowUp?: (question: string) => void;
 }
 
 const STEP_LABELS = [
@@ -48,7 +50,9 @@ export default function ChatHistoryOverlay({
   onSelectConversation,
   onDeleteChat,
   onSendMessage,
-  onInputChange
+  onInputChange,
+  onOpenDocument,
+  onSendFollowUp
 }: ChatHistoryOverlayProps) {
   const [isMobile, setIsMobile] = React.useState(false);
   const [showSidebarMobile, setShowSidebarMobile] = React.useState(false);
@@ -184,7 +188,7 @@ export default function ChatHistoryOverlay({
                       ) : (
                         <div className="whitespace-pre-wrap">{msg.content}</div>
                       )}
-                      {msg.role === "assistant" && msg.category && (
+                      {msg.role === "assistant" && msg.category && msg.citations && msg.citations.some(c => c.score >= 0.55) && (
                         <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[10px] flex flex-col gap-1.5 text-zinc-500 dark:text-zinc-400 font-mono">
                           <span className="font-medium text-zinc-400 dark:text-zinc-500">
                             Resolved by: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.category} agent</span>
@@ -195,6 +199,9 @@ export default function ChatHistoryOverlay({
                               {msg.metadata.total_latency_ms && (
                                 <> · <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{(msg.metadata.total_latency_ms / 1000).toFixed(1)}s</span></>
                               )}
+                              {msg.metadata.impact_nodes && (
+                                <> · Impact: <span className="text-[#d97757] font-semibold">{msg.metadata.impact_nodes} nodes</span></>
+                              )}
                             </span>
                           )}
                           {msg.citations && msg.citations.filter(c => c.score >= 0.55).length > 0 && (
@@ -203,7 +210,14 @@ export default function ChatHistoryOverlay({
                               <ul className="list-disc pl-4 mt-1 space-y-0.5">
                                 {msg.citations.filter(c => c.score >= 0.55).map((c, i) => (
                                   <li key={i}>
-                                    <span className="text-zinc-900 dark:text-zinc-100 font-semibold underline">{c.source_file}</span> (score: {c.score.toFixed(2)})
+                                    <button
+                                      type="button"
+                                      onClick={() => onOpenDocument?.(c.source_file)}
+                                      className="text-[#d97757] hover:text-[#b84a2f] font-semibold underline cursor-pointer transition"
+                                    >
+                                      {c.source_file}
+                                    </button>
+                                    <span className="text-zinc-400 ml-1">({c.score.toFixed(2)})</span>
                                   </li>
                                 ))}
                               </ul>
@@ -211,60 +225,34 @@ export default function ChatHistoryOverlay({
                           )}
                         </div>
                       )}
+                      {msg.role === "assistant" && msg.follow_ups && msg.follow_ups.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap gap-2">
+                          {msg.follow_ups.map((q, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => onSendFollowUp?.(q)}
+                              className="text-xs px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-[#d97757]/10 dark:hover:bg-[#d97757]/15 text-zinc-700 dark:text-zinc-300 hover:text-[#d97757] rounded-full border border-zinc-200 dark:border-zinc-700 hover:border-[#d97757]/30 transition cursor-pointer"
+                            >
+                              {q}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
               )}
               {isTyping && (
-                <div className="flex flex-col items-start w-full">
-                  {/* Thinking dots */}
-                  <div className="flex items-center gap-1.5 mb-2 pl-1">
-                    <span className="w-2 h-2 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div className="flex items-center gap-3 pl-1">
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
-
-                  {/* Pipeline status card */}
-                  <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl rounded-bl-none p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-[#d97757] rounded-full animate-pulse" />
-                        <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                          Processing Query
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                        {pipelineStep}/6
-                      </span>
-                    </div>
-
-                    {/* Progress bar */}
-                    <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5 mb-3 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-[#6a9bcc] via-[#788c5d] to-[#d97757]"
-                        style={{ width: `${Math.max(8, (pipelineStep / 6) * 100)}%` }}
-                      />
-                    </div>
-
-                    {/* Step label */}
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">
-                      {STEP_LABELS[pipelineStep] || "Initializing pipeline..."}
-                    </p>
-
-                    {/* Step indicators */}
-                    <div className="flex items-center gap-1 mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                      {[1, 2, 3, 4, 5, 6].map((step) => (
-                        <div
-                          key={step}
-                          className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                            step < pipelineStep ? "bg-[#788c5d]"
-                            : step === pipelineStep ? "bg-[#d97757] animate-pulse"
-                            : "bg-zinc-200 dark:bg-zinc-700"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
+                    {STEP_LABELS[pipelineStep] || "Initializing..."}
+                  </span>
                 </div>
               )}
             </div>
