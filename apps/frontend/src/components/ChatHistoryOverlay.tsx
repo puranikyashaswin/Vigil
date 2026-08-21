@@ -161,7 +161,7 @@ export default function ChatHistoryOverlay({
                         ? "max-w-[75%] bg-[#d97757]/10 dark:bg-[#d97757]/15 text-zinc-900 dark:text-zinc-100 rounded-br-none border border-[#d97757]/10 dark:border-[#d97757]/20"
                         : "w-full bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-800 shadow-sm"
                     }`}>
-                      {msg.role === "assistant" && msg.metadata?.trace && (
+                      {msg.role === "assistant" && msg.metadata?.trace && msg.citations && msg.citations.some(c => c.score >= 0.55) && (
                         <div className="mb-3 pb-2 border-b border-brand-mid-gray/25 dark:border-brand-mid-gray/15 font-mono text-[9px] uppercase tracking-wider text-brand-mid-gray flex items-center gap-1.5 overflow-x-auto whitespace-nowrap select-none">
                           <span className="text-brand-orange font-semibold">LOG_EXEC:</span>
                           <div className="flex items-center gap-1">
@@ -189,11 +189,19 @@ export default function ChatHistoryOverlay({
                           <span className="font-medium text-zinc-400 dark:text-zinc-500">
                             Resolved by: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.category} agent</span>
                           </span>
-                          {msg.citations && msg.citations.length > 0 && (
+                          {msg.metadata?.confidence && (
+                            <span className="text-zinc-500 dark:text-zinc-400">
+                              Confidence: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.metadata.confidence.score.toFixed(2)}</span>
+                              {msg.metadata.total_latency_ms && (
+                                <> · <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{(msg.metadata.total_latency_ms / 1000).toFixed(1)}s</span></>
+                              )}
+                            </span>
+                          )}
+                          {msg.citations && msg.citations.filter(c => c.score >= 0.55).length > 0 && (
                             <div className="text-zinc-400 dark:text-zinc-500 mt-1">
                               <span className="font-semibold text-zinc-500 dark:text-zinc-400">Citations:</span>
                               <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                                {msg.citations.map((c, i) => (
+                                {msg.citations.filter(c => c.score >= 0.55).map((c, i) => (
                                   <li key={i}>
                                     <span className="text-zinc-900 dark:text-zinc-100 font-semibold underline">{c.source_file}</span> (score: {c.score.toFixed(2)})
                                   </li>

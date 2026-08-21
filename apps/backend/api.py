@@ -113,11 +113,13 @@ def run_query_stream(request: QueryRequest):
     import re
 
     def generate_sse():
+        from concurrent.futures import ThreadPoolExecutor
+
         t_start = perf_counter()
         query = request.query
 
-        # Step 1: Route intent
-        yield f'event: step\ndata: {{"step": 1, "label": "Classifying intent..."}}\n\n'
+        # Step 1 & 2: Route intent + Retrieve context (parallel)
+        yield f'event: step\ndata: {{"step": 1, "label": "Classifying intent & searching..."}}\n\n'
         state: AgentState = {
             "query": query,
             "category": "",
@@ -127,14 +129,18 @@ def run_query_stream(request: QueryRequest):
             "ragas_log": None,
             "metadata": {},
         }
-        route_result = route_query_intent(state)
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            route_future = executor.submit(route_query_intent, state)
+            retrieve_future = executor.submit(retrieve_context_node, state)
+            route_result = route_future.result()
+            retrieve_result = retrieve_future.result()
+
         category = route_result["category"]
         state["category"] = category
         state["metadata"] = route_result["metadata"]
 
-        # Step 2: Retrieve
-        yield f'event: step\ndata: {{"step": 2, "label": "Searching knowledge base..."}}\n\n'
-        retrieve_result = retrieve_context_node(state)
+        yield f'event: step\ndata: {{"step": 2, "label": "Search complete"}}\n\n'
         state["retrieved_contexts"] = retrieve_result["retrieved_contexts"]
         state["metadata"] = {**state["metadata"], **retrieve_result["metadata"]}
         if "trace" in state["metadata"] and "trace" in retrieve_result["metadata"]:
@@ -163,12 +169,32 @@ def run_query_stream(request: QueryRequest):
         yield f'event: category\ndata: {{"category": "{category}"}}\n\n'
 
         # Build the prompt (same logic as synthesize_response_node)
+        no_docs_path = False
         if not contexts or (citations and max(c["score"] for c in citations) < 0.55):
-            system_prompt = (
-                "You are the Vigil Expert Agent. Explain that no relevant equipment specs, "
-                "procedures, regulations, or maintenance logs were found in the knowledge base. "
-                "Politely decline to hallucinate and advise the user to ingest relevant source documents."
+            citations = []
+            no_docs_path = True
+
+            query_lower = query.strip().lower().rstrip("!?.")
+            greeting_tokens = {"hi", "hii", "hello", "hey", "hola", "howdy", "sup",
+                               "good morning", "good afternoon", "good evening",
+                               "whats up", "what's up", "yo"}
+            is_greeting = query_lower in greeting_tokens or (
+                len(query.split()) <= 3 and any(g in query_lower for g in {"hi", "hello", "hey"})
             )
+
+            if is_greeting:
+                system_prompt = (
+                    "You are Vigil, an industrial knowledge intelligence assistant. "
+                    "The user has greeted you. Respond with a brief, professional greeting (1-2 sentences). "
+                    "Mention you can help with equipment specs, maintenance, compliance, and root cause analysis. "
+                    "Do NOT use emojis. Keep it concise."
+                )
+            else:
+                system_prompt = (
+                    "You are the Vigil Expert Agent. No relevant documents were found for this query. "
+                    "Briefly state this and suggest rephrasing or ingesting relevant source documents. "
+                    "Do NOT use emojis. Keep it under 3 sentences."
+                )
             user_prompt = query
         else:
             telemetry_block = ""
@@ -300,14 +326,20 @@ def run_query_stream(request: QueryRequest):
 
         total_latency = round((perf_counter() - t_start) * 1000, 1)
 
+        if no_docs_path:
+            final_trace = ["route_intent", "synthesize_response"]
+        else:
+            final_trace = state["metadata"].get("trace", []) + [
+                "synthesize_response", "contradiction_guard", "log_metrics"
+            ]
+
         done_payload = {
             "generated_response": full_response,
             "category": category,
             "citations": citations,
             "metadata": {
                 **state["metadata"],
-                "trace": state["metadata"].get("trace", [])
-                + ["synthesize_response", "contradiction_guard", "log_metrics"],
+                "trace": final_trace,
                 "node_metrics": {
                     **state["metadata"].get("node_metrics", {}),
                     "synthesize_response": {
