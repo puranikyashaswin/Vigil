@@ -32,10 +32,12 @@ export interface ChatMessage {
   content: string;
   category?: string;
   citations?: { source_file: string; excerpt: string; score: number }[];
+  follow_ups?: string[];
   metadata?: {
     trace?: string[];
     confidence?: { score: number; relevance: number; consensus: number; coverage: number };
     total_latency_ms?: number;
+    impact_nodes?: number;
   };
 }
 
