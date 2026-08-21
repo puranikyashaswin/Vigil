@@ -22,3 +22,4 @@ httpx==0.28.1
 tenacity==9.1.4
 portkey-ai==2.3.2
 unstructured==0.23.1
+python-multipart>=0.0.9

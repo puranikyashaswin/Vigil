@@ -34,6 +34,9 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   const [linkDistance, setLinkDistance] = useState(95);
   const [collisionRadius, setCollisionRadius] = useState(36);
   const [showConfig, setShowConfig] = useState(false);
+  const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+  const hoveredNodeIdRef = useRef<string | null>(null);
 
   const isDark = resolvedTheme === "dark";
   const TYPE_COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
@@ -112,16 +115,26 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
         if (sourceId === node.id) { hNodes.add(targetId as string); hLinks.add(l); }
         else if (targetId === node.id) { hNodes.add(sourceId as string); hLinks.add(l); }
       });
+      hoveredNodeIdRef.current = node.id;
+      setHoveredNode(node);
+      if (fgRef.current) {
+        const coords = fgRef.current.graph2ScreenCoords(node.x, node.y);
+        setTooltipPos({ x: coords.x, y: coords.y });
+      }
+    } else {
+      hoveredNodeIdRef.current = null;
+      setHoveredNode(null);
+      setTooltipPos(null);
     }
     setHighlightNodes(hNodes);
     setHighlightLinks(hLinks);
   }, [initializedData.links]);
 
   const nodeCanvasObject = useCallback((node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const activeHighlights = externalHighlightNodeIds && externalHighlightNodeIds.size > 0 
-      ? externalHighlightNodeIds 
+    const activeHighlights = externalHighlightNodeIds && externalHighlightNodeIds.size > 0
+      ? externalHighlightNodeIds
       : highlightNodes;
-    drawNode(node, ctx, globalScale, TYPE_COLORS, activeHighlights, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected);
+    drawNode(node, ctx, globalScale, TYPE_COLORS, activeHighlights, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected, hoveredNodeIdRef.current);
   }, [TYPE_COLORS, highlightNodes, externalHighlightNodeIds, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected]);
 
   const linkCanvasObject = useCallback((link: GraphLink, ctx: CanvasRenderingContext2D) => {
@@ -132,13 +145,14 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
           return externalHighlightNodeIds.has(s) && externalHighlightNodeIds.has(t);
         }))
       : highlightLinks;
-    drawLink(link, ctx, activeHighlightLinks, linkDefault);
+    const showLabels = highlightLinks.size > 0 || (externalHighlightNodeIds?.size ?? 0) > 0;
+    drawLink(link, ctx, activeHighlightLinks, linkDefault, showLabels);
   }, [highlightLinks, externalHighlightNodeIds, initializedData.links, linkDefault]);
 
   const nodeVal = useCallback((node: GraphNode) => {
-    const size = node.size || 3.5;
-    const hitSize = Math.max(6, size);
-    return hitSize * hitSize;
+    const size = Math.max(5, node.size || 3.5);
+    const radius = Math.max(12, size * 2.5);
+    return radius * radius;
   }, []);
 
   const nodePointerAreaPaint = useCallback((node: GraphNode, color: string, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -171,7 +185,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
             linkCanvasObject={linkCanvasObject}
             nodeVal={nodeVal}
             nodePointerAreaPaint={nodePointerAreaPaint}
-            nodeLabel={(node) => (node as GraphNode).label || (node as GraphNode).id}
+            nodeLabel={() => ""}
             enableZoomInteraction={true}
             enablePanInteraction={true}
             d3AlphaDecay={0.012}
@@ -205,6 +219,48 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
               setCollisionRadius={setCollisionRadius}
               onClose={() => setShowConfig(false)}
             />
+          )}
+
+          {/* Rich Hover Tooltip */}
+          {hoveredNode && tooltipPos && (
+            <div
+              className="absolute z-20 pointer-events-none transition-opacity duration-150"
+              style={{
+                left: Math.min(tooltipPos.x + 14, dimensions.width - 220),
+                top: Math.max(tooltipPos.y - 10, 8),
+                opacity: 1,
+              }}
+            >
+              <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl px-3 py-2.5 max-w-[210px]">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span
+                    className="inline-block w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: TYPE_COLORS[(hoveredNode.type || "concept").toLowerCase()] || "#b0aea5" }}
+                  />
+                  <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    {hoveredNode.type || "concept"}
+                  </span>
+                </div>
+                <p className="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1 truncate">
+                  {hoveredNode.label}
+                </p>
+                {hoveredNode.description && (
+                  <p className="text-[11px] font-sans text-zinc-600 dark:text-zinc-400 leading-snug line-clamp-2">
+                    {hoveredNode.description.slice(0, 80)}{hoveredNode.description.length > 80 ? "..." : ""}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-zinc-100 dark:border-zinc-800">
+                  <span className="text-[10px] font-sans text-zinc-500 dark:text-zinc-500">
+                    {hoveredNode.degree} connection{hoveredNode.degree !== 1 ? "s" : ""}
+                  </span>
+                  {hoveredNode.id.startsWith("alerts/") && (
+                    <span className="text-[10px] font-sans font-semibold text-red-500 uppercase">
+                      Alert
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
         </>
       )}

@@ -41,14 +41,6 @@ export default function Dashboard() {
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
   const [showFreeTierModal, setShowFreeTierModal] = useState(false);
 
-  useEffect(() => {
-    // Show the notice modal 10 seconds after the page has mounted
-    const timer = setTimeout(() => {
-      setShowFreeTierModal(true);
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleRunImpactAnalysisAnimation = (nodeIds: Set<string>) => {
     const idsArray = Array.from(nodeIds);
     setExternalHighlightNodeIds(new Set());
@@ -427,9 +419,15 @@ export default function Dashboard() {
 
       <AnimatePresence>
         {showPipelineVisualizer && (
-          <PipelineVisualizer 
-            onClose={() => setShowPipelineVisualizer(false)} 
-            onComplete={loadData}
+          <PipelineVisualizer
+            onClose={() => setShowPipelineVisualizer(false)}
+            onComplete={(newNodeIds) => {
+              loadData();
+              if (newNodeIds && newNodeIds.length > 0) {
+                setExternalHighlightNodeIds(new Set(newNodeIds));
+                setTimeout(() => setExternalHighlightNodeIds(new Set()), 5000);
+              }
+            }}
           />
         )}
       </AnimatePresence>

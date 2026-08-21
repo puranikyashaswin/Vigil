@@ -30,18 +30,26 @@ export function drawNode(
   selectedNodeId: string | null | undefined,
   isDark: boolean,
   nodeBorderLight: string,
-  nodeBorderSelected: string
+  nodeBorderSelected: string,
+  hoveredNodeId?: string | null
 ): void {
   const x = node.x;
   const y = node.y;
   const size = node.size || 3.5;
   const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
   const isSelected = selectedNodeId === node.id;
+  const isHoveredNode = hoveredNodeId === node.id;
   const typeLower = (node.type || "concept").toLowerCase().trim();
   const color = typeColors[typeLower] || typeColors[node.type] || "#b0aea5";
 
   ctx.save();
   ctx.globalAlpha = isHighlighted ? 1.0 : 0.15;
+
+  // Glow effect on hovered node
+  if (isHoveredNode) {
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = color;
+  }
 
   if (isSelected) {
     ctx.beginPath();
@@ -173,7 +181,8 @@ export function drawLink(
   link: GraphLink,
   ctx: CanvasRenderingContext2D,
   highlightLinks: Set<GraphLink>,
-  linkDefault: string
+  linkDefault: string,
+  showLabels?: boolean
 ): void {
   const isHighlighted = highlightLinks.size === 0 || highlightLinks.has(link);
   const source = link.source;
@@ -183,33 +192,63 @@ export function drawLink(
 
   ctx.save();
   ctx.beginPath();
-  
+
   // Orthogonal right-angle connector line
   ctx.moveTo(source.x, source.y);
   ctx.lineTo(source.x, target.y);
   ctx.lineTo(target.x, target.y);
 
-  // Classify stroke style by relationship type when not hovered/focused
   let strokeColor = linkDefault;
   let defaultAlpha = 0.22;
-  
+
   if (link.type === "VIOLATES") {
-    strokeColor = "#EF4444"; // Red for violations
-    defaultAlpha = 0.45;     // Extra visibility for violations
+    strokeColor = "#EF4444";
+    defaultAlpha = 0.45;
   } else if (link.type === "COMPLIES_WITH") {
-    strokeColor = "#788c5d"; // Green for compliance links
+    strokeColor = "#788c5d";
     defaultAlpha = 0.35;
   }
 
-  // Hovered state gets accent color (white in dark mode, black in light mode), otherwise uses relation colors
   const isHovered = isHighlighted && highlightLinks.size > 0;
   const isDark = linkDefault === "#b0aea5";
   const hoverColor = isDark ? "#faf9f5" : "#141413";
   ctx.strokeStyle = isHovered ? hoverColor : strokeColor;
   ctx.lineWidth = isHovered ? 1.4 : 0.6;
   ctx.globalAlpha = isHighlighted ? 0.85 : defaultAlpha;
-  
+
   ctx.stroke();
+
+  // Edge label on highlighted links
+  if (showLabels && isHovered && link.type) {
+    const midX = (source.x + target.x) / 2;
+    const midY = (source.y + target.y) / 2;
+    const label = link.type.replace("_", " ");
+
+    ctx.font = "bold 6px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const textW = ctx.measureText(label).width + 6;
+
+    // Background pill
+    ctx.globalAlpha = 0.9;
+    let bgColor = isDark ? "#27272a" : "#ffffff";
+    let textColor = "#b0aea5";
+    if (link.type === "VIOLATES") { textColor = "#EF4444"; }
+    else if (link.type === "COMPLIES_WITH") { textColor = "#788c5d"; }
+
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.roundRect(midX - textW / 2, midY - 5, textW, 10, 3);
+    ctx.fill();
+    ctx.strokeStyle = isDark ? "#3f3f46" : "#e4e4e7";
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Text
+    ctx.fillStyle = textColor;
+    ctx.fillText(label, midX, midY);
+  }
+
   ctx.restore();
 }
 
@@ -221,68 +260,18 @@ export function drawNodePointerArea(
 ): void {
   const x = node.x;
   const y = node.y;
-  const size = node.size || 3.5;
-  const typeLower = (node.type || "concept").toLowerCase().trim();
+  const size = Math.max(5, node.size || 3.5);
 
-  // Keep hit areas close to the node boundaries when zoomed out (preventing overlapping),
-  // but expand them when zoomed in to make tapping on mobile/touch screens easier.
-  const padding = globalScale < 0.8 ? 2.0 : Math.min(8.0, 12 / globalScale);
+  // Use a uniform large circle for ALL node types.
+  // The library's spatial index uses circular radius for candidate selection,
+  // so the pointer area must also be circular to guarantee hits.
+  const radius = Math.max(12, size * 2.5);
 
   ctx.save();
   ctx.fillStyle = color;
-
-  if (
-    typeLower === "equipment" ||
-    typeLower === "concept" ||
-    typeLower === "drawing" ||
-    typeLower === "event" ||
-    typeLower === "organization"
-  ) {
-    const monoText = node.label.split(" ")[0] || node.label;
-    ctx.font = "bold 8.5px monospace";
-    ctx.save();
-    const textWidth = ctx.measureText(monoText).width;
-    ctx.restore();
-    const paddingX = 6;
-    const w = Math.max(size * 4.2, textWidth + paddingX) + padding * 2;
-    const h = size * 2.2 + padding * 2;
-    ctx.fillRect(x - w / 2, y - h / 2, w, h);
-  } else if (typeLower === "regulation") {
-    const r = size * 1.8 + padding;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3;
-      ctx.lineTo(x + r * Math.cos(angle), y + r * Math.sin(angle));
-    }
-    ctx.closePath();
-    ctx.fill();
-  } else if (
-    typeLower === "procedure" ||
-    typeLower === "maintenance_log" ||
-    typeLower === "maintenance"
-  ) {
-    const w = size * 3.2 + padding * 2;
-    const h = size * 2.2 + padding * 2;
-    const tabW = w * 0.4;
-    const tabH = h * 0.25;
-
-    ctx.beginPath();
-    ctx.moveTo(x - w / 2, y - h / 2 + tabH);
-    ctx.lineTo(x - w / 2, y - h / 2);
-    ctx.lineTo(x - w / 2 + tabW, y - h / 2);
-    ctx.lineTo(x - w / 2 + tabW + 2, y - h / 2 + tabH);
-    ctx.lineTo(x + w / 2, y - h / 2 + tabH);
-    ctx.lineTo(x + w / 2, y + h / 2);
-    ctx.lineTo(x - w / 2, y + h / 2);
-    ctx.closePath();
-    ctx.fill();
-  } else {
-    const r = size + padding;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 2 * Math.PI);
-    ctx.fill();
-  }
-
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
+  ctx.fill();
   ctx.restore();
 }
 

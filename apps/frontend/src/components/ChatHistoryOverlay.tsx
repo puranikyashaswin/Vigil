@@ -142,7 +142,7 @@ export default function ChatHistoryOverlay({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 max-w-3xl mx-auto w-full bg-zinc-50 dark:bg-zinc-950">
+            <div className="flex-1 overflow-y-auto px-6 md:px-10 py-6 space-y-6 w-full bg-zinc-50 dark:bg-zinc-950">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center">
                   <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-400 dark:text-zinc-500 mb-4 border border-zinc-200 dark:border-zinc-800">
@@ -154,12 +154,12 @@ export default function ChatHistoryOverlay({
                   </p>
                 </div>
               ) : (
-                messages.map((msg, index) => (
-                  <div key={index} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                    <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed rounded-2xl ${
+                messages.filter(m => m.content || m.role === "user").map((msg, index) => (
+                  <div key={index} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"} w-full`}>
+                    <div className={`px-5 py-4 text-sm leading-relaxed rounded-2xl ${
                       msg.role === "user"
-                        ? "bg-clay/10 dark:bg-clay/15 text-zinc-900 dark:text-zinc-100 rounded-br-none border border-clay/10 dark:border-clay/20"
-                        : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-800"
+                        ? "max-w-[75%] bg-[#d97757]/10 dark:bg-[#d97757]/15 text-zinc-900 dark:text-zinc-100 rounded-br-none border border-[#d97757]/10 dark:border-[#d97757]/20"
+                        : "w-full bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-800 shadow-sm"
                     }`}>
                       {msg.role === "assistant" && msg.metadata?.trace && (
                         <div className="mb-3 pb-2 border-b border-brand-mid-gray/25 dark:border-brand-mid-gray/15 font-mono text-[9px] uppercase tracking-wider text-brand-mid-gray flex items-center gap-1.5 overflow-x-auto whitespace-nowrap select-none">
@@ -208,23 +208,61 @@ export default function ChatHistoryOverlay({
                 ))
               )}
               {isTyping && (
-                <div className="flex flex-col gap-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 font-mono text-[10px] uppercase tracking-wider w-full">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-clay">Agent Graph Pipeline Running</span>
-                    <span className="text-zinc-500">{pipelineStep}/6</span>
+                <div className="flex flex-col items-start w-full">
+                  {/* Thinking dots */}
+                  <div className="flex items-center gap-1.5 mb-2 pl-1">
+                    <span className="w-2 h-2 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 bg-[#d97757] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
-                  <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1">
-                    <div className="bg-clay h-1 rounded-full transition-all duration-500" style={{ width: `${(pipelineStep / 6) * 100}%` }} />
-                  </div>
-                  <div className="text-zinc-500 dark:text-zinc-400">
-                    {STEP_LABELS[pipelineStep] || ""}
+
+                  {/* Pipeline status card */}
+                  <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl rounded-bl-none p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-[#d97757] rounded-full animate-pulse" />
+                        <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                          Processing Query
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                        {pipelineStep}/6
+                      </span>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5 mb-3 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-[#6a9bcc] via-[#788c5d] to-[#d97757]"
+                        style={{ width: `${Math.max(8, (pipelineStep / 6) * 100)}%` }}
+                      />
+                    </div>
+
+                    {/* Step label */}
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium">
+                      {STEP_LABELS[pipelineStep] || "Initializing pipeline..."}
+                    </p>
+
+                    {/* Step indicators */}
+                    <div className="flex items-center gap-1 mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                      {[1, 2, 3, 4, 5, 6].map((step) => (
+                        <div
+                          key={step}
+                          className={`flex-1 h-1 rounded-full transition-all duration-300 ${
+                            step < pipelineStep ? "bg-[#788c5d]"
+                            : step === pipelineStep ? "bg-[#d97757] animate-pulse"
+                            : "bg-zinc-200 dark:bg-zinc-700"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 shrink-0 bg-zinc-50 dark:bg-zinc-950">
-              <form onSubmit={onSendMessage} className="max-w-3xl mx-auto flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-5 py-3 shadow-md dark:shadow-black/20">
+            <div className="px-6 md:px-10 py-5 border-t border-zinc-200 dark:border-zinc-800 shrink-0 bg-zinc-50 dark:bg-zinc-950">
+              <form onSubmit={onSendMessage} className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full px-5 py-3.5 shadow-md dark:shadow-black/20">
                 <input
                   type="text"
                   value={inputMessage}

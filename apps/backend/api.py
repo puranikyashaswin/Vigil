@@ -287,6 +287,177 @@ def run_query_stream(request: QueryRequest):
     )
 
 
+from fastapi import UploadFile, File
+
+
+@api.post("/api/ingest/upload")
+def ingest_upload(files: List[UploadFile] = File(...)):
+    """
+    Real file upload + processing endpoint with SSE streaming progress.
+    """
+    import tempfile
+    import shutil
+    from datetime import datetime
+    from parsers import (
+        detect_document_type, parse_pdf_local, parse_docx_local,
+        parse_xlsx_local, parse_xls_local, parse_csv_local, parse_via_vision_ocr
+    )
+    from scripts.test_extraction import run_extraction_flow
+    from scripts.okf_utils import slugify, init_okf_dir, append_to_index, append_to_log
+    from scripts.contradiction import check_contradiction, find_pairs_to_check
+    from admin_utils import perform_kg_indexing
+
+    DIR_MAP = {
+        "concept": "equipment", "drawing": "equipment",
+        "procedure": "procedures", "regulation": "regulations",
+        "maintenance_log": "maintenance", "alert": "alerts",
+    }
+
+    kg_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
+    )
+
+    def generate_ingest_sse():
+        global _graph_cache_valid
+        tmp_dir = tempfile.mkdtemp(prefix="vigil_ingest_")
+        all_new_entities = []
+        new_node_ids = []
+
+        try:
+            # Save uploaded files to temp
+            saved_files = []
+            for f in files:
+                tmp_path = os.path.join(tmp_dir, f.filename)
+                with open(tmp_path, "wb") as out:
+                    content = f.file.read()
+                    out.write(content)
+                saved_files.append((f.filename, tmp_path))
+
+            total = len(saved_files)
+
+            for idx, (filename, file_path) in enumerate(saved_files):
+                yield f"event: file_start\ndata: {json.dumps({'file': filename, 'index': idx, 'total': total})}\n\n"
+
+                # Step 1: Parse
+                yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 1, 'label': 'Parsing document...', 'status': 'running'})}\n\n"
+                try:
+                    category, ext = detect_document_type(file_path)
+                    if category == "image" or category == "scanned_pdf":
+                        parsed_text, _ = parse_via_vision_ocr(file_path)
+                    elif category == "text_native_pdf":
+                        parsed_text = parse_pdf_local(file_path)
+                    elif category == "text_native_docx":
+                        parsed_text = parse_docx_local(file_path)
+                    elif category == "spreadsheet":
+                        if ext == ".csv":
+                            parsed_text = parse_csv_local(file_path)
+                        elif ext == ".xls":
+                            parsed_text = parse_xls_local(file_path)
+                        else:
+                            parsed_text = parse_xlsx_local(file_path)
+                    else:
+                        parsed_text = f"Document: {filename}\n(Unsupported format)"
+
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 1, 'label': f'Parsed ({category})', 'status': 'complete'})}\n\n"
+                except Exception as e:
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 1, 'label': f'Parse failed: {str(e)[:60]}', 'status': 'error'})}\n\n"
+                    continue
+
+                # Step 2: Extract entities
+                yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 2, 'label': 'Extracting entities...', 'status': 'running'})}\n\n"
+                try:
+                    fallback_title = os.path.splitext(filename)[0]
+                    entities_list = run_extraction_flow(parsed_text, fallback_title)
+                    entities = [e.model_dump() for e in entities_list.entities]
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 2, 'label': f'Extracted {len(entities)} entities', 'status': 'complete'})}\n\n"
+                except Exception as e:
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 2, 'label': f'Extraction failed: {str(e)[:60]}', 'status': 'error'})}\n\n"
+                    continue
+
+                # Step 3: Write OKF files
+                yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 3, 'label': 'Writing to knowledge graph...', 'status': 'running'})}\n\n"
+                try:
+                    for ent in entities:
+                        ent_type = ent.get("type", "concept")
+                        sub_dir = DIR_MAP.get(ent_type, "equipment")
+                        slug = slugify(ent["name"])
+                        ent_filename = f"{slug}.md"
+                        rel_path = f"{sub_dir}/{ent_filename}"
+                        ent["rel_path"] = rel_path
+                        ent["sub_dir"] = sub_dir
+                        ent["filename"] = ent_filename
+
+                        dir_full_path = os.path.join(kg_dir, sub_dir)
+                        init_okf_dir(dir_full_path)
+
+                        body_lines = [
+                            f"---\ntype: {ent_type}",
+                            f'title: "{ent["name"]}"',
+                            f'description: "{ent.get("description", "")}"',
+                            f'resource: "upload/{filename}"',
+                            f"tags: {ent.get('tags', [])}",
+                            f"timestamp: {datetime.now().isoformat()}",
+                            "---\n",
+                            f"# {ent['name']}\n",
+                            ent.get("description", ""),
+                            "\n## References & Links",
+                            "No links established.",
+                        ]
+
+                        full_path = os.path.join(kg_dir, rel_path)
+                        with open(full_path, "w", encoding="utf-8") as out_f:
+                            out_f.write("\n".join(body_lines) + "\n")
+
+                        append_to_index(dir_full_path, ent_filename, ent["name"], ent.get("description", ""))
+                        append_to_log(dir_full_path, "INGEST", f"Ingested {ent['name']} from upload/{filename}")
+
+                        new_node_ids.append(rel_path)
+                        all_new_entities.append(ent)
+
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 3, 'label': f'Wrote {len(entities)} OKF files', 'status': 'complete'})}\n\n"
+                except Exception as e:
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 3, 'label': f'Write failed: {str(e)[:60]}', 'status': 'error'})}\n\n"
+
+                # Step 4: Contradiction detection
+                yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 4, 'label': 'Checking contradictions...', 'status': 'running'})}\n\n"
+                contradictions_found = 0
+                try:
+                    file_map = {e["name"].lower(): e.get("rel_path", "") for e in all_new_entities}
+                    pairs = find_pairs_to_check(entities, file_map)
+                    for ent_a, ent_b in pairs[:5]:
+                        res = check_contradiction(ent_a, ent_b)
+                        if res.get("contradiction_detected") and res.get("confidence_score", 0) > 0.7:
+                            contradictions_found += 1
+                            yield f"event: contradiction\ndata: {json.dumps({'file': filename, 'detected': True, 'severity': res.get('severity', 'medium'), 'explanation': res.get('explanation', '')[:100]})}\n\n"
+
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 4, 'label': f'{contradictions_found} conflicts found', 'status': 'complete'})}\n\n"
+                except Exception as e:
+                    yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 4, 'label': f'Check skipped: {str(e)[:40]}', 'status': 'complete'})}\n\n"
+
+                yield f"event: file_complete\ndata: {json.dumps({'file': filename, 'entities_count': len(entities), 'contradictions': contradictions_found})}\n\n"
+
+            # Step 5: Re-index everything
+            yield f"event: step\ndata: {json.dumps({'file': 'all', 'step': 5, 'label': 'Indexing vectors...', 'status': 'running'})}\n\n"
+            try:
+                perform_kg_indexing(kg_dir)
+                _graph_cache_valid = False
+                yield f"event: step\ndata: {json.dumps({'file': 'all', 'step': 5, 'label': 'Vectors indexed', 'status': 'complete'})}\n\n"
+            except Exception as e:
+                yield f"event: step\ndata: {json.dumps({'file': 'all', 'step': 5, 'label': f'Index error: {str(e)[:40]}', 'status': 'error'})}\n\n"
+
+            # Done
+            yield f"event: done\ndata: {json.dumps({'total_files': total, 'total_entities': len(all_new_entities), 'new_node_ids': new_node_ids})}\n\n"
+
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    return StreamingResponse(
+        generate_ingest_sse(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 def parse_frontmatter(content: str) -> Dict[str, Any]:
     parts = content.split("---")
     meta = {}
