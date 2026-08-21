@@ -12,6 +12,7 @@ import PipelineStatusOverlay from "@/components/PipelineStatusOverlay";
 import FloatingChatInput from "@/components/FloatingChatInput";
 import ChatHistoryOverlay from "@/components/ChatHistoryOverlay";
 import AlertDetailModal from "@/components/AlertDetailModal";
+import DocumentViewer from "@/components/DocumentViewer";
 import SplashScreen from "@/components/SplashScreen";
 import { Node, GraphData, Alert, ChatMessage, Conversation } from "@/types";
 
@@ -31,7 +32,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showPipelineVisualizer, setShowPipelineVisualizer] = useState(false);
-  const [externalHighlightNodeIds, setExternalHighlightNodeIds] = useState<Set<string>>(new Set());
+  const [externalHighlightNodeIds, setExternalHighlightNodeIds] = useState<Set<string> | Map<string, "primary" | "secondary">>(new Set());
   const [showHistory, setShowHistory] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>("");
@@ -39,19 +40,54 @@ export default function Dashboard() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
+  const [viewingDocument, setViewingDocument] = useState<string | null>(null);
 
   const handleRunImpactAnalysisAnimation = (nodeIds: Set<string>) => {
     const idsArray = Array.from(nodeIds);
-    setExternalHighlightNodeIds(new Set());
+    setExternalHighlightNodeIds(new Map());
     idsArray.forEach((id, idx) => {
       setTimeout(() => {
         setExternalHighlightNodeIds((prev) => {
-          const next = new Set(prev);
-          next.add(id);
+          const next = new Map(prev as Map<string, "primary" | "secondary">);
+          next.set(id, "primary");
           return next;
         });
       }, idx * 500);
     });
+  };
+
+  const triggerCitationImpactRipple = (citations: { source_file: string; score: number }[]) => {
+    const relevantCitations = citations.filter(c => c.score >= 0.55);
+    if (relevantCitations.length === 0) return;
+
+    const citedNodeIds = new Set(relevantCitations.map(c => c.source_file));
+    const neighbors = new Set<string>();
+
+    citedNodeIds.forEach(nodeId => {
+      graphData.links.forEach(link => {
+        const src = typeof link.source === "string" ? link.source : (link.source as any).id;
+        const tgt = typeof link.target === "string" ? link.target : (link.target as any).id;
+        if (src === nodeId) neighbors.add(tgt);
+        if (tgt === nodeId) neighbors.add(src);
+      });
+    });
+
+    const primaryIds = Array.from(citedNodeIds);
+    const secondaryIds = Array.from(neighbors).filter(n => !citedNodeIds.has(n));
+    const allIds = [...primaryIds, ...secondaryIds];
+
+    setExternalHighlightNodeIds(new Map());
+    allIds.forEach((id, idx) => {
+      setTimeout(() => {
+        setExternalHighlightNodeIds((prev) => {
+          const next = new Map(prev as Map<string, "primary" | "secondary">);
+          next.set(id, citedNodeIds.has(id) ? "primary" : "secondary");
+          return next;
+        });
+      }, idx * 300);
+    });
+
+    setTimeout(() => setExternalHighlightNodeIds(new Map()), allIds.length * 300 + 5000);
   };
 
   const loadData = async () => {
@@ -161,12 +197,19 @@ export default function Dashboard() {
     });
   };
 
+  const handleSendFollowUp = (question: string) => {
+    sendQuery(question);
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
-    const userMsg = inputMessage;
+    sendQuery(inputMessage);
+  };
+
+  const sendQuery = async (queryText: string) => {
     setInputMessage("");
-    const updated = [...messages, { role: "user", content: userMsg } as ChatMessage];
+    const updated = [...messages, { role: "user", content: queryText } as ChatMessage];
     setMessages(updated);
     updateConversationMessages(currentConversationId, updated);
     setIsTyping(true);
@@ -197,7 +240,7 @@ export default function Dashboard() {
       const res = await fetch(`${API_BASE_URL}/api/query/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: userMsg })
+        body: JSON.stringify({ query: queryText })
       });
 
       if (!res.ok || !res.body) {
@@ -272,11 +315,31 @@ export default function Dashboard() {
                   content: finalContent,
                   category: streamCategory,
                   citations: streamCitations,
+                  follow_ups: data.follow_ups || [],
                   metadata: streamMetadata,
                 };
                 const finalMessages = [...updated, finalMsg];
                 setMessages(finalMessages);
                 updateConversationMessages(currentConversationId, finalMessages);
+
+                // Trigger impact ripple on graph
+                if (streamCitations.length > 0) {
+                  const relevant = streamCitations.filter((c: { score: number }) => c.score >= 0.55);
+                  if (relevant.length > 0) {
+                    const cited = new Set(relevant.map((c: { source_file: string }) => c.source_file));
+                    let impactCount = cited.size;
+                    cited.forEach(nodeId => {
+                      graphData.links.forEach(link => {
+                        const src = typeof link.source === "string" ? link.source : (link.source as any).id;
+                        const tgt = typeof link.target === "string" ? link.target : (link.target as any).id;
+                        if (src === nodeId && !cited.has(tgt)) impactCount++;
+                        if (tgt === nodeId && !cited.has(src)) impactCount++;
+                      });
+                    });
+                    finalMsg.metadata = { ...finalMsg.metadata, impact_nodes: impactCount };
+                  }
+                  triggerCitationImpactRipple(streamCitations);
+                }
               }
             } catch {
               // skip malformed JSON lines
@@ -291,7 +354,7 @@ export default function Dashboard() {
         const res = await fetch(`${API_BASE_URL}/api/query`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: userMsg })
+          body: JSON.stringify({ query: queryText })
         });
         const data = await res.json();
         const next = [...updated, { role: "assistant", content: data.generated_response, category: data.category, citations: data.citations, metadata: data.metadata } as ChatMessage];
@@ -407,11 +470,18 @@ export default function Dashboard() {
         onCreateNewChat={handleCreateNewChat} 
         onSelectConversation={(c) => { setCurrentConversationId(c.id); setMessages(c.messages); }} 
         onDeleteChat={handleDeleteChat} 
-        onSendMessage={handleSendMessage} 
-        onInputChange={setInputMessage} 
+        onSendMessage={handleSendMessage}
+        onInputChange={setInputMessage}
+        onOpenDocument={setViewingDocument}
+        onSendFollowUp={handleSendFollowUp}
       />
 
-      <AlertDetailModal 
+      <DocumentViewer
+        filepath={viewingDocument}
+        onClose={() => setViewingDocument(null)}
+      />
+
+      <AlertDetailModal
         selectedAlert={selectedAlert} 
         onClose={() => setSelectedAlert(null)} 
       />
@@ -423,8 +493,10 @@ export default function Dashboard() {
             onComplete={(newNodeIds) => {
               loadData();
               if (newNodeIds && newNodeIds.length > 0) {
-                setExternalHighlightNodeIds(new Set(newNodeIds));
-                setTimeout(() => setExternalHighlightNodeIds(new Set()), 5000);
+                const m = new Map<string, "primary" | "secondary">();
+                newNodeIds.forEach(id => m.set(id, "primary"));
+                setExternalHighlightNodeIds(m);
+                setTimeout(() => setExternalHighlightNodeIds(new Map()), 5000);
               }
             }}
           />

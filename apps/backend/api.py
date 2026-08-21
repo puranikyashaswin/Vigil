@@ -187,7 +187,7 @@ def run_query_stream(request: QueryRequest):
                     "You are Vigil, an industrial knowledge intelligence assistant. "
                     "The user has greeted you. Respond with a brief, professional greeting (1-2 sentences). "
                     "Mention you can help with equipment specs, maintenance, compliance, and root cause analysis. "
-                    "Do NOT use emojis. Keep it concise."
+                    "Do NOT use emojis. Do NOT use em dashes. Keep it concise and direct."
                 )
             else:
                 system_prompt = (
@@ -333,10 +333,35 @@ def run_query_stream(request: QueryRequest):
                 "synthesize_response", "contradiction_guard", "log_metrics"
             ]
 
+        follow_ups = []
+        if not no_docs_path and citations:
+            try:
+                fu_result = call_llm(
+                    task="generation",
+                    system_prompt=(
+                        "Generate exactly 3 follow-up questions that can be answered using ONLY the source documents listed below. "
+                        "Questions must be directly answerable from the content in these files. "
+                        "Do NOT ask about people's supervisors, org charts, or anything not in the documents. "
+                        "Focus on: equipment specs, procedures, compliance status, maintenance history, or safety regulations. "
+                        "Output ONLY a JSON array of 3 strings. Each under 55 characters. No explanations."
+                    ),
+                    user_content=f"Answer:\n{full_response[:400]}\n\nSource documents: {', '.join(c['source_file'] for c in citations[:5])}\n\nContext excerpts:\n{chr(10).join(contexts[:3])}",
+                    temperature=0.3,
+                )
+                raw = fu_result.text.strip()
+                if raw.startswith("```"):
+                    raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    follow_ups = [q for q in parsed if isinstance(q, str)][:3]
+            except Exception:
+                pass
+
         done_payload = {
             "generated_response": full_response,
             "category": category,
             "citations": citations,
+            "follow_ups": follow_ups,
             "metadata": {
                 **state["metadata"],
                 "trace": final_trace,
@@ -761,6 +786,21 @@ def export_compliance_package() -> StreamingResponse:
             "Content-Disposition": "attachment; filename=vigil_compliance_evidence.zip"
         },
     )
+
+
+@api.get("/api/docs/{filepath:path}")
+def get_document_content(filepath: str) -> Dict[str, Any]:
+    kg_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
+    )
+    full_path = os.path.abspath(os.path.join(kg_dir, filepath))
+    if not full_path.startswith(kg_dir):
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="Document not found")
+    with open(full_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    return {"filepath": filepath, "content": content}
 
 
 @api.get("/api/admin/index-all")
