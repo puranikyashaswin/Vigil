@@ -15,8 +15,8 @@ interface SchematicPanelProps {
   setSelectedNode: (node: Node | null) => void;
   isOrganized: boolean;
   setIsOrganized: (val: boolean) => void;
-  externalHighlightNodeIds: Set<string>;
-  setExternalHighlightNodeIds: (ids: Set<string>) => void;
+  externalHighlightNodeIds: Set<string> | Map<string, "primary" | "secondary">;
+  setExternalHighlightNodeIds: (ids: Set<string> | Map<string, "primary" | "secondary">) => void;
   setActiveTab: (tab: "inspect" | "alerts") => void;
 }
 
@@ -80,7 +80,7 @@ export default function SchematicPanel({
           data={graphData} 
           onNodeClick={(node) => { 
             setSelectedNode(node); 
-            setExternalHighlightNodeIds(new Set()); 
+            setExternalHighlightNodeIds(new Map());
             if (!isMobile) setActiveTab("inspect"); 
           }} 
           selectedNodeId={selectedNode?.id} 

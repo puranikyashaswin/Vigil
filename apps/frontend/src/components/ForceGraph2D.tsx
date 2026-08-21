@@ -20,7 +20,7 @@ interface ForceGraph2DProps {
   onNodeClick: (node: Node) => void;
   selectedNodeId?: string | null;
   isOrganized?: boolean;
-  externalHighlightNodeIds?: Set<string>;
+  externalHighlightNodeIds?: Set<string> | Map<string, "primary" | "secondary">;
 }
 
 export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrganized = false, externalHighlightNodeIds }: ForceGraph2DProps) {
