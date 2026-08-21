@@ -26,7 +26,7 @@ export function drawNode(
   ctx: CanvasRenderingContext2D,
   globalScale: number,
   typeColors: Record<string, string>,
-  highlightNodes: Set<string>,
+  highlightNodes: Set<string> | Map<string, "primary" | "secondary">,
   selectedNodeId: string | null | undefined,
   isDark: boolean,
   nodeBorderLight: string,
@@ -36,7 +36,13 @@ export function drawNode(
   const x = node.x;
   const y = node.y;
   const size = node.size || 3.5;
-  const isHighlighted = highlightNodes.size === 0 || highlightNodes.has(node.id);
+  const hasNode = highlightNodes instanceof Map
+    ? highlightNodes.has(node.id)
+    : highlightNodes.has(node.id);
+  const highlightLevel = highlightNodes instanceof Map
+    ? highlightNodes.get(node.id) || null
+    : (highlightNodes.has(node.id) ? "primary" : null);
+  const isHighlighted = highlightNodes.size === 0 || hasNode;
   const isSelected = selectedNodeId === node.id;
   const isHoveredNode = hoveredNodeId === node.id;
   const typeLower = (node.type || "concept").toLowerCase().trim();
@@ -44,6 +50,16 @@ export function drawNode(
 
   ctx.save();
   ctx.globalAlpha = isHighlighted ? 1.0 : 0.15;
+
+  if (highlightNodes instanceof Map && highlightNodes.size > 0 && hasNode && highlightLevel) {
+    if (highlightLevel === "primary") {
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "#d97757";
+    } else {
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = "#6a9bcc";
+    }
+  }
 
   // Glow effect on hovered node
   if (isHoveredNode) {
