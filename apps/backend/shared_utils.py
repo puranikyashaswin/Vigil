@@ -130,14 +130,16 @@ def call_llm_vision(
         content_blocks = []
         if text_prompt:
             content_blocks.append({"type": "text", "text": text_prompt})
-        content_blocks.append({
-            "type": "image",
-            "source": {
-                "type": "base64",
-                "media_type": media_type,
-                "data": image_base64,
-            },
-        })
+        content_blocks.append(
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": image_base64,
+                },
+            }
+        )
 
         response = client.messages.create(
             model=model,
@@ -212,10 +214,12 @@ def _call_openrouter_vision_fallback(
         content_blocks.append({"type": "text", "text": text_prompt})
     else:
         content_blocks.append({"type": "text", "text": system_prompt})
-    content_blocks.append({
-        "type": "image_url",
-        "image_url": {"url": f"data:{media_type};base64,{image_base64}"},
-    })
+    content_blocks.append(
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:{media_type};base64,{image_base64}"},
+        }
+    )
 
     payload = {
         "model": "google/gemma-4-26b-a4b-it:free",
@@ -231,7 +235,9 @@ def _call_openrouter_vision_fallback(
             data = response.json()
             return data["choices"][0]["message"]["content"]
         else:
-            raise Exception(f"OpenRouter vision fallback failed: HTTP {response.status_code}")
+            raise Exception(
+                f"OpenRouter vision fallback failed: HTTP {response.status_code}"
+            )
 
 
 def clean_json_string(s: str) -> str:

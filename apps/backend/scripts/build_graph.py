@@ -41,18 +41,14 @@ async def check_contradiction_async(
 ) -> Dict[str, Any]:
     async with semaphore:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, check_contradiction, ent_a, ent_b
-        )
+        return await loop.run_in_executor(None, check_contradiction, ent_a, ent_b)
 
 
 async def run_contradiction_checks(
-    pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]]
+    pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]],
 ) -> List[Dict[str, Any]]:
     semaphore = asyncio.Semaphore(5)  # Max 5 concurrent calls to Bedrock
-    tasks = [
-        check_contradiction_async(a, b, semaphore) for a, b in pairs
-    ]
+    tasks = [check_contradiction_async(a, b, semaphore) for a, b in pairs]
     return await asyncio.gather(*tasks)
 
 
@@ -218,7 +214,9 @@ def main():
                         ent.setdefault("linked_concepts", []).append(label)
 
     # 3. Contradiction Detection Step
-    logger.info("Initializing contradiction detection pipeline (Bedrock/Claude Opus)...")
+    logger.info(
+        "Initializing contradiction detection pipeline (Bedrock/Claude Opus)..."
+    )
 
     logger.info(
         "Running pairwise contradiction detection on candidate safety intersections..."

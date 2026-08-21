@@ -164,7 +164,9 @@ def main():
         logger.warning(f"No parsed text files found in {input_dir}")
         sys.exit(0)
 
-    logger.info(f"Starting entity extraction on {len(files)} files (Bedrock/Claude Sonnet)...")
+    logger.info(
+        f"Starting entity extraction on {len(files)} files (Bedrock/Claude Sonnet)..."
+    )
     results = []
 
     for filename in sorted(files):

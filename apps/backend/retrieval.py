@@ -34,7 +34,13 @@ def compute_confidence(scores: List[float]) -> Dict[str, Any]:
       final      = 0.5*relevance + 0.3*consensus + 0.2*coverage
     """
     if not scores:
-        return {"score": 0.0, "relevance": 0.0, "consensus": 0.0, "coverage": 0.0, "formula": "0.5R+0.3C+0.2V"}
+        return {
+            "score": 0.0,
+            "relevance": 0.0,
+            "consensus": 0.0,
+            "coverage": 0.0,
+            "formula": "0.5R+0.3C+0.2V",
+        }
 
     # Relevance: harmonic mean (handles zeros gracefully)
     safe_scores = [max(s, 0.01) for s in scores]
@@ -151,6 +157,7 @@ def retrieve_contexts(
 
 # --- PRODUCTION PIPELINE NODES ---
 
+
 def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
     """
     Node 2: Broad vector retrieval (no directory filter).
@@ -194,7 +201,10 @@ def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
             "trace": ["retrieve_context"],
             "raw_hits": raw_hits,
             "node_metrics": {
-                "retrieve_context": {"latency_ms": elapsed, "vector_hits": len(raw_hits)}
+                "retrieve_context": {
+                    "latency_ms": elapsed,
+                    "vector_hits": len(raw_hits),
+                }
             },
         },
     }
@@ -241,7 +251,9 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
                 "trace": ["rerank_context"],
                 "confidence_score": 0.0,
                 "confidence": confidence,
-                "node_metrics": {"rerank_context": {"latency_ms": elapsed, "filtered_count": 0}},
+                "node_metrics": {
+                    "rerank_context": {"latency_ms": elapsed, "filtered_count": 0}
+                },
             },
         }
 
@@ -309,7 +321,8 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
     coverage = min(1.0, unique_sources / max(len(citations), 1))
     confidence["coverage"] = round(coverage, 4)
     confidence["score"] = round(
-        0.5 * confidence["relevance"] + 0.3 * confidence["consensus"] + 0.2 * coverage, 4
+        0.5 * confidence["relevance"] + 0.3 * confidence["consensus"] + 0.2 * coverage,
+        4,
     )
 
     elapsed = round((perf_counter() - t0) * 1000, 1)
@@ -321,6 +334,11 @@ def rerank_context_node(state: AgentState) -> Dict[str, Any]:
             "trace": ["rerank_context"],
             "confidence_score": confidence["score"],
             "confidence": confidence,
-            "node_metrics": {"rerank_context": {"latency_ms": elapsed, "filtered_count": len(citations)}},
+            "node_metrics": {
+                "rerank_context": {
+                    "latency_ms": elapsed,
+                    "filtered_count": len(citations),
+                }
+            },
         },
     }

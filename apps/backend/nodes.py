@@ -37,7 +37,13 @@ def route_query_intent(state: AgentState) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Intent routing failed: {str(e)}. Defaulting to copilot.")
         category = "copilot"
-        result = LLMResponse(text="copilot", input_tokens=0, output_tokens=0, model="fallback", latency_ms=0)
+        result = LLMResponse(
+            text="copilot",
+            input_tokens=0,
+            output_tokens=0,
+            model="fallback",
+            latency_ms=0,
+        )
 
     elapsed = round((perf_counter() - t0) * 1000, 1)
     logger.info(f"Routed query intent: '{query}' -> [{category}]")
@@ -98,7 +104,9 @@ def get_mock_telemetry_data(tag: str) -> str:
 
             return table
     except Exception as e:
-        logger.warning(f"Mock telemetry server unreachable ({str(e)}). Falling back to local.")
+        logger.warning(
+            f"Mock telemetry server unreachable ({str(e)}). Falling back to local."
+        )
 
     if tag == "P-101":
         return (
@@ -129,11 +137,29 @@ def get_mock_telemetry_data(tag: str) -> str:
 
 def is_failed_generation(ans: str, query: str) -> bool:
     ans_clean = ans.strip()
-    if ans_clean.lower().startswith("user safety:") or ans_clean.lower() in ("safe", "unsafe"):
+    if ans_clean.lower().startswith("user safety:") or ans_clean.lower() in (
+        "safe",
+        "unsafe",
+    ):
         return True
     if len(ans_clean.split()) < 15:
         return True
-    stopwords = {"what", "whats", "the", "for", "and", "are", "but", "not", "you", "your", "this", "that", "with", "from"}
+    stopwords = {
+        "what",
+        "whats",
+        "the",
+        "for",
+        "and",
+        "are",
+        "but",
+        "not",
+        "you",
+        "your",
+        "this",
+        "that",
+        "with",
+        "from",
+    }
     query_words = re.findall(r"\b[a-zA-Z0-9_-]+\b", query.lower())
     query_terms = [w for w in query_words if len(w) > 2 and w not in stopwords]
     if query_terms:
@@ -158,7 +184,12 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
             "Politely decline to hallucinate and advise the user to ingest relevant source documents."
         )
         try:
-            result = call_llm(task="generation", system_prompt=greeting_prompt, user_content=query, temperature=0.7)
+            result = call_llm(
+                task="generation",
+                system_prompt=greeting_prompt,
+                user_content=query,
+                temperature=0.7,
+            )
             ans = result.text
         except Exception:
             ans = (
@@ -166,7 +197,13 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
                 "equipment or parameters in the ingested documents. Please ensure the relevant source "
                 "documents are ingested into the database."
             )
-            result = LLMResponse(text=ans, input_tokens=0, output_tokens=0, model="fallback", latency_ms=0)
+            result = LLMResponse(
+                text=ans,
+                input_tokens=0,
+                output_tokens=0,
+                model="fallback",
+                latency_ms=0,
+            )
 
         elapsed = round((perf_counter() - t0) * 1000, 1)
         return {
@@ -193,7 +230,10 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
             logger.info(f"RCA Agent: Fused live telemetry for tag {tag}")
 
     context_block = "\n\n".join(
-        [f"Source [{citations[i]['source_file']}]: {contexts[i]}" for i in range(len(citations))]
+        [
+            f"Source [{citations[i]['source_file']}]: {contexts[i]}"
+            for i in range(len(citations))
+        ]
     )
 
     if category == "copilot":
@@ -249,17 +289,29 @@ def synthesize_response_node(state: AgentState) -> Dict[str, Any]:
         user_prompt = f"Context:\n{context_block}\n\nQuery: {query}"
 
     try:
-        result = call_llm(task="generation", system_prompt=system_prompt, user_content=user_prompt, temperature=0.0)
+        result = call_llm(
+            task="generation",
+            system_prompt=system_prompt,
+            user_content=user_prompt,
+            temperature=0.0,
+        )
         ans = result.text
     except Exception as e:
         logger.error(f"Generation call failed: {str(e)}")
         ans = ""
-        result = LLMResponse(text="", input_tokens=0, output_tokens=0, model="error", latency_ms=0)
+        result = LLMResponse(
+            text="", input_tokens=0, output_tokens=0, model="error", latency_ms=0
+        )
 
     if not ans or is_failed_generation(ans, query):
         logger.warning("Synthesis failed validation. Retrying...")
         try:
-            result = call_llm(task="generation", system_prompt=system_prompt, user_content=user_prompt, temperature=0.2)
+            result = call_llm(
+                task="generation",
+                system_prompt=system_prompt,
+                user_content=user_prompt,
+                temperature=0.2,
+            )
             ans = result.text
         except Exception:
             ans = ""
@@ -302,11 +354,19 @@ def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
     skip_reason = None
     if not contexts:
         skip_reason = "no_contexts"
-    elif any(phrase in generated_response.lower() for phrase in [
-        "no relevant equipment", "insufficient", "no information regarding",
-        "please ensure the relevant source", "outside the scope", "outside my knowledge",
-        "falls outside", "not within my knowledge"
-    ]):
+    elif any(
+        phrase in generated_response.lower()
+        for phrase in [
+            "no relevant equipment",
+            "insufficient",
+            "no information regarding",
+            "please ensure the relevant source",
+            "outside the scope",
+            "outside my knowledge",
+            "falls outside",
+            "not within my knowledge",
+        ]
+    ):
         skip_reason = "refusal_response"
     elif confidence.get("score", 0) > 0.85 and confidence.get("consensus", 0) > 0.9:
         skip_reason = "high_confidence"
@@ -319,7 +379,12 @@ def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
         return {
             "metadata": {
                 "trace": [f"contradiction_guard:skipped:{skip_reason}"],
-                "node_metrics": {"contradiction_guard": {"latency_ms": elapsed, "skipped": skip_reason}},
+                "node_metrics": {
+                    "contradiction_guard": {
+                        "latency_ms": elapsed,
+                        "skipped": skip_reason,
+                    }
+                },
             }
         }
 
@@ -350,7 +415,9 @@ def contradiction_guard_node(state: AgentState) -> Dict[str, Any]:
             generated_response = f"⚠️ [SAFETY WARNING: Potential Contradiction Detected]\n{guard_output}\n\n{generated_response}"
     except Exception as e:
         logger.error(f"Contradiction Guard check failed: {str(e)}")
-        result = LLMResponse(text="", input_tokens=0, output_tokens=0, model="error", latency_ms=0)
+        result = LLMResponse(
+            text="", input_tokens=0, output_tokens=0, model="error", latency_ms=0
+        )
 
     elapsed = round((perf_counter() - t0) * 1000, 1)
     return {
@@ -388,7 +455,9 @@ def log_ragas_metrics_node(state: AgentState) -> Dict[str, Any]:
     total_output = sum(m.get("output_tokens", 0) for m in node_metrics.values())
 
     try:
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..")
+        )
         log_dir = os.path.join(project_root, "logs", "ragas")
         os.makedirs(log_dir, exist_ok=True)
         log_path = os.path.join(log_dir, "interactions.jsonl")
@@ -397,7 +466,10 @@ def log_ragas_metrics_node(state: AgentState) -> Dict[str, Any]:
         import json
 
         with open(log_path, "a", encoding="utf-8") as lf:
-            lf.write(json.dumps({**ragas_log, "timestamp": datetime.now().isoformat()}) + "\n")
+            lf.write(
+                json.dumps({**ragas_log, "timestamp": datetime.now().isoformat()})
+                + "\n"
+            )
     except Exception as e:
         logger.error(f"Failed to log Ragas metrics to disk: {str(e)}")
 
