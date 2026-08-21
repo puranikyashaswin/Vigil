@@ -131,7 +131,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   }, [initializedData.links]);
 
   const nodeCanvasObject = useCallback((node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const activeHighlights = externalHighlightNodeIds && externalHighlightNodeIds.size > 0
+    const activeHighlights: Set<string> | Map<string, "primary" | "secondary"> = externalHighlightNodeIds && externalHighlightNodeIds.size > 0
       ? externalHighlightNodeIds
       : highlightNodes;
     drawNode(node, ctx, globalScale, TYPE_COLORS, activeHighlights, selectedNodeId, isDark, nodeBorderLight, nodeBorderSelected, hoveredNodeIdRef.current);
