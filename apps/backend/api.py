@@ -684,30 +684,36 @@ def index_all_kg_documents() -> Dict[str, Any]:
 def auto_seed_knowledge_graph_on_startup() -> None:
     """
     Ensures that Qdrant is populated with OKF concept embeddings on server boot.
+    Runs in a background thread so the port binds immediately.
     """
-    try:
-        from state import get_qdrant_client
-        from scripts.index_graph import COLLECTION_NAME
+    import threading
 
-        q_client = get_qdrant_client()
-        has_points = False
+    def _seed():
         try:
-            info = q_client.get_collection(COLLECTION_NAME)
-            if (info.points_count or 0) > 0:
-                has_points = True
-        except Exception:
-            has_points = False
+            from state import get_qdrant_client
+            from scripts.index_graph import COLLECTION_NAME
 
-        if not has_points:
-            logger.info(
-                "Qdrant collection empty on startup. Auto-indexing knowledge graph..."
+            q_client = get_qdrant_client()
+            has_points = False
+            try:
+                info = q_client.get_collection(COLLECTION_NAME)
+                if (info.points_count or 0) > 0:
+                    has_points = True
+            except Exception:
+                has_points = False
+
+            if not has_points:
+                logger.info(
+                    "Qdrant collection empty on startup. Auto-indexing knowledge graph..."
+                )
+                index_all_kg_documents()
+                logger.info("Auto-indexing on startup completed successfully.")
+        except Exception as e:
+            logger.warning(
+                f"Auto-seeding knowledge graph on startup failed (non-fatal): {str(e)}"
             )
-            index_all_kg_documents()
-            logger.info("Auto-indexing on startup completed successfully.")
-    except Exception as e:
-        logger.warning(
-            f"Auto-seeding knowledge graph on startup failed (non-fatal): {str(e)}"
-        )
+
+    threading.Thread(target=_seed, daemon=True).start()
 
 
 @api.get("/api/admin/debug-qdrant")
