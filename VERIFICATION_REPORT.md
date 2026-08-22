@@ -87,7 +87,7 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
   ctx.lineTo(target.x, target.y);
   ```
 
-### [PASS] VIOLATES relationships render in --status-critical red; COMPLIES_WITH render in --status-ok green; all other relationships render in the default hairline gray — verify this is driven by actual relationship type data, not just hover/selection state
+### [PASS] VIOLATES relationships render in --status-critical red; COMPLIES_WITH render in --status-ok green; all other relationships render in the default hairline gray  - verify this is driven by actual relationship type data, not just hover/selection state
 - **Citations**: [graphDrawHandlers.ts:L164-171](file:///Users/yashaswinsharma/Documents/github/vigil/apps/frontend/src/components/graph/graphDrawHandlers.ts#L164-L171)
 - **Evidence**:
   ```typescript
@@ -119,7 +119,7 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
 ### [PASS] Zero instances of the forbidden list: glowing orbs, gradient hero text, decorative orange/amber used outside status meaning, pill badges with soft glow, marketing copy phrases ("unified", "seamless", "unbreakable", "next-generation", "power of AI")
 - **Evidence**: Grep searches returned zero matches for the marketing phrases. There are no gradients or glowing shadow configurations in CSS. Orange `#d97757` is used strictly as a functional selection accent (highlighting active buttons, tabs, and nodes) and as the brand primary color.
 
-### [PASS] Home page has no hero headline/tagline section — confirm what actually renders first on `/`
+### [PASS] Home page has no hero headline/tagline section  - confirm what actually renders first on `/`
 - **Citations**: [page.tsx:L158-225](file:///Users/yashaswinsharma/Documents/github/vigil/apps/frontend/src/app/page.tsx#L158-L225)
 - **Evidence**:
   What actually renders first on `/` is the dynamic `<SplashScreen />` mechanical split-flap simulation spelling `V-I-G-I-L`. Once the splash screen exits, the viewport displays the split-pane industrial console:
@@ -139,13 +139,13 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
 
 ## 2. Functional Integrity
 
-### [PASS] Confirm zero hardcoded/deterministic demo-shortcut responses exist anywhere in the LangGraph agent pipeline — grep for any conditional that matches on a specific hardcoded query string or equipment ID and returns a canned response
+### [PASS] Confirm zero hardcoded/deterministic demo-shortcut responses exist anywhere in the LangGraph agent pipeline  - grep for any conditional that matches on a specific hardcoded query string or equipment ID and returns a canned response
 - **Citations**:
   - [graph.py](file:///Users/yashaswinsharma/Documents/github/vigil/apps/backend/graph.py)
   - [api.py](file:///Users/yashaswinsharma/Documents/github/vigil/apps/backend/api.py)
 - **Evidence**: All agent routes use Qdrant semantic indices dynamically retrieved based on the query embedding. Routing is determined by the `route_intent` node via LLM, and query-string comparisons returning mock responses are absent.
 
-### [FAIL] Confirm confidence_score in RCAResult is computed from actual retrieval similarity/agreement, not a static or randomly-varied placeholder value — show the exact calculation
+### [FAIL] Confirm confidence_score in RCAResult is computed from actual retrieval similarity/agreement, not a static or randomly-varied placeholder value  - show the exact calculation
 - **Citations**: [contradiction.py:L11-73](file:///Users/yashaswinsharma/Documents/github/vigil/apps/backend/scripts/contradiction.py#L11-L73)
 - **Evidence**:
   1. No `RCAResult` schema or metrics calculation class exists in the codebase.
@@ -177,7 +177,7 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
   ```
   This implements an actual semantic reasoning pass over the text, avoiding false positives from simple keyword presence.
 
-### [FAIL] Trace one full request end-to-end for a NON-golden-path query (not the rehearsed demo question) through all 6 LangGraph nodes and confirm each node actually receives and uses the prior node's output — not silently falling back to empty/mock context
+### [FAIL] Trace one full request end-to-end for a NON-golden-path query (not the rehearsed demo question) through all 6 LangGraph nodes and confirm each node actually receives and uses the prior node's output  - not silently falling back to empty/mock context
 - **Citations**: [graph.py:L360-395](file:///Users/yashaswinsharma/Documents/github/vigil/apps/backend/graph.py#L360-L395)
 - **Evidence**:
   1. The compiled LangGraph workflow consists of only **5 nodes** (`route_intent`, `expert_copilot`, `maintenance_rca`, `compliance`, `lessons_learned`), not 6.
@@ -200,7 +200,7 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
 
 ## 3. Runtime Safety
 
-### [PASS] CORS is not wildcard-with-credentials in the current committed config — show the actual current CORS middleware configuration
+### [PASS] CORS is not wildcard-with-credentials in the current committed config  - show the actual current CORS middleware configuration
 - **Citations**: [api.py:L28-35](file:///Users/yashaswinsharma/Documents/github/vigil/apps/backend/api.py#L28-L35)
 - **Evidence**:
   ```python
@@ -215,7 +215,7 @@ This report presents a read-only audit of the Vigil platform codebase. Each veri
   ```
   The origins allowed are restricted to the parsed origins array, never wildcard `*`.
 
-### [PASS] File upload size/type validation is enforced before the file reaches the parsing pipeline — show the actual validation code path, not just its existence in one function
+### [PASS] File upload size/type validation is enforced before the file reaches the parsing pipeline  - show the actual validation code path, not just its existence in one function
 - **Citations**: [parsers.py:L29-54](file:///Users/yashaswinsharma/Documents/github/vigil/apps/backend/parsers.py#L29-L54)
 - **Evidence**:
   ```python

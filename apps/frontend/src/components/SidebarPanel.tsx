@@ -13,6 +13,7 @@ interface SidebarPanelProps {
   setActiveTab: (tab: "inspect" | "alerts") => void;
   selectedNode: Node | null;
   onRunImpactAnalysis: (nodeIds: Set<string>) => void;
+  onAskVigil?: (query: string) => void;
   alerts: Alert[];
   setSelectedAlert: (alert: Alert | null) => void;
   loading: boolean;
@@ -26,6 +27,7 @@ export default function SidebarPanel({
   setActiveTab,
   selectedNode,
   onRunImpactAnalysis,
+  onAskVigil,
   alerts,
   setSelectedAlert,
   loading,
@@ -78,10 +80,11 @@ export default function SidebarPanel({
         ) : (
           <AnimatePresence mode="wait">
             {activeTab === "inspect" && (
-              <InspectorPanel 
+              <InspectorPanel
                 key="inspect"
-                selectedNode={selectedNode} 
-                onRunImpactAnalysis={onRunImpactAnalysis} 
+                selectedNode={selectedNode}
+                onRunImpactAnalysis={onRunImpactAnalysis}
+                onAskVigil={onAskVigil}
               />
             )}
             {activeTab === "alerts" && (

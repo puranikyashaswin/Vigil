@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { Search, X } from "lucide-react";
 import GraphLegend from "./GraphLegend";
 import { Node, GraphData } from "@/types";
 
@@ -34,10 +35,27 @@ export default function SchematicPanel({
   setExternalHighlightNodeIds,
   setActiveTab
 }: SchematicPanelProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+
+  const searchHighlightIds = useMemo(() => {
+    if (!searchQuery.trim()) return new Set<string>();
+    const q = searchQuery.toLowerCase();
+    return new Set(
+      graphData.nodes
+        .filter(n => n.label.toLowerCase().includes(q) || n.id.toLowerCase().includes(q) || n.type.toLowerCase().includes(q))
+        .map(n => n.id)
+    );
+  }, [searchQuery, graphData.nodes]);
+
+  const activeHighlights: Set<string> | Map<string, "primary" | "secondary"> = searchHighlightIds.size > 0
+    ? searchHighlightIds
+    : externalHighlightNodeIds;
+
   return (
     <section className={`p-4 md:p-6 flex flex-col relative transition-all duration-300 ${
-      isFullScreen 
-        ? "fixed inset-0 z-40 bg-brand-light dark:bg-brand-dark h-screen w-screen" 
+      isFullScreen
+        ? "fixed inset-0 z-40 bg-brand-light dark:bg-brand-dark h-screen w-screen"
         : isMobile
           ? (mobileTab === "graph" ? "flex-1 h-full w-full" : "hidden")
           : "flex-1 h-2/3 md:h-full md:w-3/5 border-r border-brand-mid-gray/25 dark:border-brand-mid-gray/15"
@@ -51,7 +69,37 @@ export default function SchematicPanel({
         </button>
       )}
       {!isFullScreen && (
-        <div className="flex items-center justify-end mb-4 shrink-0">
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <div className="flex items-center gap-2">
+            {showSearch ? (
+              <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-brand-mid-gray/20 dark:border-brand-mid-gray/15 rounded px-3 py-1.5">
+                <Search className="w-3.5 h-3.5 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search nodes..."
+                  className="bg-transparent text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none w-36"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <span className="text-[10px] text-zinc-400 font-mono">{searchHighlightIds.size} found</span>
+                )}
+                <button onClick={() => { setShowSearch(false); setSearchQuery(""); }} className="cursor-pointer">
+                  <X className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowSearch(true)}
+                className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-brand-mid-gray/20 dark:border-brand-mid-gray/15 rounded text-brand-dark/70 dark:text-brand-light/70 hover:text-brand-dark dark:hover:text-brand-light transition cursor-pointer select-none flex items-center gap-1.5"
+                title="Search nodes"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="text-xs font-semibold font-mono">Search</span>
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsOrganized(!isOrganized)}
@@ -76,16 +124,17 @@ export default function SchematicPanel({
       )}
       <div className="flex-1 w-full min-h-0 relative">
         <GraphLegend graphData={graphData} />
-        <ForceGraph2D 
-          data={graphData} 
-          onNodeClick={(node) => { 
-            setSelectedNode(node); 
+        <ForceGraph2D
+          data={graphData}
+          onNodeClick={(node) => {
+            setSelectedNode(node);
+            setSearchQuery("");
             setExternalHighlightNodeIds(new Map());
-            if (!isMobile) setActiveTab("inspect"); 
-          }} 
-          selectedNodeId={selectedNode?.id} 
-          isOrganized={isOrganized} 
-          externalHighlightNodeIds={externalHighlightNodeIds} 
+            if (!isMobile) setActiveTab("inspect");
+          }}
+          selectedNodeId={selectedNode?.id}
+          isOrganized={isOrganized}
+          externalHighlightNodeIds={activeHighlights}
         />
       </div>
     </section>

@@ -69,7 +69,7 @@ def retrieve_contexts(
     query: str, dirs: List[str] = None
 ) -> Tuple[List[str], List[Citation]]:
     """
-    BENCHMARK ONLY — not used in the production LangGraph pipeline.
+    BENCHMARK ONLY - not used in the production LangGraph pipeline.
     Used by scripts/run_retrieval_ablation.py for local retrieval quality measurements.
     """
     try:
@@ -161,7 +161,7 @@ def retrieve_contexts(
 def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
     """
     Node 2: Broad vector retrieval (no directory filter).
-    Runs in PARALLEL with route_intent — does not depend on category.
+    Runs in PARALLEL with route_intent - does not depend on category.
     """
     t0 = perf_counter()
     query = state["query"]

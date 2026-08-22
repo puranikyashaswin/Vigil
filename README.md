@@ -1,6 +1,6 @@
 # Vigil
 
-Vigil is an industrial knowledge intelligence platform that detects safety and compliance contradictions in engineering procedures, maintenance logs, and regulatory codes at the moment of ingestion — and answers grounded, cited queries through a multi-agent RAG pipeline powered by Amazon Bedrock.
+Vigil is an industrial knowledge intelligence platform that detects safety and compliance contradictions in engineering procedures, maintenance logs, and regulatory codes at the moment of ingestion - and answers grounded, cited queries through a multi-agent RAG pipeline powered by Amazon Bedrock.
 
 ---
 
@@ -24,7 +24,7 @@ flowchart TD
         INDEX["Semantic Indexing\nFastEmbed · Qdrant\nBAAI/bge-small-en-v1.5"]
     end
 
-    subgraph QUERY["Query Pipeline (LangGraph — Parallel)"]
+    subgraph QUERY["Query Pipeline (LangGraph - Parallel)"]
         direction TB
         START2["START"]
         ROUTE["route_intent\nClaude Sonnet 4.6"]
@@ -133,7 +133,7 @@ Cross-region inference profile IDs used:
 
 ## Streaming Chat
 
-Queries to `/api/query/stream` return Server-Sent Events (SSE). Tokens appear on the frontend as Claude generates them — perceived latency drops from a ~20-second blank wait to text appearing in ~2 seconds.
+Queries to `/api/query/stream` return Server-Sent Events (SSE). Tokens appear on the frontend as Claude generates them - perceived latency drops from a ~20-second blank wait to text appearing in ~2 seconds.
 
 ```
 event: token  → {"token": "The ", "done": false}
@@ -141,6 +141,29 @@ event: token  → {"token": "pressure ", "done": false}
 ...
 event: done   → {"metadata": {"confidence": {...}, "node_metrics": {...}}}
 ```
+
+---
+
+## Interactive Graph Features
+
+### Node Search & Filter
+
+The graph panel includes a search bar that filters nodes in real-time by label, ID, or type. Matching nodes remain fully visible while non-matching nodes fade to 15% opacity, making it easy to locate specific equipment, procedures, or regulations in large knowledge graphs.
+
+### Bidirectional Chat ↔ Graph Linking
+
+- **Graph → Chat**: Clicking a node and pressing "Ask Vigil About This Asset" in the Inspector Panel automatically sends a contextual query about that node's status, compliance risks, and maintenance history.
+- **Chat → Graph**: When the AI responds with citations, the cited source nodes glow orange (primary) and their neighbors glow blue (secondary) on the graph via animated impact ripple.
+
+### Real-Time WebSocket Updates
+
+The backend exposes a WebSocket endpoint at `/ws/updates`. When documents are ingested via the upload pipeline, a `graph_updated` event is broadcast to all connected clients. The frontend:
+
+1. Automatically re-fetches the graph and alerts data
+2. Highlights newly added nodes with an orange glow for 5 seconds
+3. Reconnects automatically if the connection drops (5-second retry)
+
+This eliminates the need to manually refresh after ingesting new documents.
 
 ---
 
@@ -174,7 +197,7 @@ Evaluated against a dataset of 42 concept pairs (21 contradictory, 21 clean). Ha
 | **0.7** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | **0.7895** |
 | **0.8** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
 
-Confidence scores are bimodal — threshold choice in 0.5–0.8 has no effect:
+Confidence scores are bimodal - threshold choice in 0.5–0.8 has no effect:
 - **Contradictory cohort**: avg **0.6995** (median **0.9500**)
 - **Clean control cohort**: avg **0.0919** (median **0.0000**)
 
@@ -209,13 +232,13 @@ Full scores: [docs/retrieval_ablation_results.md](docs/retrieval_ablation_result
 1. **False Negative Taxonomy (n=6 missed contradictions)**:
    - `implicit_operational` (shift/temporal logic): 3/6 pairs missed (IDs 25, 35, 37)
    - `multi_hop` (cross-document chaining): 3/3 pairs missed (IDs 23, 39, 41)
-   - Every missed pair scored exactly **0.00** (non-detection, not miscalibration — no threshold adjustment can recover them).
+   - Every missed pair scored exactly **0.00** (non-detection, not miscalibration - no threshold adjustment can recover them).
 
 2. **Unit Mismatch False Positives**: The detector treats PSI vs MPa and °C vs °F as contradiction signals instead of converting. Clean pairs 32 and 34 were falsely flagged at 0.95 and 0.98 confidence.
 
 3. **AI-Assisted Benchmark Bias**: The 42 pairs were constructed with AI assistance. Hard pairs were hand-written to mitigate this; independent external evaluation remains future work.
 
-4. **Small Out-of-Scope Cohort**: The 100% correct-refusal rate is on n=10 queries — a wide statistical confidence interval. It shows the guardrails work on this set, not a proven general rate.
+4. **Small Out-of-Scope Cohort**: The 100% correct-refusal rate is on n=10 queries - a wide statistical confidence interval. It shows the guardrails work on this set, not a proven general rate.
 
 5. **Reranking Disabled on Free-Tier Render**: FlashRank is disabled on the 512MB Render instance to prevent OOM crashes. Cost of this trade-off: MRR drops from 0.9333 → 0.8944, Hit@5 drops from 1.0 → 0.9667.
 
@@ -257,7 +280,7 @@ Measured on [test_documents/](test_documents/) corpus via [scripts/test_parsing.
 | Local parsers | PyMuPDF, pdfplumber, python-docx, openpyxl, xlrd | Text-native PDFs, DOCX, spreadsheets |
 | Knowledge format | Open Knowledge Format (OKF) | YAML frontmatter + Markdown; cross-linked via relative paths; `index.md` + `log.md` per directory. Schema in [AGENTS.md](AGENTS.md) |
 | Vector storage | `qdrant-client` | Local SQLite (`vigil_qdrant.db`) or Qdrant Cloud |
-| Embeddings | `fastembed` | `BAAI/bge-small-en-v1.5` — shared singleton, no reload on re-index |
+| Embeddings | `fastembed` | `BAAI/bge-small-en-v1.5` - shared singleton, no reload on re-index |
 | Reranking | `flashrank` | `ms-marco-MiniLM-L-12-v2`; disabled on 512MB instances |
 | Confidence model | Custom 3-component formula | `0.5×relevance + 0.3×consensus + 0.2×coverage` |
 | Streaming | FastAPI SSE | `/api/query/stream` and `/api/ingest/upload` |
@@ -272,8 +295,10 @@ Measured on [test_documents/](test_documents/) corpus via [scripts/test_parsing.
 | Framework | Next.js 16 | App Router |
 | Styling | Tailwind CSS 4 | Ivory surfaces, clay accent, serif/sans pairing |
 | Animations | `framer-motion` | Tab transitions, modal enter/exit |
-| Graph | `react-force-graph-2d` | Canvas-rendered 2D force layout; hover tooltips; glow on new nodes |
-| Markdown | Custom renderer | Tables, blockquotes, compliance matrices, RCA tables — all rendered |
+| Graph | `react-force-graph-2d` | Canvas-rendered 2D force layout; hover tooltips; glow on new nodes; **live search/filter** |
+| Real-time | WebSocket (`/ws/updates`) | Graph auto-refreshes when new documents are ingested - no manual reload needed |
+| Bidirectional linking | Inspector → Chat | "Ask Vigil About This Asset" button sends contextual query from any selected node |
+| Markdown | Custom renderer | Tables, blockquotes, compliance matrices, RCA tables - all rendered |
 | Streaming | Fetch ReadableStream | Chat tokens stream token-by-token; upload progress via SSE |
 | File Upload | HTML5 drag-and-drop | Multi-file; 50MB limit; real-time pipeline progress |
 | Icons | `lucide-react` | |
@@ -406,8 +431,8 @@ This prevents cold-start delays during demos.
 ### Performance on Free Tier (512MB RAM)
 
 - FlashRank reranking is **disabled** (`ENABLE_RERANKING` not set) to stay within 512MB
-- Embedding model loads once as a global singleton — no reload on re-index
-- Auto-indexing runs in a background daemon thread — port binds in < 2 seconds
+- Embedding model loads once as a global singleton - no reload on re-index
+- Auto-indexing runs in a background daemon thread - port binds in < 2 seconds
 
 ### Administrative Endpoints
 
@@ -418,6 +443,7 @@ This prevents cold-start delays during demos.
 | `GET /api/graph` | Knowledge graph nodes and edges (cached) |
 | `POST /api/ingest/upload` | Upload documents with live SSE progress |
 | `POST /api/query/stream` | Streaming chat query (SSE) |
+| `WS /ws/updates` | WebSocket - broadcasts `graph_updated` events after ingestion |
 
 ---
 
@@ -426,13 +452,13 @@ This prevents cold-start delays during demos.
 All source documents in `test_documents/` are git-tracked for exact reproducibility.
 
 ```bash
-# RAGAS QA evaluation (40 questions — 30 in-scope, 10 out-of-scope)
+# RAGAS QA evaluation (40 questions - 30 in-scope, 10 out-of-scope)
 python apps/backend/scripts/run_ragas_eval.py
 
 # Contradiction detection threshold sweep (42 labeled pairs)
 python apps/backend/scripts/run_contradiction_benchmark.py
 
-# Retrieval ablation — Hit@5 and MRR with/without FlashRank (zero API cost)
+# Retrieval ablation - Hit@5 and MRR with/without FlashRank (zero API cost)
 python apps/backend/scripts/run_retrieval_ablation.py
 ```
 
@@ -466,12 +492,12 @@ vigil/
   dump_static_json.py          # Static JSON exporter for demo/Vercel mode
   apps/
     backend/
-      api.py                   # FastAPI server — REST + SSE endpoints
+      api.py                   # FastAPI server - REST + SSE endpoints
       graph.py                 # LangGraph parallel fan-out pipeline
       nodes.py                 # Agent node functions (Copilot/RCA/Compliance/Lessons)
       state.py                 # AgentState + merge_metadata reducer
       retrieval.py             # Vector search + 3-component confidence model
-      shared_utils.py          # Unified LLM gateway — call_llm(), call_llm_vision()
+      shared_utils.py          # Unified LLM gateway - call_llm(), call_llm_vision()
       parsers.py               # Document type detection + local parsers + Bedrock OCR
       admin_utils.py           # Qdrant indexing helper
       scripts/
@@ -485,17 +511,17 @@ vigil/
     frontend/
       src/
         app/
-          page.tsx             # Main dashboard — streaming chat, upload, graph
+          page.tsx             # Main dashboard - streaming chat, upload, graph
           layout.tsx           # Root layout
           globals.css          # Tailwind theme + custom styles
         components/
-          ForceGraph2D.tsx      # react-force-graph-2d — hover tooltips, glow
-          ChatHistoryOverlay.tsx# Streaming chat UI — full markdown rendering
+          ForceGraph2D.tsx      # react-force-graph-2d - hover tooltips, glow
+          ChatHistoryOverlay.tsx# Streaming chat UI - full markdown rendering
           DocumentSelector.tsx  # Drag-and-drop file upload zone
           PipelineVisualizer.tsx# Real-time SSE pipeline progress
           PipelineStatusOverlay.tsx
         utils/
-          markdown.ts          # Markdown renderer — tables, blockquotes, lists
+          markdown.ts          # Markdown renderer - tables, blockquotes, lists
   knowledge_graph/             # OKF concept files (git-tracked)
     equipment/
     procedures/

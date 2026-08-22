@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
+import { useGraphUpdates } from "@/hooks/useGraphUpdates";
 import Header from "@/components/Header";
 import SchematicPanel from "@/components/SchematicPanel";
 import SidebarPanel from "@/components/SidebarPanel";
@@ -41,6 +42,18 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
   const [viewingDocument, setViewingDocument] = useState<string | null>(null);
+
+  const handleGraphUpdate = useCallback((newNodeIds: string[]) => {
+    loadData();
+    if (newNodeIds.length > 0) {
+      const m = new Map<string, "primary" | "secondary">();
+      newNodeIds.forEach(id => m.set(id, "primary"));
+      setExternalHighlightNodeIds(m);
+      setTimeout(() => setExternalHighlightNodeIds(new Map()), 5000);
+    }
+  }, []);
+
+  useGraphUpdates(API_BASE_URL, handleGraphUpdate);
 
   const handleRunImpactAnalysisAnimation = (nodeIds: Set<string>) => {
     const idsArray = Array.from(nodeIds);
@@ -195,6 +208,11 @@ export default function Dashboard() {
       localStorage.setItem("vigil_conversations", JSON.stringify(filtered));
       return filtered;
     });
+  };
+
+  const handleAskVigil = (query: string) => {
+    setShowHistory(true);
+    sendQuery(query);
   };
 
   const handleSendFollowUp = (question: string) => {
@@ -404,13 +422,14 @@ export default function Dashboard() {
             setExternalHighlightNodeIds={setExternalHighlightNodeIds}
             setActiveTab={setActiveTab}
           />
-          <SidebarPanel 
+          <SidebarPanel
             isMobile={isMobile}
             mobileTab={mobileTab}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             selectedNode={selectedNode}
             onRunImpactAnalysis={handleRunImpactAnalysisAnimation}
+            onAskVigil={handleAskVigil}
             alerts={alerts}
             setSelectedAlert={setSelectedAlert}
             loading={loading}

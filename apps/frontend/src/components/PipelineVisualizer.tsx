@@ -243,7 +243,7 @@ export default function PipelineVisualizer({ onClose, onComplete }: PipelineVisu
                 <span className="text-[10px] font-semibold tracking-wider text-zinc-500 uppercase">Process Overview</span>
                 <div className="flex-1 flex flex-col justify-between text-xs mt-1">
                   <p className="text-zinc-400 leading-relaxed font-serif italic text-[13px]">
-                    Drop documents to parse, extract entities, detect contradictions, and index into the vector database — all in real-time.
+                    Drop documents to parse, extract entities, detect contradictions, and index into the vector database, all in real-time.
                   </p>
                   <div className="text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-2 flex justify-between">
                     <span>Engine: Claude Sonnet 4.6</span>

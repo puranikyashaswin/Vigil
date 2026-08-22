@@ -175,11 +175,24 @@ def run_query_stream(request: QueryRequest):
             no_docs_path = True
 
             query_lower = query.strip().lower().rstrip("!?.")
-            greeting_tokens = {"hi", "hii", "hello", "hey", "hola", "howdy", "sup",
-                               "good morning", "good afternoon", "good evening",
-                               "whats up", "what's up", "yo"}
+            greeting_tokens = {
+                "hi",
+                "hii",
+                "hello",
+                "hey",
+                "hola",
+                "howdy",
+                "sup",
+                "good morning",
+                "good afternoon",
+                "good evening",
+                "whats up",
+                "what's up",
+                "yo",
+            }
             is_greeting = query_lower in greeting_tokens or (
-                len(query.split()) <= 3 and any(g in query_lower for g in {"hi", "hello", "hey"})
+                len(query.split()) <= 3
+                and any(g in query_lower for g in {"hi", "hello", "hey"})
             )
 
             if is_greeting:
@@ -330,7 +343,9 @@ def run_query_stream(request: QueryRequest):
             final_trace = ["route_intent", "synthesize_response"]
         else:
             final_trace = state["metadata"].get("trace", []) + [
-                "synthesize_response", "contradiction_guard", "log_metrics"
+                "synthesize_response",
+                "contradiction_guard",
+                "log_metrics",
             ]
 
         follow_ups = []
@@ -567,6 +582,9 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                 yield f"event: step\ndata: {json.dumps({'file': 'all', 'step': 5, 'label': 'Vectors indexed', 'status': 'complete'})}\n\n"
             except Exception as e:
                 yield f"event: step\ndata: {json.dumps({'file': 'all', 'step': 5, 'label': f'Index error: {str(e)[:40]}', 'status': 'error'})}\n\n"
+
+            # Notify WebSocket clients about graph update
+            notify_graph_update(new_node_ids)
 
             # Done
             yield f"event: done\ndata: {json.dumps({'total_files': total, 'total_entities': len(all_new_entities), 'new_node_ids': new_node_ids})}\n\n"
@@ -861,6 +879,50 @@ def debug_qdrant_collection() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Debug Qdrant failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+from fastapi import WebSocket, WebSocketDisconnect
+
+_ws_clients: List[WebSocket] = []
+
+
+@api.websocket("/ws/updates")
+async def websocket_updates(websocket: WebSocket):
+    await websocket.accept()
+    _ws_clients.append(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        _ws_clients.remove(websocket)
+
+
+async def broadcast_update(event: str, data: Dict[str, Any]):
+    import asyncio
+
+    message = json.dumps({"event": event, "data": data})
+    disconnected = []
+    for ws in _ws_clients:
+        try:
+            await ws.send_text(message)
+        except Exception:
+            disconnected.append(ws)
+    for ws in disconnected:
+        _ws_clients.remove(ws)
+
+
+def notify_graph_update(new_node_ids: List[str] = None):
+    import asyncio
+
+    data = {"new_node_ids": new_node_ids or []}
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(broadcast_update("graph_updated", data))
+        else:
+            loop.run_until_complete(broadcast_update("graph_updated", data))
+    except RuntimeError:
+        pass
 
 
 if __name__ == "__main__":

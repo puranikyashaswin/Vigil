@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Database, ExternalLink, AlertTriangle, CheckCircle2, Sparkles } from "lucide-react";
+import { Database, ExternalLink, AlertTriangle, CheckCircle2, Sparkles, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Node } from "@/types";
 import InspectorTimeline from "./InspectorTimeline";
@@ -10,9 +10,10 @@ import InspectorDecision from "./InspectorDecision";
 interface InspectorPanelProps {
   selectedNode: Node | null;
   onRunImpactAnalysis?: (nodeIds: Set<string>) => void;
+  onAskVigil?: (query: string) => void;
 }
 
-export default function InspectorPanel({ selectedNode, onRunImpactAnalysis }: InspectorPanelProps) {
+export default function InspectorPanel({ selectedNode, onRunImpactAnalysis, onAskVigil }: InspectorPanelProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "decision">("overview");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<boolean>(false);
@@ -175,6 +176,18 @@ export default function InspectorPanel({ selectedNode, onRunImpactAnalysis }: In
                   {selectedNode.id}
                 </div>
               </div>
+
+              {onAskVigil && (
+                <div className="pt-5 border-t border-zinc-200 dark:border-zinc-800">
+                  <button
+                    onClick={() => onAskVigil(`Tell me about ${selectedNode.label}: its current status, compliance risks, and any related maintenance history.`)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-orange text-white hover:bg-brand-orange/90 rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Ask Vigil About This Asset
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
 
