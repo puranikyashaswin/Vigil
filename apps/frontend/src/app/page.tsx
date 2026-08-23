@@ -21,7 +21,7 @@ const PipelineVisualizer = dynamic(() => import("@/components/PipelineVisualizer
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<"inspect" | "alerts">("inspect");
+  const [activeTab, setActiveTab] = useState<"inspect" | "alerts" | "kb">("inspect");
   const [pipelineStep, setPipelineStep] = useState<number>(0);
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -42,7 +42,7 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
   const [viewingDocument, setViewingDocument] = useState<string | null>(null);
-  const [stats, setStats] = useState<{ documents: number; vectors: number; queries_served: number } | null>(null);
+  const [stats, setStats] = useState<{ source_documents: number; entities: number; vectors: number; queries_served: number } | null>(null);
 
   const handleGraphUpdate = useCallback((newNodeIds: string[]) => {
     loadData();
@@ -407,7 +407,8 @@ export default function Dashboard() {
           nodesCount={graphData.nodes.length}
           edgesCount={graphData.links.length}
           alertsCount={alerts.length}
-          documentsCount={stats?.documents ?? 0}
+          sourcesCount={stats?.source_documents ?? 0}
+          entitiesCount={stats?.entities ?? 0}
           vectorsCount={stats?.vectors ?? 0}
           loading={loading}
           onShowPipeline={() => setShowPipelineVisualizer(true)}
@@ -437,6 +438,7 @@ export default function Dashboard() {
             selectedNode={selectedNode}
             onRunImpactAnalysis={handleRunImpactAnalysisAnimation}
             onAskVigil={handleAskVigil}
+            onOpenDocument={(path) => setViewingDocument(path)}
             alerts={alerts}
             setSelectedAlert={setSelectedAlert}
             loading={loading}

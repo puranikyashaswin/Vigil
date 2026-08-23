@@ -1,19 +1,21 @@
 import React from "react";
-import { FolderOpen, ShieldAlert, RefreshCw } from "lucide-react";
+import { FolderOpen, ShieldAlert, RefreshCw, Database } from "lucide-react";
 import { Menubar } from "@/components/ui/menubar";
 import { AnimatePresence } from "framer-motion";
 import InspectorPanel from "./InspectorPanel";
 import AlertFeed from "./AlertFeed";
+import KnowledgeBaseExplorer from "./KnowledgeBaseExplorer";
 import { Node, Alert } from "@/types";
 
 interface SidebarPanelProps {
   isMobile: boolean;
   mobileTab: "graph" | "alerts";
-  activeTab: "inspect" | "alerts";
-  setActiveTab: (tab: "inspect" | "alerts") => void;
+  activeTab: "inspect" | "alerts" | "kb";
+  setActiveTab: (tab: "inspect" | "alerts" | "kb") => void;
   selectedNode: Node | null;
   onRunImpactAnalysis: (nodeIds: Set<string>) => void;
   onAskVigil?: (query: string) => void;
+  onOpenDocument?: (filepath: string) => void;
   alerts: Alert[];
   setSelectedAlert: (alert: Alert | null) => void;
   loading: boolean;
@@ -28,6 +30,7 @@ export default function SidebarPanel({
   selectedNode,
   onRunImpactAnalysis,
   onAskVigil,
+  onOpenDocument,
   alerts,
   setSelectedAlert,
   loading,
@@ -62,7 +65,19 @@ export default function SidebarPanel({
             }`}
           >
             <ShieldAlert className="mr-2 size-4 text-brand-orange" />
-            System Alerts ({alerts.length})
+            Alerts ({alerts.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("kb")}
+            className={`flex cursor-pointer select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none transition-colors ${
+              activeTab === "kb"
+                ? "bg-brand-light-gray/40 dark:bg-brand-dark/80 text-brand-dark dark:text-brand-light font-semibold"
+                : "text-brand-dark/80 dark:text-brand-light/80 hover:bg-brand-light-gray/20 dark:hover:bg-brand-dark/40 hover:text-brand-dark dark:hover:text-brand-light"
+            }`}
+          >
+            <Database className="mr-2 size-4 text-[#6a9bcc]" />
+            Knowledge Base
           </button>
 
           <button
@@ -70,7 +85,6 @@ export default function SidebarPanel({
             className="flex cursor-pointer select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none text-brand-dark/80 dark:text-brand-light/80 hover:bg-brand-light-gray/20 dark:hover:bg-brand-dark/40 hover:text-brand-dark dark:hover:text-brand-light transition-colors"
           >
             <RefreshCw className={`mr-2 size-4 text-brand-green ${loading ? 'animate-spin' : ''}`} />
-            Refresh Data
           </button>
         </Menubar>
       </div>
@@ -88,10 +102,16 @@ export default function SidebarPanel({
               />
             )}
             {activeTab === "alerts" && (
-              <AlertFeed 
+              <AlertFeed
                 key="alerts"
-                alerts={alerts} 
-                onSelectAlert={setSelectedAlert} 
+                alerts={alerts}
+                onSelectAlert={setSelectedAlert}
+              />
+            )}
+            {activeTab === "kb" && (
+              <KnowledgeBaseExplorer
+                key="kb"
+                onOpenDocument={(path) => onOpenDocument?.(path)}
               />
             )}
           </AnimatePresence>

@@ -8,7 +8,8 @@ interface HeaderProps {
   nodesCount: number;
   edgesCount: number;
   alertsCount: number;
-  documentsCount: number;
+  sourcesCount: number;
+  entitiesCount: number;
   vectorsCount: number;
   loading: boolean;
   onShowPipeline: () => void;
@@ -20,7 +21,8 @@ export default function Header({
   nodesCount,
   edgesCount,
   alertsCount,
-  documentsCount,
+  sourcesCount,
+  entitiesCount,
   vectorsCount,
   loading,
   onShowPipeline,
@@ -52,7 +54,8 @@ export default function Header({
             value={alertsCount}
             valueClassName={alertsCount > 0 ? "text-brand-orange animate-pulse" : ""}
           />
-          <MetricPanel label="Docs" value={documentsCount} />
+          <MetricPanel label="Sources" value={sourcesCount} />
+          <MetricPanel label="Entities" value={entitiesCount} />
           <MetricPanel label="Vectors" value={vectorsCount.toLocaleString()} />
         </div>
 
