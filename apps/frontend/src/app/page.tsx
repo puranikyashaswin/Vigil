@@ -439,6 +439,7 @@ export default function Dashboard() {
             onRunImpactAnalysis={handleRunImpactAnalysisAnimation}
             onAskVigil={handleAskVigil}
             onOpenDocument={(path) => setViewingDocument(path)}
+            onTriggerUpload={() => setShowPipelineVisualizer(true)}
             alerts={alerts}
             setSelectedAlert={setSelectedAlert}
             loading={loading}

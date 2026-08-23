@@ -59,29 +59,20 @@ def health_check() -> Dict[str, str]:
 @api.get("/api/stats")
 def get_stats() -> Dict[str, Any]:
     import re as _re
-    import yaml
 
-    kg_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
-    )
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    kg_dir = os.path.join(project_root, "knowledge_graph")
+    docs_dir = os.path.join(project_root, "test_documents")
 
     entity_count = 0
-    source_docs = set()
     for root, _, files in os.walk(kg_dir):
         for f in files:
             if f.endswith(".md") and f not in ("index.md", "log.md"):
                 entity_count += 1
-                fpath = os.path.join(root, f)
-                try:
-                    with open(fpath, "r", encoding="utf-8") as ef:
-                        raw = ef.read()
-                    if raw.startswith("---"):
-                        fm_end = raw.index("---", 3)
-                        fm = yaml.safe_load(raw[3:fm_end])
-                        if fm and fm.get("resource"):
-                            source_docs.add(fm["resource"])
-                except Exception:
-                    pass
+
+    source_count = 0
+    if os.path.isdir(docs_dir):
+        source_count = len([f for f in os.listdir(docs_dir) if not f.startswith(".")])
 
     vectors = 0
     try:
@@ -108,7 +99,7 @@ def get_stats() -> Dict[str, Any]:
         "nodes": len(graph.get("nodes", [])),
         "edges": len(graph.get("links", [])),
         "entities": entity_count,
-        "source_documents": len(source_docs),
+        "source_documents": source_count,
         "vectors": vectors,
         "alerts": len(get_alerts()),
         "last_ingestion": last_ingestion,
@@ -120,9 +111,16 @@ def get_stats() -> Dict[str, Any]:
 def get_knowledge_base_tree() -> Dict[str, Any]:
     import yaml
 
-    kg_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
-    )
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    kg_dir = os.path.join(project_root, "knowledge_graph")
+    docs_dir = os.path.join(project_root, "test_documents")
+
+    source_files = []
+    if os.path.isdir(docs_dir):
+        for fname in sorted(os.listdir(docs_dir)):
+            if fname.startswith("."):
+                continue
+            source_files.append({"name": fname})
 
     categories = []
     for category_name in sorted(os.listdir(kg_dir)):
@@ -136,7 +134,6 @@ def get_knowledge_base_tree() -> Dict[str, Any]:
                 continue
             fpath = os.path.join(cat_path, fname)
             title = fname.replace(".md", "").replace("-", " ").title()
-            resource = None
             try:
                 with open(fpath, "r", encoding="utf-8") as ef:
                     raw = ef.read()
@@ -145,21 +142,15 @@ def get_knowledge_base_tree() -> Dict[str, Any]:
                     fm = yaml.safe_load(raw[3:fm_end])
                     if fm:
                         title = fm.get("title", title)
-                        resource = fm.get("resource")
             except Exception:
                 pass
             files.append(
-                {
-                    "name": fname,
-                    "path": f"{category_name}/{fname}",
-                    "title": title,
-                    "resource": resource,
-                }
+                {"name": fname, "path": f"{category_name}/{fname}", "title": title}
             )
 
         categories.append({"name": category_name, "count": len(files), "files": files})
 
-    return {"categories": categories}
+    return {"source_documents": source_files, "categories": categories}
 
 
 @api.post("/api/query")

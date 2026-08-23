@@ -16,6 +16,7 @@ interface SidebarPanelProps {
   onRunImpactAnalysis: (nodeIds: Set<string>) => void;
   onAskVigil?: (query: string) => void;
   onOpenDocument?: (filepath: string) => void;
+  onTriggerUpload?: () => void;
   alerts: Alert[];
   setSelectedAlert: (alert: Alert | null) => void;
   loading: boolean;
@@ -31,6 +32,7 @@ export default function SidebarPanel({
   onRunImpactAnalysis,
   onAskVigil,
   onOpenDocument,
+  onTriggerUpload,
   alerts,
   setSelectedAlert,
   loading,
@@ -112,6 +114,7 @@ export default function SidebarPanel({
               <KnowledgeBaseExplorer
                 key="kb"
                 onOpenDocument={(path) => onOpenDocument?.(path)}
+                onTriggerUpload={() => onTriggerUpload?.()}
               />
             )}
           </AnimatePresence>
