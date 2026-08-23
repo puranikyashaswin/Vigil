@@ -52,9 +52,9 @@ export function drawNode(
 
   ctx.save();
 
-  // SOURCE DOCUMENT nodes are primary — always visible
-  // Entity nodes are secondary — smaller and faded
-  if (isDocNode) {
+  // Interactive nodes (documents, or all nodes in fallback mode) are primary
+  // Non-interactive entity nodes are decorative
+  if (node.interactive) {
     ctx.globalAlpha = isHighlighted ? 1.0 : 0.4;
   } else {
     ctx.globalAlpha = isHighlighted ? 0.45 : 0.12;
@@ -157,6 +157,44 @@ export function drawNode(
 
     ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
     ctx.fillText(labelText, x, y + h / 2 + 4);
+
+  } else if (node.interactive) {
+    // === ENTITY NODE in fallback mode (no documents exist): render as labeled shape ===
+    const color = typeColors[typeLower] || typeColors[node.type] || "#b0aea5";
+
+    if (isHoveredNode || isSelected) {
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = color;
+    }
+
+    // Rounded pill shape
+    const labelText = node.label.length > 14 ? node.label.slice(0, 12) + "…" : node.label;
+    ctx.font = "600 7px Inter, system-ui, sans-serif";
+    const textW = ctx.measureText(labelText).width;
+    const w = textW + 12;
+    const h = 14;
+    const r = 7;
+
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2 + r, y - h / 2);
+    ctx.lineTo(x + w / 2 - r, y - h / 2);
+    ctx.quadraticCurveTo(x + w / 2, y - h / 2, x + w / 2, y);
+    ctx.quadraticCurveTo(x + w / 2, y + h / 2, x + w / 2 - r, y + h / 2);
+    ctx.lineTo(x - w / 2 + r, y + h / 2);
+    ctx.quadraticCurveTo(x - w / 2, y + h / 2, x - w / 2, y);
+    ctx.quadraticCurveTo(x - w / 2, y - h / 2, x - w / 2 + r, y - h / 2);
+    ctx.closePath();
+
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = isSelected ? (isDark ? "#faf9f5" : "#141413") : (isDark ? "#3f3f46" : "#d4d4d8");
+    ctx.lineWidth = isSelected ? 1.5 : 0.6;
+    ctx.stroke();
+
+    ctx.fillStyle = "#faf9f5";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(labelText, x, y);
 
   } else {
     // === ENTITY NODES: Small, non-interactive dots ===
@@ -290,17 +328,19 @@ export function drawNodePointerArea(
   ctx.save();
   ctx.fillStyle = color;
 
-  if (typeLower === "source_document") {
-    // Source document nodes: full clickable area matching their visual bounds
-    const w = 32;
-    const h = 26;
-    ctx.fillRect(x - w / 2, y - h / 2, w, h);
-  } else {
-    // Entity nodes: tiny/no pointer area (non-interactive)
-    ctx.beginPath();
-    ctx.arc(x, y, 0.1, 0, 2 * Math.PI);
-    ctx.fill();
+  if (node.interactive) {
+    if (typeLower === "source_document") {
+      const w = 50;
+      const h = 50;
+      ctx.fillRect(x - w / 2, y - h / 2, w, h);
+    } else {
+      // Interactive entity nodes (fallback mode)
+      const w = 40;
+      const h = 20;
+      ctx.fillRect(x - w / 2, y - h / 2, w, h);
+    }
   }
+  // Non-interactive nodes: draw nothing
 
   ctx.restore();
 }

@@ -797,11 +797,24 @@ def get_graph_data() -> Dict[str, list]:
                 })
                 node_set.add(node_id)
 
-                # Link entity to its source document
-                if resource:
+                # Link entity to its source document (create doc node if it doesn't exist yet)
+                if resource and resource not in ("unknown", ""):
                     doc_filename = os.path.basename(resource)
-                    doc_id = f"doc:{doc_filename}"
-                    if doc_id in doc_nodes:
+                    if doc_filename:
+                        doc_id = f"doc:{doc_filename}"
+                        if doc_id not in doc_nodes:
+                            ext = os.path.splitext(doc_filename)[1].lower()
+                            nodes.append({
+                                "id": doc_id,
+                                "label": doc_filename,
+                                "type": "source_document",
+                                "description": f"Source document: {doc_filename}",
+                                "val": 5,
+                                "interactive": True,
+                                "file_ext": ext,
+                            })
+                            node_set.add(doc_id)
+                            doc_nodes.add(doc_id)
                         links.append({
                             "source": doc_id,
                             "target": node_id,
@@ -859,6 +872,11 @@ def get_graph_data() -> Dict[str, list]:
             )
             if not doc_link_exists:
                 links.append({"source": src_doc, "target": tgt_doc, "type": "SHARED_CONTEXT"})
+
+    # Fallback: if no document nodes exist, make all entity nodes interactive
+    if not doc_nodes:
+        for n in nodes:
+            n["interactive"] = True
 
     # Calculate degree for sizing
     degrees: Dict[str, int] = {n["id"]: 0 for n in nodes}

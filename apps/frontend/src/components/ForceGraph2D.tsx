@@ -240,21 +240,23 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
                 <div className="flex items-center gap-1.5 mb-1">
                   <span
                     className="inline-block w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: "#d97757" }}
+                    style={{ backgroundColor: TYPE_COLORS[(hoveredNode.type || "concept").toLowerCase()] || "#d97757" }}
                   />
                   <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    Source Document
+                    {hoveredNode.type === "source_document" ? "Source Document" : (hoveredNode.type || "concept")}
                   </span>
                 </div>
                 <p className="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1">
                   {hoveredNode.label}
                 </p>
-                <p className="text-[11px] font-sans text-zinc-600 dark:text-zinc-400 leading-snug">
-                  {hoveredNode.degree} extracted entit{hoveredNode.degree !== 1 ? "ies" : "y"}
-                </p>
+                {hoveredNode.description && (
+                  <p className="text-[11px] font-sans text-zinc-600 dark:text-zinc-400 leading-snug line-clamp-2">
+                    {hoveredNode.description.slice(0, 100)}
+                  </p>
+                )}
                 <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-zinc-100 dark:border-zinc-800">
                   <span className="text-[10px] font-sans text-zinc-500 dark:text-zinc-500">
-                    Click to inspect
+                    {hoveredNode.degree} connection{hoveredNode.degree !== 1 ? "s" : ""} · Click to inspect
                   </span>
                 </div>
               </div>
