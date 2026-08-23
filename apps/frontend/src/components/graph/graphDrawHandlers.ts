@@ -82,9 +82,10 @@ export function drawNode(
     typeLower === "event" ||
     typeLower === "organization"
   ) {
-    // Inner mono-spaced equipment tag text
-    const monoText = node.label.split(" ")[0] || node.label;
-    ctx.font = "bold 8.5px monospace";
+    // Inner mono-spaced equipment tag text — truncate for readability
+    let monoText = node.label.split(" ")[0] || node.label;
+    if (monoText.length > 10) monoText = monoText.slice(0, 9) + "…";
+    ctx.font = "bold 8px monospace";
     
     // Calculate dynamic width based on text length to prevent text overflow in light mode
     ctx.save();
@@ -168,7 +169,7 @@ export function drawNode(
     typeLower !== "organization"
   ) {
     const isHovered = highlightNodes.size > 0 && highlightNodes.has(node.id);
-    const shouldShowLabel = globalScale > 0.8 || isSelected || isHovered;
+    const shouldShowLabel = globalScale > 1.2 || isSelected || isHovered;
     
     if (shouldShowLabel) {
       const fontSize = Math.max(3.2, 9 / globalScale);

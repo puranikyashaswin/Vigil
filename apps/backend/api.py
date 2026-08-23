@@ -134,6 +134,7 @@ def get_knowledge_base_tree() -> Dict[str, Any]:
                 continue
             fpath = os.path.join(cat_path, fname)
             title = fname.replace(".md", "").replace("-", " ").title()
+            resource = ""
             try:
                 with open(fpath, "r", encoding="utf-8") as ef:
                     raw = ef.read()
@@ -142,10 +143,11 @@ def get_knowledge_base_tree() -> Dict[str, Any]:
                     fm = yaml.safe_load(raw[3:fm_end])
                     if fm:
                         title = fm.get("title", title)
+                        resource = fm.get("resource", "")
             except Exception:
                 pass
             files.append(
-                {"name": fname, "path": f"{category_name}/{fname}", "title": title}
+                {"name": fname, "path": f"{category_name}/{fname}", "title": title, "resource": resource}
             )
 
         categories.append({"name": category_name, "count": len(files), "files": files})
@@ -547,7 +549,12 @@ def ingest_upload(files: List[UploadFile] = File(...)):
         new_node_ids = []
 
         try:
-            # Save uploaded files to temp
+            # Save uploaded files to temp and also to test_documents for tracking
+            docs_dir = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "test_documents")
+            )
+            os.makedirs(docs_dir, exist_ok=True)
+
             saved_files = []
             for f in files:
                 tmp_path = os.path.join(tmp_dir, f.filename)
@@ -555,6 +562,10 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                     content = f.file.read()
                     out.write(content)
                 saved_files.append((f.filename, tmp_path))
+                # Copy to test_documents so it shows in KB explorer
+                persist_path = os.path.join(docs_dir, f.filename)
+                if not os.path.exists(persist_path):
+                    shutil.copy2(tmp_path, persist_path)
 
             total = len(saved_files)
 
@@ -617,7 +628,7 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                             f"---\ntype: {ent_type}",
                             f'title: "{ent["name"]}"',
                             f'description: "{ent.get("description", "")}"',
-                            f'resource: "upload/{filename}"',
+                            f'resource: "test_documents/{filename}"',
                             f"tags: {ent.get('tags', [])}",
                             f"timestamp: {datetime.now().isoformat()}",
                             "---\n",

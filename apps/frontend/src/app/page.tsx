@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
   const [viewingDocument, setViewingDocument] = useState<string | null>(null);
   const [stats, setStats] = useState<{ source_documents: number; entities: number; vectors: number; queries_served: number } | null>(null);
+  const [kbRefreshKey, setKbRefreshKey] = useState(0);
 
   const handleGraphUpdate = useCallback((newNodeIds: string[]) => {
     loadData();
@@ -440,6 +441,22 @@ export default function Dashboard() {
             onAskVigil={handleAskVigil}
             onOpenDocument={(path) => setViewingDocument(path)}
             onTriggerUpload={() => setShowPipelineVisualizer(true)}
+            kbRefreshKey={kbRefreshKey}
+            onHighlightSource={(filename, entityPaths) => {
+              if (entityPaths.length === 0) {
+                setExternalHighlightNodeIds(new Map());
+                return;
+              }
+              const m = new Map<string, "primary" | "secondary">();
+              entityPaths.forEach(id => m.set(id, "primary"));
+              graphData.links.forEach(link => {
+                const src = typeof link.source === "string" ? link.source : (link.source as any).id;
+                const tgt = typeof link.target === "string" ? link.target : (link.target as any).id;
+                if (m.has(src) && !m.has(tgt)) m.set(tgt, "secondary");
+                if (m.has(tgt) && !m.has(src)) m.set(src, "secondary");
+              });
+              setExternalHighlightNodeIds(m);
+            }}
             alerts={alerts}
             setSelectedAlert={setSelectedAlert}
             loading={loading}
@@ -518,9 +535,13 @@ export default function Dashboard() {
       <AnimatePresence>
         {showPipelineVisualizer && (
           <PipelineVisualizer
-            onClose={() => setShowPipelineVisualizer(false)}
+            onClose={() => {
+              setShowPipelineVisualizer(false);
+              setKbRefreshKey(k => k + 1);
+            }}
             onComplete={(newNodeIds) => {
               loadData();
+              setKbRefreshKey(k => k + 1);
               if (newNodeIds && newNodeIds.length > 0) {
                 const m = new Map<string, "primary" | "secondary">();
                 newNodeIds.forEach(id => m.set(id, "primary"));

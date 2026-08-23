@@ -30,9 +30,9 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   const containerRef = useRef<HTMLDivElement>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<GraphLink>>(new Set());
-  const [chargeStrength, setChargeStrength] = useState(-240);
-  const [linkDistance, setLinkDistance] = useState(95);
-  const [collisionRadius, setCollisionRadius] = useState(36);
+  const [chargeStrength, setChargeStrength] = useState(-400);
+  const [linkDistance, setLinkDistance] = useState(140);
+  const [collisionRadius, setCollisionRadius] = useState(50);
   const [showConfig, setShowConfig] = useState(false);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
@@ -75,7 +75,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
     if (dimensions.width < 100 || dimensions.height < 100) return;
 
     const chargeForce = fgRef.current.d3Force("charge");
-    if (chargeForce) chargeForce.strength(chargeStrength).distanceMax(250);
+    if (chargeForce) chargeForce.strength(chargeStrength).distanceMax(400);
     const centerForce = fgRef.current.d3Force("center");
     if (centerForce) centerForce.x(dimensions.width / 2).y(dimensions.height / 2);
     const linkForce = fgRef.current.d3Force("link");

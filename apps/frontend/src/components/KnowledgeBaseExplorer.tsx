@@ -14,6 +14,7 @@ interface KBFile {
   name: string;
   path: string;
   title: string;
+  resource: string;
 }
 
 interface KBCategory {
@@ -30,6 +31,8 @@ interface KBTree {
 interface KnowledgeBaseExplorerProps {
   onOpenDocument: (filepath: string) => void;
   onTriggerUpload: () => void;
+  onHighlightSource?: (filename: string, entityPaths: string[]) => void;
+  refreshKey?: number;
 }
 
 function getFileIcon(name: string) {
@@ -50,15 +53,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   alerts: "text-red-400",
 };
 
-export default function KnowledgeBaseExplorer({ onOpenDocument, onTriggerUpload }: KnowledgeBaseExplorerProps) {
+export default function KnowledgeBaseExplorer({ onOpenDocument, onTriggerUpload, onHighlightSource, refreshKey }: KnowledgeBaseExplorerProps) {
   const [tree, setTree] = useState<KBTree | null>(null);
   const [expandedSources, setExpandedSources] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [highlightedSource, setHighlightedSource] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTree();
-  }, []);
+  }, [refreshKey]);
 
   const fetchTree = async () => {
     try {
@@ -80,6 +84,20 @@ export default function KnowledgeBaseExplorer({ onOpenDocument, onTriggerUpload 
       else next.add(name);
       return next;
     });
+  };
+
+  const handleSourceClick = (filename: string) => {
+    if (!tree || !onHighlightSource) return;
+    const entityPaths: string[] = [];
+    for (const cat of tree.categories) {
+      for (const file of cat.files) {
+        if (file.resource && file.resource.includes(filename)) {
+          entityPaths.push(file.path);
+        }
+      }
+    }
+    setHighlightedSource(highlightedSource === filename ? null : filename);
+    onHighlightSource(filename, entityPaths);
   };
 
   if (loading) {
@@ -132,15 +150,30 @@ export default function KnowledgeBaseExplorer({ onOpenDocument, onTriggerUpload 
             >
               <div className="ml-5 pl-3 border-l border-zinc-200 dark:border-zinc-800 mt-0.5">
                 {tree.source_documents.map(file => (
-                  <div
+                  <button
                     key={file.name}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-left"
+                    type="button"
+                    onClick={() => handleSourceClick(file.name)}
+                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition cursor-pointer ${
+                      highlightedSource === file.name
+                        ? "bg-[#d97757]/15 border border-[#d97757]/30"
+                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
+                    }`}
                   >
                     {getFileIcon(file.name)}
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                    <span className={`text-xs truncate ${
+                      highlightedSource === file.name
+                        ? "text-[#d97757] font-medium"
+                        : "text-zinc-600 dark:text-zinc-400"
+                    }`}>
                       {file.name}
                     </span>
-                  </div>
+                    {highlightedSource === file.name && (
+                      <span className="ml-auto text-[9px] font-mono text-[#d97757]/70 shrink-0">
+                        viewing
+                      </span>
+                    )}
+                  </button>
                 ))}
               </div>
             </motion.div>

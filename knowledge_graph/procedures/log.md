@@ -44,3 +44,27 @@ Record of ingest, link, and modification actions:
 
 ### 2026-08-21
 **INGEST**: Ingested entity Newport Racing Event Survey from source test_documents/scanned_form_1.png (2026-08-21T14:14:29.239907)
+
+### 2026-08-23
+**INGEST**: Ingested ChatRepair from upload/2304.00385v2.pdf (2026-08-23T10:10:18.006202)
+
+### 2026-08-23
+**INGEST**: Ingested Conversational Repair from upload/2304.00385v2.pdf (2026-08-23T10:10:18.017160)
+
+### 2026-08-23
+**INGEST**: Ingested Plausible Patch Generation from upload/2304.00385v2.pdf (2026-08-23T10:10:18.017868)
+
+### 2026-08-23
+**INGEST**: Ingested PAIRRANKER from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.251863)
+
+### 2026-08-23
+**INGEST**: Ingested GENFUSER from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.253068)
+
+### 2026-08-23
+**INGEST**: Ingested Pairwise Ranking Method from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.254614)
+
+### 2026-08-23
+**INGEST**: Ingested ChatGPT-based Ranking from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.255488)
+
+### 2026-08-23
+**INGEST**: Ingested Self-Instruct Formatting from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.256328)

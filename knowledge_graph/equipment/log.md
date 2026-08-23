@@ -317,3 +317,78 @@ Record of ingest, link, and modification actions:
 
 ### 2026-08-23
 **INGEST**: Ingested 2304.00385v2 from upload/2304.00385v2.pdf (2026-08-23T10:02:23.682112)
+
+### 2026-08-23
+**INGEST**: Ingested Automated Program Repair from upload/2304.00385v2.pdf (2026-08-23T10:10:18.008849)
+
+### 2026-08-23
+**INGEST**: Ingested Generate and Validate from upload/2304.00385v2.pdf (2026-08-23T10:10:18.010520)
+
+### 2026-08-23
+**INGEST**: Ingested Large Language Model from upload/2304.00385v2.pdf (2026-08-23T10:10:18.011472)
+
+### 2026-08-23
+**INGEST**: Ingested ChatGPT from upload/2304.00385v2.pdf (2026-08-23T10:10:18.012281)
+
+### 2026-08-23
+**INGEST**: Ingested Reinforcement Learning from Human Feedback from upload/2304.00385v2.pdf (2026-08-23T10:10:18.012899)
+
+### 2026-08-23
+**INGEST**: Ingested Defects4j from upload/2304.00385v2.pdf (2026-08-23T10:10:18.013872)
+
+### 2026-08-23
+**INGEST**: Ingested QuixBugs from upload/2304.00385v2.pdf (2026-08-23T10:10:18.014731)
+
+### 2026-08-23
+**INGEST**: Ingested AlphaRepair from upload/2304.00385v2.pdf (2026-08-23T10:10:18.015431)
+
+### 2026-08-23
+**INGEST**: Ingested Neural Machine Translation from upload/2304.00385v2.pdf (2026-08-23T10:10:18.016466)
+
+### 2026-08-23
+**INGEST**: Ingested TBar from upload/2304.00385v2.pdf (2026-08-23T10:10:18.018376)
+
+### 2026-08-23
+**INGEST**: Ingested SelfAPR from upload/2304.00385v2.pdf (2026-08-23T10:10:18.018859)
+
+### 2026-08-23
+**INGEST**: Ingested RewardRepair from upload/2304.00385v2.pdf (2026-08-23T10:10:18.019468)
+
+### 2026-08-23
+**INGEST**: Ingested Recoder from upload/2304.00385v2.pdf (2026-08-23T10:10:18.019930)
+
+### 2026-08-23
+**INGEST**: Ingested CURE from upload/2304.00385v2.pdf (2026-08-23T10:10:18.020420)
+
+### 2026-08-23
+**INGEST**: Ingested CoCoNuT from upload/2304.00385v2.pdf (2026-08-23T10:10:18.020899)
+
+### 2026-08-23
+**INGEST**: Ingested GenProg from upload/2304.00385v2.pdf (2026-08-23T10:10:18.021277)
+
+### 2026-08-23
+**INGEST**: Ingested CodexRepair from upload/2304.00385v2.pdf (2026-08-23T10:10:18.021642)
+
+### 2026-08-23
+**INGEST**: Ingested InstructGPT from upload/2304.00385v2.pdf (2026-08-23T10:10:18.022443)
+
+### 2026-08-23
+**INGEST**: Ingested Proximal Policy Optimization from upload/2304.00385v2.pdf (2026-08-23T10:10:18.023555)
+
+### 2026-08-23
+**INGEST**: Ingested 2304.00385v2 from upload/2304.00385v2.pdf (2026-08-23T10:20:53.222832)
+
+### 2026-08-23
+**INGEST**: Ingested LLM-BLENDER from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.249999)
+
+### 2026-08-23
+**INGEST**: Ingested MixInstruct from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.253996)
+
+### 2026-08-23
+**INGEST**: Ingested Open-source LLM Ensemble from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.255059)
+
+### 2026-08-23
+**INGEST**: Ingested BERTScore / BARTScore / BLUERT Metrics from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.255878)
+
+### 2026-08-23
+**INGEST**: Ingested RoBERTa Cross-Attention Encoder from upload/C1_2023_LLMBlender_PairwiseRanking.pdf (2026-08-23T10:31:25.256717)

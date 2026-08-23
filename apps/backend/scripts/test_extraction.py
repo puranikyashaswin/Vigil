@@ -69,7 +69,9 @@ EXTRACTION_SYSTEM_PROMPT = (
     "1. DO NOT extract or include any equipment tags, regulatory references, or linked concepts unless they are LITERALLY mentioned in the provided raw text.\n"
     "2. DO NOT use example values (like 'V-202' or 'P-101') unless they are explicitly present in the input text.\n"
     "3. If no tags or references are found, return empty lists [].\n"
-    "4. Return pure raw JSON without any explanations or markdown block wrappers."
+    "4. Return pure raw JSON without any explanations or markdown block wrappers.\n"
+    "5. Extract at most 12 of the MOST IMPORTANT entities. Prioritize equipment, procedures, and regulations over generic concepts.\n"
+    "6. Keep descriptions concise (under 120 characters each)."
 )
 
 
@@ -100,6 +102,9 @@ def run_extraction_flow(text: str, fallback_title: str) -> ExtractedEntitiesList
     """
     Executes the extraction and runs self-repair loop if validation fails.
     """
+    # Truncate to avoid excessive output tokens and reduce latency
+    if len(text) > 8000:
+        text = text[:8000] + "\n\n[... truncated for extraction ...]"
     raw_json = ""
     try:
         raw_json = extract_entities_llm(text)

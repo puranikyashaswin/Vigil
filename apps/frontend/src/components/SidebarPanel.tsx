@@ -17,6 +17,8 @@ interface SidebarPanelProps {
   onAskVigil?: (query: string) => void;
   onOpenDocument?: (filepath: string) => void;
   onTriggerUpload?: () => void;
+  onHighlightSource?: (filename: string, entityPaths: string[]) => void;
+  kbRefreshKey?: number;
   alerts: Alert[];
   setSelectedAlert: (alert: Alert | null) => void;
   loading: boolean;
@@ -33,6 +35,8 @@ export default function SidebarPanel({
   onAskVigil,
   onOpenDocument,
   onTriggerUpload,
+  onHighlightSource,
+  kbRefreshKey,
   alerts,
   setSelectedAlert,
   loading,
@@ -115,6 +119,8 @@ export default function SidebarPanel({
                 key="kb"
                 onOpenDocument={(path) => onOpenDocument?.(path)}
                 onTriggerUpload={() => onTriggerUpload?.()}
+                onHighlightSource={onHighlightSource}
+                refreshKey={kbRefreshKey}
               />
             )}
           </AnimatePresence>

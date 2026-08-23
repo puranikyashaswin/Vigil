@@ -46,7 +46,7 @@ MODEL_ROUTER = {
 
 MAX_TOKENS_ROUTER = {
     "route_intent": 20,
-    "extraction": 4096,
+    "extraction": 8192,
     "generation": 4096,
     "contradiction": 1024,
     "contradiction_guard": 256,

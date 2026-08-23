@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { FileText, Eye, Cpu, ShieldAlert, Database, Play, X, Layers, Server, Activity } from "lucide-react";
+import { FileText, Eye, Cpu, ShieldAlert, Database, Play, X, Layers, Server, Activity, Loader2, CheckCircle2 } from "lucide-react";
 import PerformanceTelemetry from "./PerformanceTelemetry";
 import PipelineStepsGrid from "./PipelineStepsGrid";
 import DocumentSelector from "./DocumentSelector";
@@ -298,18 +298,37 @@ export default function PipelineVisualizer({ onClose, onComplete }: PipelineVisu
             <Server className="w-4 h-4 text-zinc-500" />
             <span>{selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""} selected</span>
           </div>
-          <button
-            onClick={runPipeline}
-            disabled={isRunning || selectedFiles.length === 0}
-            className={`px-5 py-2.5 rounded-xl font-semibold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition select-none ${
-              isRunning || selectedFiles.length === 0
-                ? "bg-zinc-800 text-zinc-500 border border-zinc-800"
-                : "bg-zinc-100 hover:bg-zinc-200 text-zinc-900 shadow-lg shadow-white/5"
-            }`}
-          >
-            <Play className={`w-4 h-4 ${isRunning ? "animate-spin text-zinc-400" : ""}`} />
-            {isRunning ? "Running Pipeline..." : "Trigger Ingestion"}
-          </button>
+          <div className="flex items-center gap-3">
+            {progress === 100 && !isRunning && (
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-xl font-semibold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition select-none bg-[#788c5d] hover:bg-[#788c5d]/90 text-white shadow-lg"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Done - View Knowledge Base
+              </button>
+            )}
+            <button
+              onClick={runPipeline}
+              disabled={isRunning || selectedFiles.length === 0 || progress === 100}
+              className={`px-5 py-2.5 rounded-xl font-semibold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition select-none ${
+                isRunning
+                  ? "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                  : progress === 100
+                    ? "bg-zinc-800 text-zinc-600 border border-zinc-800"
+                    : selectedFiles.length === 0
+                      ? "bg-zinc-800 text-zinc-500 border border-zinc-800"
+                      : "bg-zinc-100 hover:bg-zinc-200 text-zinc-900 shadow-lg shadow-white/5"
+              }`}
+            >
+              {isRunning ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+              {isRunning ? "Processing..." : progress === 100 ? "Complete" : "Trigger Ingestion"}
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
