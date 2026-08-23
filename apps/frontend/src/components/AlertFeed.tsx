@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldAlert, AlertTriangle, Clock } from "lucide-react";
+import { ShieldAlert, AlertTriangle, Clock, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Alert } from "@/types";
 import { getSeverityStyle } from "@/utils/severityStyles";
@@ -8,6 +8,7 @@ import { getSeverityStyle } from "@/utils/severityStyles";
 interface AlertFeedProps {
   alerts: Alert[];
   onSelectAlert: (alert: Alert) => void;
+  onAskVigil?: (query: string) => void;
 }
 
 const getMobileHighContrastStyle = (severity: string) => {
@@ -51,7 +52,7 @@ const getMobileHighContrastStyle = (severity: string) => {
   }
 };
 
-export default function AlertFeed({ alerts, onSelectAlert }: AlertFeedProps) {
+export default function AlertFeed({ alerts, onSelectAlert, onAskVigil }: AlertFeedProps) {
   return (
     <motion.div
       key="alerts"
@@ -78,9 +79,8 @@ export default function AlertFeed({ alerts, onSelectAlert }: AlertFeedProps) {
           return (
             <div key={alert.id} className="contents">
               {/* Desktop card view */}
-              <div 
-                onClick={() => onSelectAlert(alert)}
-                className={`p-5 cursor-pointer hover:opacity-90 transition flex-col gap-3 relative overflow-hidden rounded-lg ${style.bg} hidden md:flex`}
+              <div
+                className={`p-5 flex-col gap-3 relative overflow-hidden rounded-lg ${style.bg} hidden md:flex`}
               >
                 <div className="flex items-center justify-between">
                   <span className={style.badge}>
@@ -96,16 +96,24 @@ export default function AlertFeed({ alerts, onSelectAlert }: AlertFeedProps) {
                     <AlertTriangle className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                     {alert.title}
                   </h3>
-                  <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed truncate">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                     {alert.description}
                   </p>
                 </div>
+                {onAskVigil && (
+                  <button
+                    onClick={() => onAskVigil(`Explain this alert: "${alert.title}". ${alert.description}. What caused this conflict, what are the safety risks, and what immediate corrective actions should be taken?`)}
+                    className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Ask Vigil about this
+                  </button>
+                )}
               </div>
 
               {/* Mobile sunlight-readable high-contrast view */}
-              <div 
-                onClick={() => onSelectAlert(alert)}
-                className={`cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex flex-col gap-4 relative overflow-hidden md:hidden ${mobileStyle.card}`}
+              <div
+                className={`flex flex-col gap-4 relative overflow-hidden md:hidden ${mobileStyle.card}`}
               >
                 <div className="flex items-center justify-between">
                   <span className={mobileStyle.badge}>
@@ -125,6 +133,15 @@ export default function AlertFeed({ alerts, onSelectAlert }: AlertFeedProps) {
                     {alert.description}
                   </p>
                 </div>
+                {onAskVigil && (
+                  <button
+                    onClick={() => onAskVigil(`Explain this alert: "${alert.title}". ${alert.description}. What caused this conflict, what are the safety risks, and what immediate corrective actions should be taken?`)}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-white/20 hover:bg-white/30 active:scale-[0.98] text-white rounded-lg text-sm font-bold transition cursor-pointer border border-white/30"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Ask Vigil about this
+                  </button>
+                )}
               </div>
             </div>
           );

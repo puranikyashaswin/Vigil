@@ -112,6 +112,7 @@ export default function SidebarPanel({
                 key="alerts"
                 alerts={alerts}
                 onSelectAlert={setSelectedAlert}
+                onAskVigil={onAskVigil}
               />
             )}
             {activeTab === "kb" && (
