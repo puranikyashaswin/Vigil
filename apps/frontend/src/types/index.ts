@@ -6,6 +6,7 @@ export interface Node {
   val?: number;
   interactive?: boolean;
   file_ext?: string;
+  severity?: string;
 }
 
 export interface Link {

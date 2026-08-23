@@ -198,7 +198,7 @@ def run_query_stream(request: QueryRequest):
     from retrieval import (
         retrieve_context_node,
         rerank_context_node,
-        _embedding_model,
+        get_embedding_model,
         COLLECTION_NAME,
         get_qdrant_client,
         compute_confidence,
@@ -771,6 +771,7 @@ def get_graph_data() -> Dict[str, list]:
             doc_nodes.add(doc_id)
 
     # 2. Add ENTITY nodes (secondary, non-interactive) and link to their source doc
+    # Alert nodes are special: they are interactive and get distinct styling
     entity_to_doc: Dict[str, str] = {}
     for root, _, files in os.walk(kg_dir):
         for file in files:
@@ -787,14 +788,20 @@ def get_graph_data() -> Dict[str, list]:
                 ent_type = meta.get("type", "concept")
                 resource = meta.get("resource", "")
 
-                nodes.append({
+                is_alert = rel_path.startswith("alerts/") or ent_type == "alert"
+
+                node_data = {
                     "id": node_id,
                     "label": title,
-                    "type": ent_type,
+                    "type": "alert" if is_alert else ent_type,
                     "description": meta.get("description", ""),
-                    "val": 1,
-                    "interactive": False,
-                })
+                    "val": 4 if is_alert else 1,
+                    "interactive": True if is_alert else False,
+                }
+                if is_alert:
+                    node_data["severity"] = meta.get("severity", "medium")
+
+                nodes.append(node_data)
                 node_set.add(node_id)
 
                 # Link entity to its source document (create doc node if it doesn't exist yet)
@@ -999,8 +1006,13 @@ def index_all_kg_documents() -> Dict[str, Any]:
 def auto_seed_knowledge_graph_on_startup() -> None:
     """
     Ensures that Qdrant is populated with OKF concept embeddings on server boot.
-    Runs in a background thread so the port binds immediately.
+    Skipped by default to save memory on free-tier hosting (embedding model is ~400MB).
+    Set AUTO_INDEX_ON_STARTUP=1 to enable, or indexing happens lazily on first query.
     """
+    if not os.getenv("AUTO_INDEX_ON_STARTUP", ""):
+        logger.info("Skipping auto-indexing on startup (set AUTO_INDEX_ON_STARTUP=1 to enable). Embeddings load lazily on first query.")
+        return
+
     import threading
 
     def _seed():

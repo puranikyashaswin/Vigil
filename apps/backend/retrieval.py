@@ -3,14 +3,21 @@ import math
 import logging
 from time import perf_counter
 from typing import List, Dict, Any, Tuple
-from fastembed import TextEmbedding
 from state import AgentState, Citation, get_qdrant_client
 
 logger = logging.getLogger("vigil.retrieval")
 COLLECTION_NAME = "vigil_okf"
 
-logger.info("Initializing global TextEmbedding model: BAAI/bge-small-en-v1.5...")
-_embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+_embedding_model = None
+
+
+def get_embedding_model():
+    global _embedding_model
+    if _embedding_model is None:
+        from fastembed import TextEmbedding
+        logger.info("Initializing TextEmbedding model: BAAI/bge-small-en-v1.5 (lazy)...")
+        _embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+    return _embedding_model
 
 _reranker = None
 
@@ -74,7 +81,7 @@ def retrieve_contexts(
     """
     try:
         q_client = get_qdrant_client()
-        query_vector = list(next(_embedding_model.embed([query])))
+        query_vector = list(next(get_embedding_model().embed([query])))
 
         query_filter = None
         if dirs:
@@ -168,7 +175,7 @@ def retrieve_context_node(state: AgentState) -> Dict[str, Any]:
 
     try:
         q_client = get_qdrant_client()
-        query_vector = list(next(_embedding_model.embed([query])))
+        query_vector = list(next(get_embedding_model().embed([query])))
 
         search_response = q_client.query_points(
             collection_name=COLLECTION_NAME,

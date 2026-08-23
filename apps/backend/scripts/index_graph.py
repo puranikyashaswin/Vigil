@@ -5,7 +5,6 @@ from typing import Dict, Any, List
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
-from fastembed import TextEmbedding
 
 # Set up logging
 logging.basicConfig(
@@ -88,6 +87,7 @@ def main():
         sys.exit(1)
 
     try:
+        from fastembed import TextEmbedding
         logger.info("Initializing embedding model: BAAI/bge-small-en-v1.5...")
         embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
     except Exception as e:

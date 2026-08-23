@@ -154,6 +154,9 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
     if (typeLower === "source_document") {
       return 32 * 32;
     }
+    if (typeLower === "alert") {
+      return 18 * 18;
+    }
     return 4;
   }, []);
 
@@ -243,8 +246,13 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
                     style={{ backgroundColor: TYPE_COLORS[(hoveredNode.type || "concept").toLowerCase()] || "#d97757" }}
                   />
                   <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    {hoveredNode.type === "source_document" ? "Source Document" : (hoveredNode.type || "concept")}
+                    {hoveredNode.type === "source_document" ? "Source Document" : hoveredNode.type === "alert" ? "Alert" : (hoveredNode.type || "concept")}
                   </span>
+                  {hoveredNode.type === "alert" && (hoveredNode as any).severity && (
+                    <span className="text-[9px] font-bold uppercase text-red-500">
+                      {(hoveredNode as any).severity}
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1">
                   {hoveredNode.label}

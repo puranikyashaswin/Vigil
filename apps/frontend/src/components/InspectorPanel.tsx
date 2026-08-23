@@ -161,6 +161,19 @@ export default function InspectorPanel({ selectedNode, onRunImpactAnalysis, onAs
               className="space-y-6"
             >
               <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-5 rounded-xl leading-relaxed">
+                {selectedNode.type === "alert" && selectedNode.severity && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      selectedNode.severity === "critical" || selectedNode.severity === "high"
+                        ? "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400"
+                        : selectedNode.severity === "medium"
+                        ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    }`}>
+                      {selectedNode.severity} severity
+                    </span>
+                  </div>
+                )}
                 <h4 className="text-[10px] font-bold tracking-wider uppercase text-zinc-400 mb-2">Description</h4>
                 <p className="text-sm text-zinc-700 dark:text-zinc-300 font-serif italic text-[14px]">
                   {selectedNode.description || "No specification records provided for this concept node."}
@@ -180,11 +193,20 @@ export default function InspectorPanel({ selectedNode, onRunImpactAnalysis, onAs
               {onAskVigil && (
                 <div className="pt-5 border-t border-zinc-200 dark:border-zinc-800">
                   <button
-                    onClick={() => onAskVigil(`Tell me about ${selectedNode.label}: its current status, compliance risks, and any related maintenance history.`)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-orange text-white hover:bg-brand-orange/90 rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm"
+                    onClick={() => {
+                      const query = selectedNode.type === "alert"
+                        ? `Explain this alert: "${selectedNode.label}". What caused it, what are the risks, and what immediate actions should be taken to resolve it?`
+                        : `Tell me about "${selectedNode.label}": what is it, what are its compliance risks, any related maintenance history, and what should I know about it?`;
+                      onAskVigil(query);
+                    }}
+                    className={`w-full flex items-center justify-center gap-2.5 px-4 py-3 ${
+                      selectedNode.type === "alert"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-brand-orange hover:bg-brand-orange/90"
+                    } text-white active:scale-[0.98] rounded-xl text-sm font-semibold transition cursor-pointer shadow-md hover:shadow-lg`}
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    Ask Vigil About This Asset
+                    <MessageCircle className="w-4 h-4" />
+                    {selectedNode.type === "alert" ? "Ask Vigil to resolve this" : "Ask Vigil about this"}
                   </button>
                 </div>
               )}

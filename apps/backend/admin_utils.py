@@ -7,7 +7,7 @@ from typing import Dict, Any, Callable
 from fastapi import HTTPException
 from state import get_qdrant_client
 from scripts.index_graph import load_okf_files, COLLECTION_NAME, chunk_text
-from retrieval import _embedding_model as embedding_model
+from retrieval import get_embedding_model
 from qdrant_client.http.models import (
     Distance,
     VectorParams,
@@ -113,7 +113,7 @@ def perform_kg_indexing(kg_dir: str) -> Dict[str, Any]:
             )
 
     embed_texts = [c["embed_text"] for c in all_chunks]
-    embeddings = list(embedding_model.embed(embed_texts, batch_size=32))
+    embeddings = list(get_embedding_model().embed(embed_texts, batch_size=32))
 
     points = []
     for idx, (c_info, vector) in enumerate(zip(all_chunks, embeddings), start=1):

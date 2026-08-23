@@ -8,6 +8,7 @@ export interface GraphNode {
   val?: number;
   interactive?: boolean;
   file_ext?: string;
+  severity?: string;
   x: number;
   y: number;
   degree: number;
@@ -70,7 +71,71 @@ export function drawNode(
     }
   }
 
-  if (isDocNode) {
+  const isAlertNode = typeLower === "alert";
+
+  if (isAlertNode) {
+    // === ALERT NODE: Warning shield shape ===
+    const isHovered = isHoveredNode;
+    const severity = (node as any).severity || "medium";
+    const alertColor = severity === "critical" || severity === "high" ? "#DC2626" : severity === "medium" ? "#F59E0B" : "#6B7280";
+
+    if (isHovered || isSelected) {
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = alertColor;
+    }
+
+    // Draw hexagon/shield shape
+    const r = 14;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 2;
+      const px = x + r * Math.cos(angle);
+      const py = y + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+
+    ctx.fillStyle = isDark ? "#1c1917" : "#fef2f2";
+    ctx.fill();
+    ctx.strokeStyle = isSelected || isHovered ? alertColor : (isDark ? "#7f1d1d" : "#fca5a5");
+    ctx.lineWidth = isSelected || isHovered ? 2.5 : 1.5;
+    ctx.stroke();
+
+    // Warning icon (triangle with !)
+    ctx.beginPath();
+    ctx.moveTo(x, y - 5);
+    ctx.lineTo(x - 4.5, y + 3);
+    ctx.lineTo(x + 4.5, y + 3);
+    ctx.closePath();
+    ctx.strokeStyle = alertColor;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Exclamation mark
+    ctx.font = "bold 5px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = alertColor;
+    ctx.fillText("!", x, y + 1);
+
+    // Label below
+    const labelText = node.label.length > 20 ? node.label.slice(0, 18) + "…" : node.label;
+    const fontSize = Math.max(4, 9 / globalScale);
+    ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.globalAlpha = isHighlighted ? 1.0 : 0.5;
+
+    ctx.strokeStyle = isDark ? "#141413" : "#faf9f5";
+    ctx.lineWidth = 3.0;
+    ctx.lineJoin = "round";
+    ctx.strokeText(labelText, x, y + r + 3);
+
+    ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
+    ctx.fillText(labelText, x, y + r + 3);
+
+  } else if (isDocNode) {
     // === SOURCE DOCUMENT NODE: Large rounded rectangle with document icon ===
     const isHovered = isHoveredNode;
 
@@ -333,6 +398,11 @@ export function drawNodePointerArea(
       const w = 50;
       const h = 50;
       ctx.fillRect(x - w / 2, y - h / 2, w, h);
+    } else if (typeLower === "alert") {
+      const r = 18;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fill();
     } else {
       // Interactive entity nodes (fallback mode)
       const w = 40;
