@@ -6,6 +6,8 @@ export interface GraphNode {
   type: string;
   description?: string;
   val?: number;
+  interactive?: boolean;
+  file_ext?: string;
   x: number;
   y: number;
   degree: number;
@@ -46,14 +48,21 @@ export function drawNode(
   const isSelected = selectedNodeId === node.id;
   const isHoveredNode = hoveredNodeId === node.id;
   const typeLower = (node.type || "concept").toLowerCase().trim();
-  const color = typeColors[typeLower] || typeColors[node.type] || "#b0aea5";
+  const isDocNode = typeLower === "source_document";
 
   ctx.save();
-  ctx.globalAlpha = isHighlighted ? 1.0 : 0.15;
+
+  // SOURCE DOCUMENT nodes are primary — always visible
+  // Entity nodes are secondary — smaller and faded
+  if (isDocNode) {
+    ctx.globalAlpha = isHighlighted ? 1.0 : 0.4;
+  } else {
+    ctx.globalAlpha = isHighlighted ? 0.45 : 0.12;
+  }
 
   if (highlightNodes instanceof Map && highlightNodes.size > 0 && hasNode && highlightLevel) {
     if (highlightLevel === "primary") {
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 20;
       ctx.shadowColor = "#d97757";
     } else {
       ctx.shadowBlur = 12;
@@ -61,133 +70,118 @@ export function drawNode(
     }
   }
 
-  // Glow effect on hovered node
-  if (isHoveredNode) {
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = color;
-  }
+  if (isDocNode) {
+    // === SOURCE DOCUMENT NODE: Large rounded rectangle with document icon ===
+    const isHovered = isHoveredNode;
 
-  if (isSelected) {
+    if (isHovered || isSelected) {
+      ctx.shadowBlur = 22;
+      ctx.shadowColor = "#d97757";
+    }
+
+    // Determine color by file extension
+    const ext = (node.file_ext || "").toLowerCase();
+    let docColor = "#d97757";
+    if (ext === ".csv") docColor = "#788c5d";
+    else if (ext === ".xlsx" || ext === ".xls") docColor = "#4ade80";
+    else if (ext === ".png" || ext === ".jpg") docColor = "#a78bfa";
+    else if (ext === ".pdf") docColor = "#d97757";
+
+    // Draw rounded rectangle body
+    const w = 28;
+    const h = 22;
+    const r = 4;
+
     ctx.beginPath();
-    ctx.arc(x, y, size * 2.2, 0, 2 * Math.PI);
-    ctx.strokeStyle = isDark ? "#faf9f5" : "#141413";
-    ctx.lineWidth = 1.8;
+    ctx.moveTo(x - w / 2 + r, y - h / 2);
+    ctx.lineTo(x + w / 2 - r, y - h / 2);
+    ctx.quadraticCurveTo(x + w / 2, y - h / 2, x + w / 2, y - h / 2 + r);
+    ctx.lineTo(x + w / 2, y + h / 2 - r);
+    ctx.quadraticCurveTo(x + w / 2, y + h / 2, x + w / 2 - r, y + h / 2);
+    ctx.lineTo(x - w / 2 + r, y + h / 2);
+    ctx.quadraticCurveTo(x - w / 2, y + h / 2, x - w / 2, y + h / 2 - r);
+    ctx.lineTo(x - w / 2, y - h / 2 + r);
+    ctx.quadraticCurveTo(x - w / 2, y - h / 2, x - w / 2 + r, y - h / 2);
+    ctx.closePath();
+
+    // Fill
+    ctx.fillStyle = isDark ? "#1e1e1e" : "#ffffff";
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = isSelected || isHovered ? docColor : (isDark ? "#3f3f46" : "#d4d4d8");
+    ctx.lineWidth = isSelected || isHovered ? 2.2 : 1.2;
     ctx.stroke();
-  }
 
-  if (
-    typeLower === "equipment" ||
-    typeLower === "concept" ||
-    typeLower === "drawing" ||
-    typeLower === "event" ||
-    typeLower === "organization"
-  ) {
-    // Inner mono-spaced equipment tag text — truncate for readability
-    let monoText = node.label.split(" ")[0] || node.label;
-    if (monoText.length > 10) monoText = monoText.slice(0, 9) + "…";
-    ctx.font = "bold 8px monospace";
-    
-    // Calculate dynamic width based on text length to prevent text overflow in light mode
-    ctx.save();
-    const textWidth = ctx.measureText(monoText).width;
-    ctx.restore();
-    
-    // 1. Rectangular shape for Equipment / Concept nodes
-    const paddingX = 6;
-    const w = Math.max(size * 4.2, textWidth + paddingX);
-    const h = size * 2.2;
-    ctx.fillStyle = color;
-    ctx.fillRect(x - w / 2, y - h / 2, w, h);
+    // Document icon (small colored corner fold)
+    const foldSize = 5;
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2 - foldSize, y - h / 2);
+    ctx.lineTo(x + w / 2, y - h / 2 + foldSize);
+    ctx.lineTo(x + w / 2 - foldSize, y - h / 2 + foldSize);
+    ctx.closePath();
+    ctx.fillStyle = docColor;
+    ctx.fill();
 
-    ctx.strokeStyle = isSelected ? nodeBorderSelected : nodeBorderLight;
-    ctx.lineWidth = 0.8;
-    ctx.strokeRect(x - w / 2, y - h / 2, w, h);
-
-    ctx.fillStyle = "#faf9f5"; // Clear white text inside colored rectangles for high contrast
+    // Extension badge
+    const extLabel = ext.replace(".", "").toUpperCase() || "DOC";
+    ctx.font = "bold 5px Inter, system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(monoText, x, y);
+    ctx.fillStyle = docColor;
+    ctx.fillText(extLabel, x, y - 2);
 
-  } else if (typeLower === "regulation") {
-    // 2. Hexagon outline for Regulation nodes
-    const r = size * 1.8;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3;
-      ctx.lineTo(x + r * Math.cos(angle), y + r * Math.sin(angle));
+    // Horizontal lines (simulating text)
+    ctx.strokeStyle = isDark ? "#3f3f46" : "#d4d4d8";
+    ctx.lineWidth = 0.6;
+    for (let i = 0; i < 3; i++) {
+      const ly = y + 3 + i * 3;
+      ctx.beginPath();
+      ctx.moveTo(x - 8, ly);
+      ctx.lineTo(x + 8 - i * 2, ly);
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = isSelected ? 2.5 : 1.8;
-    ctx.stroke();
 
-    ctx.fillStyle = color;
-    ctx.globalAlpha = isHighlighted ? 0.25 : 0.05;
-    ctx.fill();
+    // Label below — always visible for document nodes
+    const labelText = node.label.length > 22 ? node.label.slice(0, 20) + "…" : node.label;
+    const fontSize = Math.max(4, 10 / globalScale);
+    ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.globalAlpha = isHighlighted ? 1.0 : 0.5;
 
-  } else if (typeLower === "procedure" || typeLower === "maintenance_log" || typeLower === "maintenance") {
-    // 3. File-tab shape for Document nodes
-    const w = size * 3.2;
-    const h = size * 2.2;
-    const tabW = w * 0.4;
-    const tabH = h * 0.25;
+    ctx.strokeStyle = isDark ? "#141413" : "#faf9f5";
+    ctx.lineWidth = 3.0;
+    ctx.lineJoin = "round";
+    ctx.strokeText(labelText, x, y + h / 2 + 4);
 
-    ctx.beginPath();
-    // Start at top-left under the tab height
-    ctx.moveTo(x - w / 2, y - h / 2 + tabH);
-    ctx.lineTo(x - w / 2, y - h / 2);
-    ctx.lineTo(x - w / 2 + tabW, y - h / 2);
-    ctx.lineTo(x - w / 2 + tabW + 2, y - h / 2 + tabH);
-    ctx.lineTo(x + w / 2, y - h / 2 + tabH);
-    ctx.lineTo(x + w / 2, y + h / 2);
-    ctx.lineTo(x - w / 2, y + h / 2);
-    ctx.closePath();
-
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.strokeStyle = isSelected ? nodeBorderSelected : nodeBorderLight;
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
+    ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
+    ctx.fillText(labelText, x, y + h / 2 + 4);
 
   } else {
-    // Fallback circular nodes (e.g. Alerts)
+    // === ENTITY NODES: Small, non-interactive dots ===
+    const color = typeColors[typeLower] || typeColors[node.type] || "#b0aea5";
+    const r = Math.max(2.5, size * 0.6);
+
     ctx.beginPath();
-    ctx.arc(x, y, size, 0, 2 * Math.PI);
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.strokeStyle = isSelected ? nodeBorderSelected : nodeBorderLight;
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-  }
 
-  // Draw external label underneath node types that do not put mono text inside
-  if (
-    typeLower !== "equipment" &&
-    typeLower !== "concept" &&
-    typeLower !== "drawing" &&
-    typeLower !== "event" &&
-    typeLower !== "organization"
-  ) {
-    const isHovered = highlightNodes.size > 0 && highlightNodes.has(node.id);
-    const shouldShowLabel = globalScale > 1.2 || isSelected || isHovered;
-    
-    if (shouldShowLabel) {
-      const fontSize = Math.max(3.2, 9 / globalScale);
-      ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+    // Show label only when highlighted (from document click)
+    if (hasNode && highlightLevel) {
+      ctx.globalAlpha = 0.9;
+      const fontSize = Math.max(3, 7 / globalScale);
+      ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      
-      const isTextHighlighted = isHighlighted ? (globalScale > 1.1 || isSelected ? 1.0 : 0.85) : 0.15;
-      ctx.globalAlpha = isTextHighlighted;
-      
-      // Draw background stroke for maximum contrast outline
+      ctx.textBaseline = "top";
       ctx.strokeStyle = isDark ? "#141413" : "#faf9f5";
-      ctx.lineWidth = 3.0;
+      ctx.lineWidth = 2.5;
       ctx.lineJoin = "round";
-      ctx.strokeText(node.label, x, y + size * 2.2 + 2);
-
+      const lbl = node.label.length > 18 ? node.label.slice(0, 16) + "…" : node.label;
+      ctx.strokeText(lbl, x, y + r + 2);
       ctx.fillStyle = isDark ? "#faf9f5" : "#141413";
-      ctx.fillText(node.label, x, y + size * 2.2 + 2);
+      ctx.fillText(lbl, x, y + r + 2);
     }
   }
 
@@ -210,13 +204,27 @@ export function drawLink(
   ctx.save();
   ctx.beginPath();
 
-  // Orthogonal right-angle connector line
-  ctx.moveTo(source.x, source.y);
-  ctx.lineTo(source.x, target.y);
-  ctx.lineTo(target.x, target.y);
-
   let strokeColor = linkDefault;
   let defaultAlpha = 0.22;
+
+  if (link.type === "EXTRACTED_FROM") {
+    // Subtle straight line from document to entity
+    ctx.moveTo(source.x, source.y);
+    ctx.lineTo(target.x, target.y);
+    defaultAlpha = 0.12;
+  } else if (link.type === "SHARED_CONTEXT") {
+    // Dashed line between documents
+    ctx.setLineDash([4, 3]);
+    ctx.moveTo(source.x, source.y);
+    ctx.lineTo(target.x, target.y);
+    strokeColor = "#d97757";
+    defaultAlpha = 0.4;
+  } else {
+    // Orthogonal right-angle connector for entity-entity links
+    ctx.moveTo(source.x, source.y);
+    ctx.lineTo(source.x, target.y);
+    ctx.lineTo(target.x, target.y);
+  }
 
   if (link.type === "VIOLATES") {
     strokeColor = "#EF4444";
@@ -230,7 +238,7 @@ export function drawLink(
   const isDark = linkDefault === "#b0aea5";
   const hoverColor = isDark ? "#faf9f5" : "#141413";
   ctx.strokeStyle = isHovered ? hoverColor : strokeColor;
-  ctx.lineWidth = isHovered ? 1.4 : 0.6;
+  ctx.lineWidth = isHovered ? 1.4 : (link.type === "SHARED_CONTEXT" ? 1.0 : 0.5);
   ctx.globalAlpha = isHighlighted ? 0.85 : defaultAlpha;
 
   ctx.stroke();
@@ -277,18 +285,23 @@ export function drawNodePointerArea(
 ): void {
   const x = node.x;
   const y = node.y;
-  const size = Math.max(5, node.size || 3.5);
-
-  // Use a uniform large circle for ALL node types.
-  // The library's spatial index uses circular radius for candidate selection,
-  // so the pointer area must also be circular to guarantee hits.
-  const radius = Math.max(12, size * 2.5);
+  const typeLower = (node.type || "concept").toLowerCase().trim();
 
   ctx.save();
   ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, 2 * Math.PI);
-  ctx.fill();
+
+  if (typeLower === "source_document") {
+    // Source document nodes: full clickable area matching their visual bounds
+    const w = 32;
+    const h = 26;
+    ctx.fillRect(x - w / 2, y - h / 2, w, h);
+  } else {
+    // Entity nodes: tiny/no pointer area (non-interactive)
+    ctx.beginPath();
+    ctx.arc(x, y, 0.1, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
   ctx.restore();
 }
 

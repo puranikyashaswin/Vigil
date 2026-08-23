@@ -4,6 +4,8 @@ export interface Node {
   type: string;
   description?: string;
   val?: number;
+  interactive?: boolean;
+  file_ext?: string;
 }
 
 export interface Link {

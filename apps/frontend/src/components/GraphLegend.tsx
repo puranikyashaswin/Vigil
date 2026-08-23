@@ -27,9 +27,10 @@ export default function GraphLegend({ graphData }: GraphLegendProps) {
   });
 
   const items = [
+    { type: "source_document", color: "#d97757", label: "Source Document" },
     { type: "concept", color: "#6a9bcc", label: "Concept" },
     { type: "procedure", color: "#788c5d", label: "Procedure" },
-    { type: "regulation", color: "#d97757", label: "Regulation" },
+    { type: "regulation", color: "#faf9f5", label: "Regulation" },
     { type: "maintenance_log", color: "#b0aea5", label: "Maintenance" },
     { type: "alert", color: "#EF4444", label: "Alert" },
   ];

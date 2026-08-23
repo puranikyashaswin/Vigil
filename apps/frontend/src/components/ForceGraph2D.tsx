@@ -107,7 +107,7 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   const handleNodeHover = useCallback((node: GraphNode | null) => {
     const hNodes = new Set<string>();
     const hLinks = new Set<GraphLink>();
-    if (node) {
+    if (node && node.interactive) {
       hNodes.add(node.id);
       initializedData.links.forEach((l) => {
         const sourceId = typeof l.source === "object" ? l.source.id : l.source;
@@ -150,9 +150,11 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
   }, [highlightLinks, externalHighlightNodeIds, initializedData.links, linkDefault]);
 
   const nodeVal = useCallback((node: GraphNode) => {
-    const size = Math.max(5, node.size || 3.5);
-    const radius = Math.max(12, size * 2.5);
-    return radius * radius;
+    const typeLower = (node.type || "concept").toLowerCase().trim();
+    if (typeLower === "source_document") {
+      return 32 * 32;
+    }
+    return 4;
   }, []);
 
   const nodePointerAreaPaint = useCallback((node: GraphNode, color: string, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -191,7 +193,10 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
             d3AlphaDecay={0.012}
             d3VelocityDecay={0.35}
             onNodeHover={handleNodeHover}
-            onNodeClick={(node) => onNodeClick(node as unknown as Node)}
+            onNodeClick={(node) => {
+              const gn = node as unknown as GraphNode;
+              if (gn.interactive) onNodeClick(gn as unknown as Node);
+            }}
             enableNodeDrag={true}
             onEngineStop={() => {
               if (fgRef.current && !hasZoomedRef.current) {
@@ -231,33 +236,26 @@ export default function ForceGraph2D({ data, onNodeClick, selectedNodeId, isOrga
                 opacity: 1,
               }}
             >
-              <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl px-3 py-2.5 max-w-[210px]">
+              <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl px-3 py-2.5 max-w-[240px]">
                 <div className="flex items-center gap-1.5 mb-1">
                   <span
                     className="inline-block w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: TYPE_COLORS[(hoveredNode.type || "concept").toLowerCase()] || "#b0aea5" }}
+                    style={{ backgroundColor: "#d97757" }}
                   />
                   <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    {hoveredNode.type || "concept"}
+                    Source Document
                   </span>
                 </div>
-                <p className="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1 truncate">
+                <p className="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-tight mb-1">
                   {hoveredNode.label}
                 </p>
-                {hoveredNode.description && (
-                  <p className="text-[11px] font-sans text-zinc-600 dark:text-zinc-400 leading-snug line-clamp-2">
-                    {hoveredNode.description.slice(0, 80)}{hoveredNode.description.length > 80 ? "..." : ""}
-                  </p>
-                )}
+                <p className="text-[11px] font-sans text-zinc-600 dark:text-zinc-400 leading-snug">
+                  {hoveredNode.degree} extracted entit{hoveredNode.degree !== 1 ? "ies" : "y"}
+                </p>
                 <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-zinc-100 dark:border-zinc-800">
                   <span className="text-[10px] font-sans text-zinc-500 dark:text-zinc-500">
-                    {hoveredNode.degree} connection{hoveredNode.degree !== 1 ? "s" : ""}
+                    Click to inspect
                   </span>
-                  {hoveredNode.id.startsWith("alerts/") && (
-                    <span className="text-[10px] font-sans font-semibold text-red-500 uppercase">
-                      Alert
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

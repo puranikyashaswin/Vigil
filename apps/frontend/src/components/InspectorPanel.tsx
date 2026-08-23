@@ -31,9 +31,9 @@ export default function InspectorPanel({ selectedNode, onRunImpactAnalysis, onAs
         <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-850 rounded-full flex items-center justify-center mb-6">
           <Database className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />
         </div>
-        <h3 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-2 font-serif">No Asset Selected</h3>
+        <h3 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-2 font-serif">No Document Selected</h3>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs leading-normal">
-          Select any node in the knowledge schema to inspect historical parameters, compliance risks, and run impact simulations.
+          Click any source document node on the graph to inspect its extracted entities, compliance risks, and run impact simulations.
         </p>
       </div>
     );

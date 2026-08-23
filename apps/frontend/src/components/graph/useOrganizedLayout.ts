@@ -20,73 +20,92 @@ export function useOrganizedLayout(
       const C_x = width / 2;
       const C_y = height / 2;
 
-      // Group nodes by type
-      const groups: Record<string, GraphNode[]> = {};
-      nodes.forEach((node) => {
-        const typeLower = (node.type || "concept").toLowerCase().trim();
-        const category = typeLower === "maintenance_log" ? "maintenance" : typeLower;
-        if (!groups[category]) groups[category] = [];
-        groups[category].push(node);
-      });
-
-      const groupKeys = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
-      const numGroups = groupKeys.length;
+      // Separate document nodes from entity nodes
+      const docNodes = nodes.filter(n => n.type === "source_document" || n.interactive);
+      const entityNodes = nodes.filter(n => n.type !== "source_document" && !n.interactive);
 
       const targets: Record<string, { x: number; y: number }> = {};
 
-      // Position each group in a region around the center
-      // Largest group gets center, others get outer positions
-      const outerRadius = Math.min(width, height) * 0.35;
+      // Position document nodes in a clean grid/arc at center
+      const numDocs = docNodes.length;
+      if (numDocs <= 6) {
+        // Single row
+        const spacing = 80;
+        const startX = C_x - ((numDocs - 1) * spacing) / 2;
+        docNodes.forEach((node, i) => {
+          targets[node.id] = { x: startX + i * spacing, y: C_y };
+        });
+      } else {
+        // Two rows
+        const cols = Math.ceil(numDocs / 2);
+        const spacing = 80;
+        const startX = C_x - ((cols - 1) * spacing) / 2;
+        docNodes.forEach((node, i) => {
+          const row = Math.floor(i / cols);
+          const col = i % cols;
+          targets[node.id] = {
+            x: startX + col * spacing,
+            y: C_y - 40 + row * 80,
+          };
+        });
+      }
 
-      groupKeys.forEach((key, groupIdx) => {
-        const groupNodes = groups[key];
-        const n = groupNodes.length;
+      // Position entity nodes in orbits around their linked document
+      // Build doc -> entities map from links
+      const docEntities: Record<string, GraphNode[]> = {};
+      docNodes.forEach(d => { docEntities[d.id] = []; });
 
-        // Group center position
-        let gx: number, gy: number;
-        if (groupIdx === 0 && n > 15) {
-          // Largest group gets the center
-          gx = C_x;
-          gy = C_y;
-        } else {
-          const angle = ((groupIdx === 0 ? 0 : groupIdx - 1) / Math.max(1, numGroups - 1)) * 2 * Math.PI - Math.PI / 2;
-          const dist = groupIdx === 0 ? 0 : outerRadius;
-          gx = C_x + dist * Math.cos(angle);
-          gy = C_y + dist * Math.sin(angle);
+      // Find links connecting docs to entities
+      const linkData = fgRef.current ? (fgRef.current as any).graphData?.() : null;
+      const links: { source: string; target: string }[] = linkData?.links?.map((l: any) => ({
+        source: typeof l.source === "object" ? l.source.id : l.source,
+        target: typeof l.target === "object" ? l.target.id : l.target,
+      })) || [];
+
+      const assignedEntities = new Set<string>();
+      links.forEach(l => {
+        if (docEntities[l.source] !== undefined && !assignedEntities.has(l.target)) {
+          const ent = entityNodes.find(n => n.id === l.target);
+          if (ent) {
+            docEntities[l.source].push(ent);
+            assignedEntities.add(l.target);
+          }
         }
-
-        if (n === 1) {
-          targets[groupNodes[0].id] = { x: gx, y: gy };
-        } else if (n <= 8) {
-          // Small groups: circle
-          const r = Math.max(40, n * 18);
-          groupNodes.forEach((node, i) => {
-            const a = (i / n) * 2 * Math.PI;
-            targets[node.id] = {
-              x: gx + r * Math.cos(a),
-              y: gy + r * Math.sin(a),
-            };
-          });
-        } else {
-          // Large groups: grid layout
-          const cols = Math.ceil(Math.sqrt(n * 1.5));
-          const rows = Math.ceil(n / cols);
-          const spacing = 55;
-          const startX = gx - ((cols - 1) * spacing) / 2;
-          const startY = gy - ((rows - 1) * spacing) / 2;
-
-          groupNodes.forEach((node, i) => {
-            const col = i % cols;
-            const row = Math.floor(i / cols);
-            targets[node.id] = {
-              x: startX + col * spacing,
-              y: startY + row * spacing,
-            };
-          });
+        if (docEntities[l.target] !== undefined && !assignedEntities.has(l.source)) {
+          const ent = entityNodes.find(n => n.id === l.source);
+          if (ent) {
+            docEntities[l.target].push(ent);
+            assignedEntities.add(l.source);
+          }
         }
       });
 
-      const startPositions = nodes.map((n) => ({
+      // Position entities in a circle around their document
+      Object.entries(docEntities).forEach(([docId, entities]) => {
+        const docPos = targets[docId];
+        if (!docPos) return;
+        const n = entities.length;
+        const orbitRadius = Math.max(35, Math.min(60, n * 8));
+        entities.forEach((ent, i) => {
+          const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+          targets[ent.id] = {
+            x: docPos.x + orbitRadius * Math.cos(angle),
+            y: docPos.y + orbitRadius * Math.sin(angle),
+          };
+        });
+      });
+
+      // Unassigned entities go to a corner
+      entityNodes.filter(n => !assignedEntities.has(n.id)).forEach((node, i) => {
+        const angle = (i / 12) * 2 * Math.PI;
+        targets[node.id] = {
+          x: C_x + (width * 0.4) * Math.cos(angle),
+          y: C_y + (height * 0.4) * Math.sin(angle),
+        };
+      });
+
+      // Animate to positions
+      const startPositions = nodes.map(n => ({
         id: n.id,
         x: n.x ?? C_x,
         y: n.y ?? C_y
@@ -103,8 +122,8 @@ export function useOrganizedLayout(
           ? 4 * progress * progress * progress
           : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
-        nodes.forEach((node) => {
-          const start = startPositions.find((p) => p.id === node.id);
+        nodes.forEach(node => {
+          const start = startPositions.find(p => p.id === node.id);
           const target = targets[node.id];
           if (start && target) {
             node.fx = start.x + (target.x - start.x) * ease;
@@ -115,7 +134,7 @@ export function useOrganizedLayout(
         if (progress < 1) {
           animFrameId = requestAnimationFrame(animate);
         } else {
-          nodes.forEach((node) => {
+          nodes.forEach(node => {
             const target = targets[node.id];
             if (target) {
               node.fx = target.x;
@@ -128,7 +147,7 @@ export function useOrganizedLayout(
       animFrameId = requestAnimationFrame(animate);
       return () => cancelAnimationFrame(animFrameId);
     } else {
-      nodes.forEach((node) => {
+      nodes.forEach(node => {
         node.fx = undefined;
         node.fy = undefined;
       });

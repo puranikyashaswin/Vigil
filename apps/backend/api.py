@@ -730,16 +730,19 @@ import re
 @api.get("/api/graph")
 def get_graph_data() -> Dict[str, list]:
     """
-    Scans the knowledge_graph/ and outputs a nodes/links structure for react-force-graph-2d.
-    Uses an in-memory cache to avoid repeated filesystem walks.
+    Scans knowledge_graph/ and test_documents/ to build a graph where:
+    - Source documents are PRIMARY nodes (interactive, clickable)
+    - Extracted entities are SECONDARY nodes (non-interactive, decorative)
+    - Links connect documents to their derived entities
     """
     global _graph_cache, _graph_cache_valid
     if _graph_cache_valid and _graph_cache:
         return _graph_cache
 
-    kg_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
-    )
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    kg_dir = os.path.join(project_root, "knowledge_graph")
+    docs_dir = os.path.join(project_root, "test_documents")
+
     if not os.path.exists(kg_dir):
         return {"nodes": [], "links": []}
 
@@ -747,7 +750,28 @@ def get_graph_data() -> Dict[str, list]:
     links: List[Dict[str, str]] = []
     node_set: set = set()
 
-    # Traverse directories to build nodes
+    # 1. Add SOURCE DOCUMENT nodes (primary, interactive)
+    doc_nodes: set = set()
+    if os.path.isdir(docs_dir):
+        for fname in sorted(os.listdir(docs_dir)):
+            if fname.startswith("."):
+                continue
+            doc_id = f"doc:{fname}"
+            ext = os.path.splitext(fname)[1].lower()
+            nodes.append({
+                "id": doc_id,
+                "label": fname,
+                "type": "source_document",
+                "description": f"Source document: {fname}",
+                "val": 5,
+                "interactive": True,
+                "file_ext": ext,
+            })
+            node_set.add(doc_id)
+            doc_nodes.add(doc_id)
+
+    # 2. Add ENTITY nodes (secondary, non-interactive) and link to their source doc
+    entity_to_doc: Dict[str, str] = {}
     for root, _, files in os.walk(kg_dir):
         for file in files:
             if file.endswith(".md") and file not in ["index.md", "log.md"]:
@@ -761,19 +785,31 @@ def get_graph_data() -> Dict[str, list]:
                 node_id = rel_path
                 title = meta.get("title", file.replace(".md", ""))
                 ent_type = meta.get("type", "concept")
+                resource = meta.get("resource", "")
 
-                nodes.append(
-                    {
-                        "id": node_id,
-                        "label": title,
-                        "type": ent_type,
-                        "description": meta.get("description", ""),
-                        "val": 1,
-                    }
-                )
+                nodes.append({
+                    "id": node_id,
+                    "label": title,
+                    "type": ent_type,
+                    "description": meta.get("description", ""),
+                    "val": 1,
+                    "interactive": False,
+                })
                 node_set.add(node_id)
 
-    # Re-traverse to parse references & build links
+                # Link entity to its source document
+                if resource:
+                    doc_filename = os.path.basename(resource)
+                    doc_id = f"doc:{doc_filename}"
+                    if doc_id in doc_nodes:
+                        links.append({
+                            "source": doc_id,
+                            "target": node_id,
+                            "type": "EXTRACTED_FROM",
+                        })
+                        entity_to_doc[node_id] = doc_id
+
+    # 3. Cross-document links between entities (existing logic)
     for root, _, files in os.walk(kg_dir):
         for file in files:
             if file.endswith(".md") and file not in ["index.md", "log.md"]:
@@ -783,7 +819,6 @@ def get_graph_data() -> Dict[str, list]:
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
-                # Search for relative links in markdown body
                 matches = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
                 for label, target in matches:
                     if target.startswith(".") or target.startswith(".."):
@@ -792,55 +827,50 @@ def get_graph_data() -> Dict[str, list]:
                             os.path.join(source_dir, target)
                         ).replace("\\", "/")
 
-                        if target_path in node_set:
+                        if target_path in node_set and target_path not in doc_nodes:
                             link_exists = any(
-                                (
-                                    l["source"] == source_id
-                                    and l["target"] == target_path
-                                )
-                                or (
-                                    l["source"] == target_path
-                                    and l["target"] == source_id
-                                )
+                                (l["source"] == source_id and l["target"] == target_path)
+                                or (l["source"] == target_path and l["target"] == source_id)
                                 for l in links
                             )
                             if not link_exists:
                                 rel_type = "REFERENCES"
-                                if source_id.startswith(
-                                    "alerts/"
-                                ) or target_path.startswith("alerts/"):
+                                if source_id.startswith("alerts/") or target_path.startswith("alerts/"):
                                     rel_type = "VIOLATES"
                                 elif (
                                     source_id.startswith("regulations/")
-                                    and (
-                                        target_path.startswith("procedures/")
-                                        or target_path.startswith("maintenance/")
-                                    )
+                                    and (target_path.startswith("procedures/") or target_path.startswith("maintenance/"))
                                 ) or (
                                     target_path.startswith("regulations/")
-                                    and (
-                                        source_id.startswith("procedures/")
-                                        or source_id.startswith("maintenance/")
-                                    )
+                                    and (source_id.startswith("procedures/") or source_id.startswith("maintenance/"))
                                 ):
                                     rel_type = "COMPLIES_WITH"
+                                links.append({"source": source_id, "target": target_path, "type": rel_type})
 
-                                links.append(
-                                    {
-                                        "source": source_id,
-                                        "target": target_path,
-                                        "type": rel_type,
-                                    }
-                                )
+    # 4. Add inter-document links where entities from different docs reference each other
+    for l in links[:]:
+        src_doc = entity_to_doc.get(l["source"])
+        tgt_doc = entity_to_doc.get(l["target"])
+        if src_doc and tgt_doc and src_doc != tgt_doc:
+            doc_link_exists = any(
+                (dl["source"] == src_doc and dl["target"] == tgt_doc)
+                or (dl["source"] == tgt_doc and dl["target"] == src_doc)
+                for dl in links if dl["type"] == "SHARED_CONTEXT"
+            )
+            if not doc_link_exists:
+                links.append({"source": src_doc, "target": tgt_doc, "type": "SHARED_CONTEXT"})
 
-    # Calculate degree of each node to scale node size
+    # Calculate degree for sizing
     degrees: Dict[str, int] = {n["id"]: 0 for n in nodes}
     for l in links:
         degrees[l["source"]] = degrees.get(l["source"], 0) + 1
         degrees[l["target"]] = degrees.get(l["target"], 0) + 1
 
     for n in nodes:
-        n["val"] = 2 + degrees[n["id"]] * 1.5
+        if n.get("interactive"):
+            n["val"] = 6 + degrees[n["id"]] * 0.5
+        else:
+            n["val"] = 1 + degrees[n["id"]] * 0.3
 
     result = {"nodes": nodes, "links": links}
     _graph_cache = result
