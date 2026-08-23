@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<"graph" | "alerts">("graph");
   const [viewingDocument, setViewingDocument] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ documents: number; vectors: number; queries_served: number } | null>(null);
 
   const handleGraphUpdate = useCallback((newNodeIds: string[]) => {
     loadData();
@@ -106,13 +107,17 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [graphRes, alertsRes] = await Promise.all([
+      const [graphRes, alertsRes, statsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/graph`),
-        fetch(`${API_BASE_URL}/api/alerts`)
+        fetch(`${API_BASE_URL}/api/alerts`),
+        fetch(`${API_BASE_URL}/api/stats`).catch(() => null)
       ]);
       if (graphRes.ok && alertsRes.ok) {
         setGraphData(await graphRes.json());
         setAlerts(await alertsRes.json());
+        if (statsRes && statsRes.ok) {
+          setStats(await statsRes.json());
+        }
         setIsDemoMode(false);
         setLoading(false);
         return;
@@ -271,7 +276,7 @@ export default function Dashboard() {
       let streamedContent = "";
       let streamCategory = "";
       let streamCitations: { source_file: string; excerpt: string; score: number }[] = [];
-      let streamMetadata: { trace?: string[] } = {};
+      let streamMetadata: ChatMessage["metadata"] = {};
       let buffer = "";
 
       // Add placeholder assistant message for streaming
@@ -398,10 +403,12 @@ export default function Dashboard() {
     <>
       <SplashScreen />
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Header 
+        <Header
           nodesCount={graphData.nodes.length}
           edgesCount={graphData.links.length}
           alertsCount={alerts.length}
+          documentsCount={stats?.documents ?? 0}
+          vectorsCount={stats?.vectors ?? 0}
           loading={loading}
           onShowPipeline={() => setShowPipelineVisualizer(true)}
           onRefresh={loadData}

@@ -40,6 +40,7 @@ api.add_middleware(
 # In-memory graph cache
 _graph_cache: Dict[str, Any] = {}
 _graph_cache_valid: bool = False
+_queries_served: int = 0
 
 
 class QueryRequest(BaseModel):
@@ -53,6 +54,52 @@ def health_check() -> Dict[str, str]:
         "cloud" if qdrant_url and "your_" not in qdrant_url else "local_sqlite"
     )
     return {"status": "ok", "qdrant_mode": qdrant_mode}
+
+
+@api.get("/api/stats")
+def get_stats() -> Dict[str, Any]:
+    import re as _re
+
+    kg_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_graph")
+    )
+
+    doc_count = 0
+    for root, _, files in os.walk(kg_dir):
+        for f in files:
+            if f.endswith(".md") and f not in ("index.md", "log.md"):
+                doc_count += 1
+
+    vectors = 0
+    try:
+        from state import get_qdrant_client
+
+        q_client = get_qdrant_client()
+        info = q_client.get_collection("vigil_okf")
+        vectors = info.points_count or 0
+    except Exception:
+        pass
+
+    last_ingestion = None
+    log_path = os.path.join(kg_dir, "log.md")
+    if os.path.exists(log_path):
+        with open(log_path, "r", encoding="utf-8") as lf:
+            content = lf.read()
+        timestamps = _re.findall(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", content)
+        if timestamps:
+            last_ingestion = timestamps[-1]
+
+    graph = get_graph_data()
+
+    return {
+        "nodes": len(graph.get("nodes", [])),
+        "edges": len(graph.get("links", [])),
+        "documents": doc_count,
+        "vectors": vectors,
+        "alerts": len(get_alerts()),
+        "last_ingestion": last_ingestion,
+        "queries_served": _queries_served,
+    }
 
 
 @api.post("/api/query")
@@ -113,6 +160,8 @@ def run_query_stream(request: QueryRequest):
     import re
 
     def generate_sse():
+        global _queries_served
+        _queries_served += 1
         from concurrent.futures import ThreadPoolExecutor
 
         t_start = perf_counter()

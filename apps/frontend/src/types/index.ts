@@ -35,8 +35,18 @@ export interface ChatMessage {
   follow_ups?: string[];
   metadata?: {
     trace?: string[];
-    confidence?: { score: number; relevance: number; consensus: number; coverage: number };
+    node_metrics?: Record<string, {
+      latency_ms?: number;
+      input_tokens?: number;
+      output_tokens?: number;
+      model?: string;
+      vector_hits?: number;
+      filtered_count?: number;
+      skipped?: boolean;
+    }>;
+    confidence?: { score: number; relevance: number; consensus: number; coverage: number; formula?: string };
     total_latency_ms?: number;
+    total_tokens?: { input: number; output: number };
     impact_nodes?: number;
   };
 }

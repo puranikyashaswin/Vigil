@@ -194,14 +194,93 @@ export default function ChatHistoryOverlay({
                             Resolved by: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.category} agent</span>
                           </span>
                           {msg.metadata?.confidence && (
-                            <span className="text-zinc-500 dark:text-zinc-400">
-                              Confidence: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{msg.metadata.confidence.score.toFixed(2)}</span>
-                              {msg.metadata.total_latency_ms && (
-                                <> · <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{(msg.metadata.total_latency_ms / 1000).toFixed(1)}s</span></>
-                              )}
-                              {msg.metadata.impact_nodes && (
-                                <> · Impact: <span className="text-[#d97757] font-semibold">{msg.metadata.impact_nodes} nodes</span></>
-                              )}
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1 flex-1">
+                                  <span className="text-[8px] w-2.5 text-[#d97757] font-bold">R</span>
+                                  <div className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#d97757] rounded-full" style={{ width: `${msg.metadata.confidence.relevance * 100}%` }} />
+                                  </div>
+                                  <span className="text-[8px] w-7 text-right font-semibold">{(msg.metadata.confidence.relevance * 100).toFixed(0)}%</span>
+                                </div>
+                                <div className="flex items-center gap-1 flex-1">
+                                  <span className="text-[8px] w-2.5 text-[#788c5d] font-bold">C</span>
+                                  <div className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#788c5d] rounded-full" style={{ width: `${msg.metadata.confidence.consensus * 100}%` }} />
+                                  </div>
+                                  <span className="text-[8px] w-7 text-right font-semibold">{(msg.metadata.confidence.consensus * 100).toFixed(0)}%</span>
+                                </div>
+                                <div className="flex items-center gap-1 flex-1">
+                                  <span className="text-[8px] w-2.5 text-[#6a9bcc] font-bold">V</span>
+                                  <div className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#6a9bcc] rounded-full" style={{ width: `${msg.metadata.confidence.coverage * 100}%` }} />
+                                  </div>
+                                  <span className="text-[8px] w-7 text-right font-semibold">{(msg.metadata.confidence.coverage * 100).toFixed(0)}%</span>
+                                </div>
+                              </div>
+                              <span className="text-[8px] text-zinc-400 dark:text-zinc-500">
+                                0.5R + 0.3C + 0.2V = <span className="text-zinc-900 dark:text-zinc-100 font-bold">{msg.metadata.confidence.score.toFixed(2)}</span>
+                                {msg.metadata.total_latency_ms && (
+                                  <> | <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{(msg.metadata.total_latency_ms / 1000).toFixed(1)}s</span></>
+                                )}
+                                {msg.metadata.impact_nodes && (
+                                  <> | <span className="text-[#d97757] font-semibold">{msg.metadata.impact_nodes} nodes</span></>
+                                )}
+                              </span>
+                            </div>
+                          )}
+                          {msg.metadata?.node_metrics && msg.metadata.total_latency_ms && msg.metadata.trace && (
+                            <div className="mt-1.5">
+                              <div className="flex w-full h-4 rounded overflow-hidden border border-zinc-200 dark:border-zinc-800">
+                                {msg.metadata.trace.filter(step => {
+                                  const m = msg.metadata?.node_metrics?.[step];
+                                  return m && !m.skipped && m.latency_ms;
+                                }).map((step, idx) => {
+                                  const metrics = msg.metadata!.node_metrics![step]!;
+                                  const pct = (metrics.latency_ms! / msg.metadata!.total_latency_ms!) * 100;
+                                  const colors = ["#d97757", "#788c5d", "#6a9bcc", "#d97757", "#788c5d"];
+                                  return (
+                                    <div
+                                      key={step}
+                                      style={{ width: `${Math.max(pct, 6)}%`, backgroundColor: colors[idx % colors.length] }}
+                                      className="flex items-center justify-center text-[7px] font-mono text-white/90 truncate px-0.5"
+                                      title={`${step}: ${metrics.latency_ms}ms`}
+                                    >
+                                      {pct > 12 && <span>{step.replace("_context", "").replace("_response", "").replace("_intent", "").replace("synthesize", "gen")}</span>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                {msg.metadata.trace.filter(step => {
+                                  const m = msg.metadata?.node_metrics?.[step];
+                                  return m && !m.skipped && m.latency_ms;
+                                }).map((step, idx) => {
+                                  const metrics = msg.metadata!.node_metrics![step]!;
+                                  const colors = ["text-[#d97757]", "text-[#788c5d]", "text-[#6a9bcc]", "text-[#d97757]", "text-[#788c5d]"];
+                                  return (
+                                    <span key={step} className={`text-[8px] font-mono ${colors[idx % colors.length]}`}>
+                                      {step.split("_")[0]}: {metrics.latency_ms}ms
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {msg.metadata?.node_metrics?.contradiction_guard && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-mono font-semibold mt-1 ${
+                              msg.metadata.node_metrics.contradiction_guard.skipped
+                                ? "bg-[#788c5d]/15 text-[#788c5d] border border-[#788c5d]/20"
+                                : msg.content.includes("[SAFETY WARNING")
+                                  ? "bg-red-500/15 text-red-400 border border-red-500/20"
+                                  : "bg-[#6a9bcc]/15 text-[#6a9bcc] border border-[#6a9bcc]/20"
+                            }`}>
+                              {msg.metadata.node_metrics.contradiction_guard.skipped
+                                ? "Guard: skipped (high confidence)"
+                                : msg.content.includes("[SAFETY WARNING")
+                                  ? "Guard: checked - WARNING"
+                                  : "Guard: checked - SAFE"
+                              }
                             </span>
                           )}
                           {msg.citations && msg.citations.filter(c => c.score >= 0.55).length > 0 && (

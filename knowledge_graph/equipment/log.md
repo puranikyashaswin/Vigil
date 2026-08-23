@@ -311,3 +311,6 @@ Record of ingest, link, and modification actions:
 
 ### 2026-08-21
 **INGEST**: Ingested entity Newport Hospitality from source test_documents/scanned_form_1.png (2026-08-21T14:14:29.240283)
+
+### 2026-08-23
+**INGEST**: Ingested 2304.00385v2 from upload/2304.00385v2.pdf (2026-08-23T09:33:00.926947)
