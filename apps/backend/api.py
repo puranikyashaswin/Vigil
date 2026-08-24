@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 # Add current path and apps/backend to sys.path
 sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.join(os.path.dirname(__file__), "scripts"))
 from graph import app as graph_app
 
 # Set up logging
@@ -634,6 +635,8 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                             "---\n",
                             f"# {ent['name']}\n",
                             ent.get("description", ""),
+                            "\n## Source Content",
+                            parsed_text[:3000],
                             "\n## References & Links",
                             "No links established.",
                         ]
@@ -665,19 +668,125 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                 yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 4, 'label': 'Checking contradictions...', 'status': 'running'})}\n\n"
                 contradictions_found = 0
                 try:
-                    file_map = {
-                        e["name"].lower(): e.get("rel_path", "")
-                        for e in all_new_entities
-                    }
-                    pairs = find_pairs_to_check(entities, file_map)
-                    for ent_a, ent_b in pairs[:5]:
-                        res = check_contradiction(ent_a, ent_b)
+                    # Load existing entities from knowledge graph for cross-checking
+                    existing_entities = []
+                    import re as _re
+                    _equip_pattern = _re.compile(r'\b([A-Z]-\d{2,4}|P-\d{2,4}|V-\d{2,4}|T-\d{2,4})\b')
+                    _reg_pattern = _re.compile(r'\b(SR-\d+|OSHA[\s\d.]+|CFR[\s\d.]+|1910\.\d+)\b', _re.IGNORECASE)
+                    for sub in ["regulations", "procedures", "equipment", "maintenance"]:
+                        sub_path = os.path.join(kg_dir, sub)
+                        if not os.path.isdir(sub_path):
+                            continue
+                        for fname in os.listdir(sub_path):
+                            if not fname.endswith(".md") or fname in ("index.md", "log.md"):
+                                continue
+                            fpath = os.path.join(sub_path, fname)
+                            with open(fpath, "r", encoding="utf-8") as ef:
+                                content = ef.read()
+                            parts = content.split("---")
+                            if len(parts) >= 3:
+                                meta = {}
+                                for line in parts[1].strip().splitlines():
+                                    if ":" in line:
+                                        k, v = line.split(":", 1)
+                                        meta[k.strip()] = v.strip().strip('"').strip("'")
+                                body = "---".join(parts[2:])
+                                full_text = meta.get("title", "") + " " + meta.get("description", "") + " " + body
+                                equip_tags = list(set(_equip_pattern.findall(full_text)))
+                                reg_refs = list(set(_reg_pattern.findall(full_text)))
+                                existing_entities.append({
+                                    "name": meta.get("title", fname.replace(".md", "")),
+                                    "type": meta.get("type", "concept"),
+                                    "description": meta.get("description", ""),
+                                    "equipment_tags": equip_tags,
+                                    "regulatory_references": reg_refs,
+                                    "linked_concepts": [],
+                                })
+
+                    # Only check new entities against existing REGULATION entities
+                    new_names = {e["name"].lower() for e in entities}
+                    reg_entities = [e for e in existing_entities if e.get("type") == "regulation"]
+                    pairs = []
+                    for ne in entities:
+                        for re_ent in reg_entities:
+                            pairs.append((ne, re_ent))
+                    # Prioritize pairs where equipment tags or reg refs overlap
+                    def pair_score(pair):
+                        a, b = pair
+                        a_tags = set(a.get("equipment_tags", []))
+                        b_tags = set(b.get("equipment_tags", []))
+                        a_refs = set(a.get("regulatory_references", []))
+                        b_refs = set(b.get("regulatory_references", []))
+                        return len(a_tags & b_tags) + len(a_refs & b_refs)
+                    pairs.sort(key=pair_score, reverse=True)
+                    for ent_a, ent_b in pairs[:2]:
+                        # Enrich with full content for accurate contradiction checking
+                        enriched_a = dict(ent_a)
+                        enriched_b = dict(ent_b)
+                        if ent_a["name"].lower() in new_names:
+                            enriched_a["description"] = ent_a.get("description", "") + "\n\nFull source content:\n" + parsed_text[:2000]
+                        if ent_b["name"].lower() in new_names:
+                            enriched_b["description"] = ent_b.get("description", "") + "\n\nFull source content:\n" + parsed_text[:2000]
+                        # For existing entities, load their full file body
+                        for enriched, ent in [(enriched_a, ent_a), (enriched_b, ent_b)]:
+                            if ent["name"].lower() not in new_names:
+                                for sub in ["regulations", "procedures", "equipment", "maintenance"]:
+                                    sub_path = os.path.join(kg_dir, sub)
+                                    if not os.path.isdir(sub_path):
+                                        continue
+                                    for fn in os.listdir(sub_path):
+                                        if not fn.endswith(".md") or fn in ("index.md", "log.md"):
+                                            continue
+                                        fp = os.path.join(sub_path, fn)
+                                        with open(fp, "r", encoding="utf-8") as rf:
+                                            fc = rf.read()
+                                        if ent["name"] in fc:
+                                            enriched["description"] = fc[:2000]
+                                            break
+                                    else:
+                                        continue
+                                    break
+                        res = check_contradiction(enriched_a, enriched_b)
                         if (
                             res.get("contradiction_detected")
                             and res.get("confidence_score", 0) > 0.7
                         ):
                             contradictions_found += 1
-                            yield f"event: contradiction\ndata: {json.dumps({'file': filename, 'detected': True, 'severity': res.get('severity', 'medium'), 'explanation': res.get('explanation', '')[:100]})}\n\n"
+                            # Persist alert as .md file in knowledge_graph/alerts/
+                            alerts_dir = os.path.join(kg_dir, "alerts")
+                            os.makedirs(alerts_dir, exist_ok=True)
+                            severity = res.get("severity", "medium")
+                            explanation = res.get("explanation", "Contradiction detected between documents.")
+                            alert_title = f"Conflict: {ent_a['name']} vs {ent_b['name']}"
+                            from datetime import datetime as _dt
+                            alert_ts = _dt.now().strftime("%Y-%m-%dT%H:%M:%S")
+                            alert_slug = f"conflict-{ent_a['name'].lower().replace(' ', '-')[:20]}-{ent_b['name'].lower().replace(' ', '-')[:20]}-{int(_dt.now().timestamp())}"
+                            alert_content = f"""---
+type: alert
+title: "{alert_title}"
+description: "{explanation[:200]}"
+resource: "pipeline/upload-contradiction"
+tags: [conflict, alert, {severity}]
+timestamp: {alert_ts}
+confidence_score: {res.get('confidence_score', 0.85)}
+severity: {severity}
+---
+
+# Alert: Compliance Conflict Detected
+
+A contradiction has been flagged between two linked concepts during document upload.
+
+## Conflict Details
+- **Source A**: {ent_a['name']}
+- **Source B**: {ent_b['name']}
+
+## Explanation
+{explanation}
+"""
+                            alert_path = os.path.join(alerts_dir, f"{alert_slug}.md")
+                            with open(alert_path, "w", encoding="utf-8") as af:
+                                af.write(alert_content)
+                            yield f"event: contradiction\ndata: {json.dumps({'file': filename, 'detected': True, 'severity': severity, 'explanation': explanation[:100]})}\n\n"
 
                     yield f"event: step\ndata: {json.dumps({'file': filename, 'step': 4, 'label': f'{contradictions_found} conflicts found', 'status': 'complete'})}\n\n"
                 except Exception as e:
