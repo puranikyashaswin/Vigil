@@ -42,7 +42,7 @@ flowchart TD
         GUARD --> LOG
     end
 
-    DASHBOARD[/"Next.js Dashboard\n2D Force Graph · Streaming Chat\nAlert Feed · File Upload"/]
+    DASHBOARD[/"Next.js Dashboard\nDocument-Centric Graph · Alert Nodes\nStreaming Chat · Ask Vigil · File Upload"/]
 
     DOC --> DETECT
     DETECT --> PARSER
@@ -146,14 +146,30 @@ event: done   → {"metadata": {"confidence": {...}, "node_metrics": {...}}}
 
 ## Interactive Graph Features
 
+### Document-Centric Graph Architecture
+
+The knowledge graph uses a **document-first** design:
+
+- **Source Document Nodes** (primary): Each uploaded file appears as a distinct, clickable rounded-rectangle card with file-type badge (PDF, CSV, XLSX, etc.) and corner fold icon. These are the main interaction points.
+- **Alert Nodes** (interactive): Compliance alerts render as red hexagonal warning shields, clickable with severity indicators. Clicking opens the Inspector with an "Ask Vigil to resolve this" button.
+- **Entity Nodes** (decorative): Extracted concepts orbit their parent document as small colored dots. They highlight when their parent document is selected but are not directly clickable.
+
+When no source documents are available (e.g., production without file storage), the graph falls back to making all entity nodes interactive with labeled pill shapes.
+
+### Organized Layout
+
+Toggle "Organized Layout" to snap document nodes into a clean grid at center, with entity nodes arranged in orbital rings around their parent document. Smooth cubic-eased animation transitions between force-directed and organized modes.
+
 ### Node Search & Filter
 
 The graph panel includes a search bar that filters nodes in real-time by label, ID, or type. Matching nodes remain fully visible while non-matching nodes fade to 15% opacity, making it easy to locate specific equipment, procedures, or regulations in large knowledge graphs.
 
 ### Bidirectional Chat ↔ Graph Linking
 
-- **Graph → Chat**: Clicking a node and pressing "Ask Vigil About This Asset" in the Inspector Panel automatically sends a contextual query about that node's status, compliance risks, and maintenance history.
+- **Graph → Chat**: Clicking any document or alert node opens the Inspector Panel with full description and an **"Ask Vigil about this"** button that sends a contextual query directly to chat.
+- **Alert → Chat**: Alert cards in the Alerts tab include an **"Ask Vigil about this"** button — no modal popup, just instant AI analysis of the conflict, risks, and corrective actions.
 - **Chat → Graph**: When the AI responds with citations, the cited source nodes glow orange (primary) and their neighbors glow blue (secondary) on the graph via animated impact ripple.
+- **Knowledge Base → Graph**: Clicking a source document in the Knowledge Base explorer highlights all its derived entities on the graph.
 
 ### Real-Time WebSocket Updates
 
@@ -164,6 +180,10 @@ The backend exposes a WebSocket endpoint at `/ws/updates`. When documents are in
 3. Reconnects automatically if the connection drops (5-second retry)
 
 This eliminates the need to manually refresh after ingesting new documents.
+
+### Graph Legend & Schema Panel
+
+A collapsible legend panel shows all node types with live counts (Source Documents, Concepts, Procedures, Regulations, Maintenance, Alerts). Auto-opens on desktop, collapsed on mobile.
 
 ---
 
@@ -192,14 +212,14 @@ Evaluated against a dataset of 42 concept pairs (21 contradictory, 21 clean). Ha
 
 | Threshold | TP | FP | TN | FN | Precision | Recall | F1-Score |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **0.5** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
-| **0.6** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
-| **0.7** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | **0.7895** |
-| **0.8** | 15 | 2 | 19 | 6 | 0.8824 | 0.7143 | 0.7895 |
+| **0.5** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | 0.8947 |
+| **0.6** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | 0.8947 |
+| **0.7** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | **0.8947** |
+| **0.8** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | 0.8947 |
 
 Confidence scores are bimodal - threshold choice in 0.5–0.8 has no effect:
-- **Contradictory cohort**: avg **0.6995** (median **0.9500**)
-- **Clean control cohort**: avg **0.0919** (median **0.0000**)
+- **Contradictory cohort**: avg **0.8800** (median **0.9500**)
+- **Clean control cohort**: avg **0.9050** (median **0.9000**)
 
 Default threshold: **0.7** (robust safety margin). See [docs/contradiction_benchmark_results.md](docs/contradiction_benchmark_results.md).
 
@@ -293,11 +313,13 @@ Measured on [test_documents/](test_documents/) corpus via [scripts/test_parsing.
 | Layer | Technology | Details |
 |:---|:---|:---|
 | Framework | Next.js 16 | App Router |
-| Styling | Tailwind CSS 4 | Ivory surfaces, clay accent, serif/sans pairing |
-| Animations | `framer-motion` | Tab transitions, modal enter/exit |
-| Graph | `react-force-graph-2d` | Canvas-rendered 2D force layout; hover tooltips; glow on new nodes; **live search/filter** |
+| Styling | Tailwind CSS 4 | Ivory surfaces, clay accent (`#d97757`), sage green (`#788c5d`), blue (`#6a9bcc`) |
+| Animations | `framer-motion` | Tab transitions, layout animations, cubic-eased graph transitions |
+| Graph | `react-force-graph-2d` | Canvas-rendered; document cards, alert hexagons, entity dots; custom pointer areas; organized layout mode |
+| Graph interaction | Custom draw handlers | `nodeCanvasObject` renders 3 node types; `nodePointerAreaPaint` for accurate hit detection; hover tooltips with type/severity |
 | Real-time | WebSocket (`/ws/updates`) | Graph auto-refreshes when new documents are ingested - no manual reload needed |
-| Bidirectional linking | Inspector → Chat | "Ask Vigil About This Asset" button sends contextual query from any selected node |
+| Bidirectional linking | Inspector → Chat | "Ask Vigil about this" sends contextual query; alert cards have direct "Ask Vigil" buttons |
+| Knowledge Base | File tree explorer | Browse source documents and extracted entities; click to highlight on graph |
 | Markdown | Custom renderer | Tables, blockquotes, compliance matrices, RCA tables - all rendered |
 | Streaming | Fetch ReadableStream | Chat tokens stream token-by-token; upload progress via SSE |
 | File Upload | HTML5 drag-and-drop | Multi-file; 50MB limit; real-time pipeline progress |
@@ -381,7 +403,7 @@ python pid_topology_extractor.py --input test_documents/your_diagram.png
 python apps/backend/api.py
 ```
 
-The server auto-indexes the knowledge graph in a background thread on first start so port binding is immediate.
+The server starts immediately without loading ML models. Embedding model and Qdrant indexing happen lazily on first query. Set `AUTO_INDEX_ON_STARTUP=1` to pre-index at boot (requires >512MB RAM).
 
 ### 6. Start the frontend
 
@@ -419,6 +441,7 @@ Set these in **Render → Environment**:
 | `AWS_REGION` | `us-east-1` |
 | `QDRANT_URL` | Qdrant Cloud cluster URL |
 | `QDRANT_API_KEY` | Qdrant Cloud API key |
+| `AUTO_INDEX_ON_STARTUP` | Leave unset on free tier (saves ~350MB RAM) |
 
 ### Keep-Alive (Free Tier)
 
@@ -431,8 +454,9 @@ This prevents cold-start delays during demos.
 ### Performance on Free Tier (512MB RAM)
 
 - FlashRank reranking is **disabled** (`ENABLE_RERANKING` not set) to stay within 512MB
-- Embedding model loads once as a global singleton - no reload on re-index
-- Auto-indexing runs in a background daemon thread - port binds in < 2 seconds
+- Embedding model is **lazy-loaded** — only instantiated on first query, not at startup. Saves ~350MB of RAM (fastembed + onnxruntime + model weights) until actually needed.
+- Auto-indexing on startup is **skipped by default** to prevent OOM. Set `AUTO_INDEX_ON_STARTUP=1` to enable. Indexing happens automatically on first query if the collection is empty.
+- Graph, alerts, and stats endpoints serve immediately without loading any ML models.
 
 ### Administrative Endpoints
 
@@ -515,11 +539,19 @@ vigil/
           layout.tsx           # Root layout
           globals.css          # Tailwind theme + custom styles
         components/
-          ForceGraph2D.tsx      # react-force-graph-2d - hover tooltips, glow
+          ForceGraph2D.tsx      # Graph canvas - node rendering, tooltips, interaction
+          graph/
+            graphDrawHandlers.ts # Custom node/link rendering (document, alert, entity)
+            graphColors.ts       # Type → color maps (light/dark)
+            useOrganizedLayout.ts# Animated grid layout mode
+          InspectorPanel.tsx    # Node inspector - description, "Ask Vigil" button
+          AlertFeed.tsx         # Alert cards with inline "Ask Vigil" CTA
+          KnowledgeBaseExplorer.tsx # File tree + highlight-on-graph
+          GraphLegend.tsx       # Node type legend with live counts
           ChatHistoryOverlay.tsx# Streaming chat UI - full markdown rendering
           DocumentSelector.tsx  # Drag-and-drop file upload zone
           PipelineVisualizer.tsx# Real-time SSE pipeline progress
-          PipelineStatusOverlay.tsx
+          SidebarPanel.tsx      # Inspector/Alerts/KB tab container
         utils/
           markdown.ts          # Markdown renderer - tables, blockquotes, lists
   knowledge_graph/             # OKF concept files (git-tracked)

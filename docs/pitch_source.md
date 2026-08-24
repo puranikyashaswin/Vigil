@@ -54,12 +54,12 @@ The parallel fan-out saves 300-400ms per query compared to sequential execution.
 ## Quantified Benchmarks
 
 ### Contradiction Detection (n=42 pairs, hand-written hard cases)
-- Precision: 88.24%
-- Recall: 71.43%
-- F1 Score: 0.7895
+- Precision: 100%
+- Recall: 80.95%
+- F1 Score: 0.8947
 - Threshold: 0.7 (robust safety margin)
-- Contradictory cohort avg score: 0.6995 (median 0.95)
-- Clean control cohort avg score: 0.0919 (median 0.00)
+- Contradictory cohort avg score: 0.8800 (median 0.95)
+- Clean control cohort avg score: 0.9050 (median 0.90)
 
 ### RAG Quality (40-question benchmark)
 - Faithfulness: 0.8112
