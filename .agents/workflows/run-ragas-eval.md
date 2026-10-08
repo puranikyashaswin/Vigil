@@ -75,7 +75,7 @@ eval_result = evaluate(
     ]
 )
 
-# 5. Save results to docs/ for pitch deck
+# 5. Save results to docs/ for the project write-up
 report_df = eval_result.to_pandas()
 report_df.to_csv("docs/ragas_eval_results.csv", index=False)
 
@@ -88,6 +88,6 @@ print(f"RAGAS Evaluation complete. Overall Score: {eval_result}")
 
 All evaluation metrics are stored in the following locations:
 - **Raw Scores Spreadsheet**: `docs/ragas_eval_results.csv` (contains line-by-line scores for each metric).
-- **Consolidated Summary Markdown**: `docs/ragas_summary.md` (contains overall averages for faithfulness, relevancy, and context matching, suitable for copy-pasting directly into the hackathon pitch deck).
+- **Consolidated Summary Markdown**: `docs/ragas_summary.md` (contains overall averages for faithfulness, relevancy, and context matching, suitable for copy-pasting directly into the README or write-ups).
 - **Execution Log Trace**: Sent automatically to **LangSmith** for deep observability.
 ---

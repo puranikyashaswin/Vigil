@@ -1,7 +1,5 @@
 # VIGIL - Industrial Knowledge Intelligence
 
-**ET AI Hackathon 2.0 2026 | Finale**
-
 ---
 
 ## Table of Contents
@@ -545,36 +543,6 @@ cd apps/frontend && npm install && npm run dev
 
 ---
 
-## Presentation Flow (13 Slides)
-
-| Slide | Title | Key Message |
-|:---:|:---|:---|
-| 1 | VIGIL - Industrial Knowledge Intelligence | Title card. ET AI Hackathon 2.0 2026, Finale |
-| 2 | Industrial plants run on documents | 7-12 systems, 35% search time, 25% retiring |
-| 3 | Documents contradict each other. Nobody catches it. | "Set bypass 120 PSI" vs "Max pressure 100 PSI" |
-| 4 | What if your system caught contradictions... | ...the moment a document was ingested? |
-| 5 | Vigil: Proactive Intelligence, Not Reactive Search | 5 capabilities: Ingest, Detect, Resolve, Query, Stream |
-| 6 | 6-Stage Streaming Pipeline | Architecture diagram. Under 5 seconds. |
-| 7 | Double-Sided Contradiction Detection | Forward + Reverse. 100% precision, 80.95% recall |
-| 8 | Technical Stack | Backend + Frontend technologies listed |
-| 9 | LIVE DEMO | Knowledge Graph + Streaming Chat + Real-time Ingestion |
-| 10 | Benchmarked, Not Claimed | All quantified metrics with validation details |
-| 11 | 10x+ ROI | 50L-2Cr saved per shutdown, 5-8L/year pricing |
-| 12 | Vigil doesn't wait for you to ask the right question | Closing message |
-| 13 | Thank you. | End |
-
----
-
-## Presentation Style Notes
-
-- **Framework**: SCQA (Situation, Complication, Question, Answer)
-- **Theme**: Dark background, minimal text
-- **Accent Color**: Warm clay/orange (#D97757)
-- **Duration**: 7-8 minutes presentation + 7-8 minutes Q&A
-- **Live demo included**: Real functionality, not mockups
-
----
-
 ## Innovation Summary (What No Competitor Has)
 
 1. **PROACTIVE** contradiction detection at ingestion time (not reactive Q&A)
@@ -588,5 +556,4 @@ cd apps/frontend && npm install && npm run dev
 
 ---
 
-*Built for the ET AI Hackathon 2.0 2026 - Octave Challenge*
-*By Yashaswin Sharma*
+*Built by Yashaswin Sharma*

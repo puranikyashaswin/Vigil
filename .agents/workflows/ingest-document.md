@@ -116,7 +116,7 @@ To ensure proactive alert generation, the contradiction check must evaluate both
 
 ### Part B: Reverse Contradiction Check
 1. Search all existing OKF files in the workspace for markdown link references pointing to the newly ingested concept's filename (e.g., `../procedures/crude-feed-startup.md`).
-   - *Brute-Force Scan (Hackathon Scope)*: Perform a simple local full-text scan using regex/glob across all `.md` files in the OKF bundle to find link matches (takes <50ms for a few hundred small markdown files).
+   - *Brute-Force Scan (Prototype Scope)*: Perform a simple local full-text scan using regex/glob across all `.md` files in the OKF bundle to find link matches (takes <50ms for a few hundred small markdown files).
    - *Known Scaling Limitation*: For large-scale production databases (>1,000 files), this brute-force scan will cause ingestion bottlenecks. In production, replace this with a metadata lookup in Qdrant (querying the `linked_concepts` payload array) or by querying a cached in-memory graph index.
 2. For each matching file found, retrieve its content.
 3. Compare the existing file's rules against the newly ingested concept's content using the verification query below.

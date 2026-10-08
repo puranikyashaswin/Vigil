@@ -1,7 +1,7 @@
 # Vigil Production Scaling Guide
 *Technical Reference for Enterprise Deployment*
 
-This document outlines the engineering path to scale Vigil from a hackathon-scale prototype (tested on ~50 documents) to a production-grade deployment handling 100,000+ documents in a large industrial organization.
+This document outlines the engineering path to scale Vigil from a prototype (tested on ~50 documents) to a production-grade deployment handling 100,000+ documents in a large industrial organization.
 
 ---
 
