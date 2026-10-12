@@ -206,61 +206,71 @@ After upload completes, the knowledge graph refreshes automatically and newly ad
 
 ## Empirical Evaluation & Performance Benchmarks
 
-### 1. Proactive Contradiction Detection Sweep (n=42 pairs)
+### 1. Proactive Contradiction Detection (42 labeled pairs, 41 scored)
 
-Evaluated against a dataset of 42 concept pairs (21 contradictory, 21 clean). Hard pairs (implicit, temporal, multi-hop conflicts) were hand-written to reduce construction bias.
+Benchmark: [tests/contradiction_benchmark.json](tests/contradiction_benchmark.json), 42 concept pairs (21 contradictory, 21 clean). Re-run on 2026-10-12 with Claude Opus 4.6 on Bedrock (temperature 0) at commit `b991e82`. Pair 32 (clean) returned unparseable JSON on 4 of 4 attempts and is excluded, as it was in the 2026-08-24 run, so n = 41 (21 contradictory, 20 clean). The 2026-10-12 run reproduced the 2026-08-24 confusion matrix exactly ([run log](docs/contradiction_benchmark_run_log_2026-08-24.txt)).
 
-| Threshold | TP | FP | TN | FN | Precision | Recall | F1-Score |
+| Threshold | TP | FP | TN | FN | Precision | Recall | F1 |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **0.5** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | 0.8947 |
-| **0.6** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | 0.8947 |
-| **0.7** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | **0.8947** |
-| **0.8** | 17 | 0 | 20 | 4 | 1.0000 | 0.8095 | 0.8947 |
+| 0.5 / 0.6 / 0.7 / 0.8 | 17 | 0 | 20 | 4 | 1.000 | 0.810 | 0.895 |
 
-Confidence scores are bimodal - threshold choice in 0.5–0.8 has no effect:
-- **Contradictory cohort**: avg **0.8800** (median **0.9500**)
-- **Clean control cohort**: avg **0.9050** (median **0.9000**)
+95% CIs (percentile bootstrap over the 41 pairs, B = 10,000, threshold 0.7):
+- Recall: [0.625, 0.955]
+- F1: [0.769, 0.977]
+- Precision: the bootstrap interval collapses to [1.0, 1.0] because there are 0 false positives, so it says nothing. The exact Clopper-Pearson 95% lower bound for 17/17 is 0.805.
 
-Default threshold: **0.7** (robust safety margin). See [docs/contradiction_benchmark_results.md](docs/contradiction_benchmark_results.md).
+The threshold sweep is flat because `confidence_score` is the model's confidence in its own verdict ("contradiction" or "clean"), not a probability of contradiction. Mean (median) confidence:
+- Contradictory pairs: 0.884 (0.95)
+- Clean pairs: 0.908 (0.925)
 
-### 2. QA RAG Performance (40-Question Split Benchmark)
+These differ slightly from the 2026-08-24 run (0.880 / 0.905), even at temperature 0.
 
-| Metric | Score | Notes |
-|:---|:---:|:---|
-| Faithfulness (in-scope, n=30) | **0.8112** | Factual grounding of responses |
-| Answer Relevancy (in-scope, n=30) | **0.8307** | Alignment with query intent |
-| Context Precision (in-scope, n=30) | **0.7197** | Relevance of retrieved directories |
-| Context Recall (in-scope, n=30) | **0.7167** | Retrieval rate of ground-truth facts |
-| Correct-Refusal Rate (out-of-scope, n=10) | **1.0000** | 10/10 correct safety refusals |
-| False-Refusal Rate (in-scope, n=30) | **0.0667** | 2/30 human-verified false refusals |
+Results: [docs/eval_runs/2026-10-12/](docs/eval_runs/2026-10-12/) (`contradiction_raw.json`, `contradiction_summary.json`, `contradiction_run_log.txt`).
 
-Full scores: [docs/ragas_results.md](docs/ragas_results.md) and [docs/ragas_eval_results.csv](docs/ragas_eval_results.csv).
+### 2. QA RAG Performance (40 questions: 30 in-scope, 10 out-of-scope)
 
-### 3. Retrieval Ablation Study (n=30 questions, zero API cost)
+Re-run on 2026-10-12 at commit `b991e82`, using the local Qdrant index (`vigil_qdrant.db`, 96 points) with reranking off (the default):
+- **Agent:** Claude Sonnet 4.6 on Bedrock.
+- **Judge:** Claude Haiku 4.5 on Bedrock, scored with RAGAS 0.4.3 and `BAAI/bge-small-en-v1.5` embeddings.
+- **CIs:** 95% percentile bootstrap over questions (B = 10,000).
 
-| Method | Hit@5 | MRR | Difference |
-|:---|:---:|:---:|:---:|
-| Without Reranking | 0.9667 | 0.8944 | Baseline |
-| With FlashRank | 1.0000 | 0.9333 | MRR +0.0389 |
+| Metric | Score | 95% CI |
+|:---|:---:|:---:|
+| Faithfulness (in-scope, 29 of 30 scored; 1 judge parse failure) | 0.583 | [0.518, 0.650] |
+| Answer Relevancy (in-scope, n=30) | 0.612 | [0.464, 0.753] |
+| Context Precision (in-scope, n=30) | 0.551 | [0.382, 0.718] |
+| Context Recall (in-scope, n=30) | 0.633 | [0.467, 0.800] |
+| Correct refusals (out-of-scope, n=10) | 10/10 by manual reading (9/10 by the script's keyword heuristic) | Clopper-Pearson lower bound 0.69 |
+| False refusals (in-scope, n=30) | 3/30 (Q13, Q19, Q24), single-reader judgement; Q2 and Q20 are partial answers | n/a |
 
-Full scores: [docs/retrieval_ablation_results.md](docs/retrieval_ablation_results.md).
+Results: [docs/eval_runs/2026-10-12/ragas/](docs/eval_runs/2026-10-12/ragas/) (`ragas_scores.csv`, `ragas_answers.jsonl`, `ragas_summary.json`).
+
+The scores reported earlier (faithfulness 0.8112, answer relevancy 0.8307, context precision 0.7197, context recall 0.7167) are **not backed by a saved result file**. [docs/ragas_eval_results.csv](docs/ragas_eval_results.csv) has empty score columns for all 30 rows. The repo script's judge (`openrouter/free`) also routes each call to an unspecified free model. RAGAS scores depend heavily on the judge model, so the new and old numbers cannot be compared directly.
+
+### 3. Retrieval Ablation Study (n=30 questions, no LLM calls)
+
+Re-run on 2026-10-12 with the unmodified `evaluate_retrieval()` against the current local index:
+
+| Method | Hit@5 | MRR |
+|:---|:---:|:---:|
+| Without reranking | 0.933 | 0.836 |
+| With FlashRank | 0.967 | 0.874 |
+
+FlashRank adds +0.033 Hit@5 (one query) and +0.038 MRR. The earlier figures (0.9667/0.8944 without reranking, 1.0/0.9333 with) were measured on an earlier index state, and only the summary in [docs/retrieval_ablation_results.md](docs/retrieval_ablation_results.md) was saved from that run. Results: [docs/eval_runs/2026-10-12/retrieval_ablation.json](docs/eval_runs/2026-10-12/retrieval_ablation.json).
 
 ---
 
 ## Known Limitations & Engineering Trade-offs
 
-1. **False Negative Taxonomy (n=6 missed contradictions)**:
-   - `implicit_operational` (shift/temporal logic): 3/6 pairs missed (IDs 25, 35, 37)
-   - `multi_hop` (cross-document chaining): 3/3 pairs missed (IDs 23, 39, 41)
-   - Every missed pair scored exactly **0.00** (non-detection, not miscalibration - no threshold adjustment can recover them).
+1. **False negatives (4 of 21 contradictory pairs, same in the 2026-08-24 and 2026-10-12 runs)**: pairs 25, 35, 39 and 41. For each one the model returned "no contradiction", with verdict confidence 0.90, 0.30, 0.85 and 0.35. Changing the threshold cannot recover these misses. The category labels in [docs/contradiction_failure_analysis.md](docs/contradiction_failure_analysis.md) (implicit_operational: 25, 35, 37; multi_hop: 23, 39, 41) come from an earlier run with 6 misses. Pairs 23 and 37 are detected in both current runs. The benchmark JSON has no category field, so the taxonomy cannot be recomputed from it.
 
-2. **Unit Mismatch False Positives**: The detector treats PSI vs MPa and °C vs °F as contradiction signals instead of converting. Clean pairs 32 and 34 were falsely flagged at 0.95 and 0.98 confidence.
+2. **Unit conversion is not established**: in the earlier run in `contradiction_failure_analysis.md`, clean pairs 32 (PSI vs MPa) and 34 (°C vs °F) were falsely flagged. In both current runs, pair 34 is correctly judged clean. Pair 32 never produced parseable output, and the production code (`check_contradiction`) silently treats a parse failure as "no contradiction" with confidence 0.0.
 
 3. **AI-Assisted Benchmark Bias**: The 42 pairs were constructed with AI assistance. Hard pairs were hand-written to mitigate this; independent external evaluation remains future work.
 
-4. **Small Out-of-Scope Cohort**: The 100% correct-refusal rate is on n=10 queries - a wide statistical confidence interval. It shows the guardrails work on this set, not a proven general rate.
+4. **Small Out-of-Scope Cohort**: 10/10 correct refusals on n=10 gives an exact 95% lower bound of only 0.69. Also, `run_ragas_eval.py` counts an agent exception as a correct refusal, so a crash would raise this metric.
 
-5. **Reranking Disabled on Free-Tier Render**: FlashRank is disabled on the 512MB Render instance to prevent OOM crashes. Cost of this trade-off: MRR drops from 0.9333 → 0.8944, Hit@5 drops from 1.0 → 0.9667.
+5. **Reranking Disabled on Free-Tier Render**: FlashRank is disabled on the 512MB Render instance to prevent OOM crashes. On the 2026-10-12 index this costs 0.038 MRR (0.874 → 0.836) and 0.033 Hit@5 (0.967 → 0.933).
 
 ---
 
@@ -268,16 +278,23 @@ Full scores: [docs/retrieval_ablation_results.md](docs/retrieval_ablation_result
 
 | File Type | Method | Notes |
 |:---|:---|:---|
-| PDF (text-native) | PyMuPDF (primary), pdfplumber (fallback) | No LLM call; 80–94% faster than pdfplumber alone |
+| PDF (text-native) | PyMuPDF (primary), pdfplumber (fallback) | No LLM call; 87–98% less extraction time than pdfplumber on the test PDFs |
 | PDF (scanned/image) | Claude Sonnet 4.6 vision (Bedrock) | AI-powered OCR with layout understanding |
 | DOCX | python-docx | Preserves headings and paragraph structure |
 | XLSX / XLS | openpyxl / xlrd | Handles legacy .xls files misencoded as .xlsx |
 | CSV | Python csv module | Zero-dependency, deterministic |
 
-Measured on [test_documents/](test_documents/) corpus via [scripts/test_parsing.py](apps/backend/scripts/test_parsing.py):
+Plain text extraction timed on 2026-10-12 on the PDFs in [test_documents/](test_documents/), median of 3 runs, on an 8GB M2 with other processes running, so absolute times are inflated. Results: [docs/eval_runs/2026-10-12/pdf_parse_timing.json](docs/eval_runs/2026-10-12/pdf_parse_timing.json). The earlier table (1.61s vs 0.26s and so on) had no saved result file.
 
-| Document | pdfplumber | PyMuPDF | Improvement |
+| Document | pdfplumber | PyMuPDF | Time reduction |
 |:---|:---:|:---:|:---:|
+| 29 CFR 1910.119 (up to date as of 7-01-2026), 317KB | 11.10s | 0.82s | 92.6% |
+| osha_1910_119.pdf, 204KB | 13.65s | 0.41s | 97.0% |
+| artofthepid-aiche-rbt11-15-19.pdf, 7.0MB | 22.01s | 0.55s | 97.5% |
+| 462-Piping-and-Instrumentation-Diagrams.pdf, 3.1MB | 5.60s | 0.24s | 95.6% |
+| Emergency_Bypass_Procedure_P101.pdf, 2KB | 0.08s | 0.01s | 86.6% |
+
+---|:---:|:---:|:---:|
 | 29 CFR 1910.119 OSHA (316KB) | 1.61s | 0.26s | 83.8% faster |
 | P&ID Reference Manual (7MB) | 3.44s | 0.20s | 94.2% faster |
 | Piping & Instrumentation Diagrams | 0.80s | 0.15s | 81.2% faster |

@@ -1,5 +1,7 @@
 # Contradiction Detection Evaluation Report
 
+> **Audit note (2026-10-12):** a re-run at commit `b991e82` reproduced this confusion matrix: TP 17, FP 0, TN 20, FN 4, with pair 32 excluded. It adds 95% bootstrap CIs over the 41 pairs: recall [0.625, 0.955] and F1 [0.769, 0.977]. Precision has 0 false positives, so its bootstrap interval is degenerate; the Clopper-Pearson lower bound is 0.805. Note that the confidence values are the model's confidence in its own verdict, not P(contradiction). See `docs/eval_runs/2026-10-12/contradiction_summary.json`.
+
 This report evaluates Vigil's proactive contradiction detection node. The model is tested against a labeled dataset of 42 concept pairs containing known contradictions and clean safety-critical specifications.
 
 **Note**: The evaluation pairs were authored with AI assistance, with a set of hard pairs hand-written to mitigate construction bias. Independent evaluation is future work.

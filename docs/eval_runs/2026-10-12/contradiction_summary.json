@@ -1,0 +1,102 @@
+{
+  "source": "docs/eval_runs/2026-10-12/contradiction_raw.json",
+  "meta": {
+    "run_at": "2026-10-12T18:13:54",
+    "git_head": "b991e820832fd0968ee7cf14b56af1ea6b5174e8",
+    "model": "us.anthropic.claude-opus-4-6-v1",
+    "temperature": 0.0,
+    "backend": "bedrock",
+    "function": "apps/backend/scripts/contradiction.py::check_contradiction (unmodified)",
+    "runner": "audit runner (not committed script); retries a pair up to 4x on API/parse failure",
+    "token_usage": {
+      "in": 21252,
+      "out": 6320
+    }
+  },
+  "n_scored": 41,
+  "excluded_pairs_call_failed": [
+    32
+  ],
+  "n_contradictory": 21,
+  "n_clean": 20,
+  "threshold_sweep": {
+    "0.5": {
+      "tp": 17,
+      "fp": 0,
+      "tn": 20,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8095,
+      "f1": 0.8947
+    },
+    "0.6": {
+      "tp": 17,
+      "fp": 0,
+      "tn": 20,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8095,
+      "f1": 0.8947
+    },
+    "0.7": {
+      "tp": 17,
+      "fp": 0,
+      "tn": 20,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8095,
+      "f1": 0.8947
+    },
+    "0.8": {
+      "tp": 17,
+      "fp": 0,
+      "tn": 20,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8095,
+      "f1": 0.8947
+    }
+  },
+  "bootstrap": {
+    "method": "nonparametric percentile bootstrap over pairs, threshold 0.7",
+    "B": 10000,
+    "seed": 20261012,
+    "resamples_with_undefined_metric_dropped": 0,
+    "ci95": {
+      "precision": [
+        1.0,
+        1.0
+      ],
+      "recall": [
+        0.625,
+        0.9545
+      ],
+      "f1": [
+        0.7692,
+        0.9767
+      ]
+    }
+  },
+  "precision_exact_clopper_pearson_95_lower": 0.8049,
+  "missed_pairs": [
+    25,
+    35,
+    39,
+    41
+  ],
+  "missed_confidence": {
+    "25": 0.9,
+    "35": 0.3,
+    "39": 0.85,
+    "41": 0.35
+  },
+  "confidence_note": "confidence_score is the model's confidence in its own verdict (clean or contradiction), not P(contradiction)",
+  "confidence_contradictory": {
+    "mean": 0.8843,
+    "median": 0.95
+  },
+  "confidence_clean": {
+    "mean": 0.9075,
+    "median": 0.925
+  }
+}

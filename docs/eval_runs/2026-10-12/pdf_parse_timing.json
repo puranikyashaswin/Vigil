@@ -1,0 +1,54 @@
+{
+  "machine": "macOS-27.2-arm64-arm-64bit",
+  "python": "3.11.15",
+  "pymupdf": "1.28.0",
+  "pdfplumber": "0.11.10",
+  "note": "other processes were running on the machine; timings are indicative",
+  "rows": [
+    {
+      "file": "29 CFR 1910.119 (up to date as of 7-01-2026).pdf",
+      "bytes": 316668,
+      "pdfplumber_median_s": 11.096,
+      "pdfplumber_chars": 99087,
+      "pymupdf_median_s": 0.818,
+      "pymupdf_chars": 99244,
+      "pymupdf_time_reduction_pct": 92.6
+    },
+    {
+      "file": "462-Piping-and-Instrumentation-Diagrams.pdf",
+      "bytes": 3136182,
+      "pdfplumber_median_s": 5.597,
+      "pdfplumber_chars": 28213,
+      "pymupdf_median_s": 0.244,
+      "pymupdf_chars": 28997,
+      "pymupdf_time_reduction_pct": 95.6
+    },
+    {
+      "file": "Emergency_Bypass_Procedure_P101.pdf",
+      "bytes": 2069,
+      "pdfplumber_median_s": 0.082,
+      "pdfplumber_chars": 1438,
+      "pymupdf_median_s": 0.011,
+      "pymupdf_chars": 1439,
+      "pymupdf_time_reduction_pct": 86.6
+    },
+    {
+      "file": "artofthepid-aiche-rbt11-15-19.pdf",
+      "bytes": 6979934,
+      "pdfplumber_median_s": 22.005,
+      "pdfplumber_chars": 11733,
+      "pymupdf_median_s": 0.546,
+      "pymupdf_chars": 11924,
+      "pymupdf_time_reduction_pct": 97.5
+    },
+    {
+      "file": "osha_1910_119.pdf",
+      "bytes": 204074,
+      "pdfplumber_median_s": 13.648,
+      "pdfplumber_chars": 91130,
+      "pymupdf_median_s": 0.412,
+      "pymupdf_chars": 91721,
+      "pymupdf_time_reduction_pct": 97.0
+    }
+  ]
+}

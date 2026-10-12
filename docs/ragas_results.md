@@ -1,5 +1,7 @@
 # RAGAS Evaluation and Safety Abstention Report
 
+> **Audit note (2026-10-12): the averages in this report are not backed by a saved result file.** `docs/ragas_eval_results.csv` has empty faithfulness, answer_relevancy, context_precision and context_recall columns for all 30 rows. A re-run (judge: Claude Haiku 4.5) gives faithfulness 0.583, answer relevancy 0.612, context precision 0.551 and context recall 0.633, with 10/10 correct refusals on manual reading and 3/30 false refusals. See `docs/eval_runs/2026-10-12/ragas/`. The per-question context recall values and the 'Grounded' labels in section 3 below have no saved source either.
+
 This report summarizes the final performance metrics of Vigil's routed RAG QA pipeline against the 40-question golden QA suite. Metrics are split between answerable (in-scope) queries and unanswerable (out-of-scope) queries to demonstrate safety grounding.
 
 ---

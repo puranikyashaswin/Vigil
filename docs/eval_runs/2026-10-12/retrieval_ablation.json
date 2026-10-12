@@ -1,0 +1,20 @@
+{
+  "run_at": "2026-10-12T18:45:02",
+  "git_head": "b991e820832fd0968ee7cf14b56af1ea6b5174e8",
+  "n_queries": 30,
+  "index": "local vigil_qdrant.db (vigil_okf)",
+  "results": {
+    "without_reranking": {
+      "hit_at_5": 0.9333,
+      "mrr": 0.8361
+    },
+    "with_flashrank": {
+      "hit_at_5": 0.9667,
+      "mrr": 0.8744
+    }
+  },
+  "delta": {
+    "hit_at_5": 0.0334,
+    "mrr": 0.0383
+  }
+}

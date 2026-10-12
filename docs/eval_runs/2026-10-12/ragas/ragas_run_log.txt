@@ -1,0 +1,154 @@
+QDRANT_URL is not configured. Using local SQLite-backed Qdrant DB. This will degrade under concurrent load. See docs/SCALING.md for production setup.
+[1/40] in_scope=True err=False refusal_kw=False ctx=5 11.8s
+[2/40] in_scope=True err=False refusal_kw=True ctx=4 14.9s
+[3/40] in_scope=True err=False refusal_kw=True ctx=5 10.6s
+[4/40] in_scope=True err=False refusal_kw=True ctx=4 19.2s
+[5/40] in_scope=True err=False refusal_kw=False ctx=5 6.6s
+[6/40] in_scope=True err=False refusal_kw=False ctx=5 6.5s
+[7/40] in_scope=True err=False refusal_kw=False ctx=5 4.2s
+Mock telemetry server unreachable ([Errno 61] Connection refused). Falling back to local.
+[8/40] in_scope=True err=False refusal_kw=False ctx=6 9.0s
+[9/40] in_scope=True err=False refusal_kw=False ctx=5 6.9s
+[10/40] in_scope=True err=False refusal_kw=False ctx=5 5.5s
+[11/40] in_scope=True err=False refusal_kw=False ctx=5 9.2s
+Mock telemetry server unreachable ([Errno 61] Connection refused). Falling back to local.
+[12/40] in_scope=True err=False refusal_kw=False ctx=5 15.9s
+[13/40] in_scope=True err=False refusal_kw=False ctx=5 8.2s
+[14/40] in_scope=True err=False refusal_kw=True ctx=5 4.9s
+[15/40] in_scope=True err=False refusal_kw=False ctx=5 5.3s
+[16/40] in_scope=True err=False refusal_kw=False ctx=5 7.5s
+[17/40] in_scope=True err=False refusal_kw=False ctx=5 6.8s
+[18/40] in_scope=True err=False refusal_kw=False ctx=5 4.3s
+Mock telemetry server unreachable ([Errno 61] Connection refused). Falling back to local.
+[19/40] in_scope=True err=False refusal_kw=False ctx=6 7.3s
+[20/40] in_scope=True err=False refusal_kw=True ctx=5 5.6s
+[21/40] in_scope=True err=False refusal_kw=True ctx=5 12.0s
+[22/40] in_scope=True err=False refusal_kw=False ctx=5 5.9s
+[23/40] in_scope=True err=False refusal_kw=False ctx=5 6.7s
+[24/40] in_scope=True err=False refusal_kw=False ctx=5 5.0s
+[25/40] in_scope=True err=False refusal_kw=True ctx=5 5.6s
+[26/40] in_scope=True err=False refusal_kw=False ctx=5 8.9s
+[27/40] in_scope=True err=False refusal_kw=False ctx=5 6.9s
+Mock telemetry server unreachable ([Errno 61] Connection refused). Falling back to local.
+[28/40] in_scope=True err=False refusal_kw=False ctx=6 9.0s
+[29/40] in_scope=True err=False refusal_kw=False ctx=5 7.8s
+[30/40] in_scope=True err=False refusal_kw=False ctx=4 19.8s
+[31/40] in_scope=False err=False refusal_kw=True ctx=5 6.7s
+[32/40] in_scope=False err=False refusal_kw=True ctx=5 6.8s
+[33/40] in_scope=False err=False refusal_kw=True ctx=5 5.9s
+Mock telemetry server unreachable ([Errno 61] Connection refused). Falling back to local.
+[34/40] in_scope=False err=False refusal_kw=True ctx=5 9.0s
+[35/40] in_scope=False err=False refusal_kw=True ctx=5 6.6s
+[36/40] in_scope=False err=False refusal_kw=True ctx=5 9.5s
+[37/40] in_scope=False err=False refusal_kw=True ctx=5 5.5s
+[38/40] in_scope=False err=False refusal_kw=False ctx=5 8.1s
+[39/40] in_scope=False err=False refusal_kw=True ctx=5 9.4s
+Mock telemetry server unreachable ([Errno 61] Connection refused). Falling back to local.
+[40/40] in_scope=False err=False refusal_kw=True ctx=6 8.1s
+<workdir>/vigil_audit/run_ragas_audit.py:59: DeprecationWarning: Importing faithfulness from 'ragas.metrics' is deprecated and will be removed in v1.0. Please use 'ragas.metrics.collections' instead. Example: from ragas.metrics.collections import faithfulness
+  from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+<workdir>/vigil_audit/run_ragas_audit.py:59: DeprecationWarning: Importing answer_relevancy from 'ragas.metrics' is deprecated and will be removed in v1.0. Please use 'ragas.metrics.collections' instead. Example: from ragas.metrics.collections import answer_relevancy
+  from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+<workdir>/vigil_audit/run_ragas_audit.py:59: DeprecationWarning: Importing context_precision from 'ragas.metrics' is deprecated and will be removed in v1.0. Please use 'ragas.metrics.collections' instead. Example: from ragas.metrics.collections import context_precision
+  from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+<workdir>/vigil_audit/run_ragas_audit.py:59: DeprecationWarning: Importing context_recall from 'ragas.metrics' is deprecated and will be removed in v1.0. Please use 'ragas.metrics.collections' instead. Example: from ragas.metrics.collections import context_recall
+  from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+statements.55.reason
+  Field required [type=missing, input_value={'statement': 'Equipment ...chnician Sarah Connor.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+statements.55.verdict
+  Field required [type=missing, input_value={'statement': 'Equipment ...chnician Sarah Connor.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langchain/errors/OUTPUT_PARSING_FAILURE )
+
+python(12188) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+{
+ "meta": {
+  "run_at": "2026-10-12T18:43:33",
+  "git_head": "b991e820832fd0968ee7cf14b56af1ea6b5174e8",
+  "git_dirty_note": "working tree had uncommitted knowledge_graph/ changes; Qdrant index = local vigil_qdrant.db (collection vigil_okf, 96 points)",
+  "agent_backend": "bedrock",
+  "agent_models": {
+   "route_intent": "us.anthropic.claude-sonnet-4-6",
+   "extraction": "us.anthropic.claude-sonnet-4-6",
+   "generation": "us.anthropic.claude-sonnet-4-6",
+   "contradiction": "us.anthropic.claude-opus-4-6-v1",
+   "contradiction_guard": "us.anthropic.claude-sonnet-4-6",
+   "ocr": "us.anthropic.claude-sonnet-4-6",
+   "topology": "us.anthropic.claude-opus-4-6-v1"
+  },
+  "reranking": "false",
+  "judge": "bedrock:us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "ragas_version": "0.4.3",
+  "embeddings": "fastembed BAAI/bge-small-en-v1.5"
+ },
+ "in_scope_n": 30,
+ "out_of_scope_n": 10,
+ "ragas_in_scope": {
+  "faithfulness": {
+   "mean": 0.5833,
+   "n_scored": 29,
+   "n_nan": 1
+  },
+  "answer_relevancy": {
+   "mean": 0.612,
+   "n_scored": 30,
+   "n_nan": 0
+  },
+  "context_precision": {
+   "mean": 0.5511,
+   "n_scored": 30,
+   "n_nan": 0
+  },
+  "context_recall": {
+   "mean": 0.6333,
+   "n_scored": 30,
+   "n_nan": 0
+  }
+ },
+ "ragas_bootstrap_ci95": {
+  "faithfulness": [
+   0.5183,
+   0.6504
+  ],
+  "answer_relevancy": [
+   0.4637,
+   0.7525
+  ],
+  "context_precision": [
+   0.3817,
+   0.7178
+  ],
+  "context_recall": [
+   0.4667,
+   0.8
+  ]
+ },
+ "agent_errors": 0,
+ "out_of_scope_correct_refusals_keyword_or_empty_ctx": 9,
+ "out_of_scope_refusal_note": "repo heuristic: refusal keyword in answer OR empty contexts; errors count as refusals in the repo script",
+ "in_scope_refusal_keyword_hits": [
+  1,
+  2,
+  3,
+  13,
+  19,
+  20,
+  24
+ ],
+ "agent_token_usage": {
+  "calls": 438,
+  "in": 468012,
+  "out": 123622,
+  "by_model": {
+   "us.anthropic.claude-sonnet-4-6": [
+    71630,
+    22070
+   ],
+   "us.anthropic.claude-haiku-4-5-20251001-v1:0": [
+    396382,
+    101552
+   ]
+  }
+ }
+}

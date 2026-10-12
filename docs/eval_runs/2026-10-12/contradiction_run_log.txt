@@ -1,0 +1,47 @@
+1 True True 0.98 
+2 True True 0.85 
+3 False False 0.95 
+4 False False 0.95 
+5 True True 0.97 
+6 False False 0.95 
+7 True True 0.95 
+8 False False 0.95 
+9 True True 0.95 
+10 False False 0.95 
+11 True True 0.97 
+12 False False 0.95 
+13 True True 0.97 
+14 False False 0.9 
+15 True True 0.95 
+16 False False 0.9 
+17 True True 0.97 
+18 False False 0.95 
+19 True True 0.97 
+20 False False 0.95 
+21 True True 0.95 
+22 False False 0.85 
+23 True True 0.95 
+24 False False 0.9 
+25 True False 0.9 
+26 False False 0.85 
+27 True True 0.95 
+28 False False 0.95 
+29 True True 0.97 
+30 False False 0.95 
+31 True True 0.95 
+Contradiction check failed between Valve V-202 Limits and Operating Procedure P-04: Extra data: line 3 column 1 (char 489)
+Contradiction check failed between Valve V-202 Limits and Operating Procedure P-04: Extra data: line 3 column 1 (char 489)
+Contradiction check failed between Valve V-202 Limits and Operating Procedure P-04: Extra data: line 3 column 1 (char 489)
+Contradiction check failed between Valve V-202 Limits and Operating Procedure P-04: Extra data: line 3 column 1 (char 489)
+32 False False 0.0 FAIL
+33 True True 0.95 
+34 False False 0.85 
+35 True False 0.3 
+36 False False 0.85 
+37 True True 0.92 
+38 False False 0.85 
+39 True False 0.85 
+40 False False 0.85 
+41 True False 0.35 
+42 False False 0.85 
+META {"run_at": "2026-10-12T18:13:54", "git_head": "b991e820832fd0968ee7cf14b56af1ea6b5174e8", "model": "us.anthropic.claude-opus-4-6-v1", "temperature": 0.0, "backend": "bedrock", "function": "apps/backend/scripts/contradiction.py::check_contradiction (unmodified)", "runner": "audit runner (not committed script); retries a pair up to 4x on API/parse failure", "token_usage": {"in": 21252, "out": 6320}}

@@ -1,0 +1,1122 @@
+user_input,retrieved_contexts,response,reference,faithfulness,answer_relevancy,context_precision,context_recall
+What safety procedures apply to pump P-102?,"['# Process Procedure P-102: Pump safety and operations\n\nSafety guidelines and regulations for Pump P-102:\n- Pump P-102 handles highly hazardous process fluids and chemicals in the main production line.\n- The operation, maintenance, and testing of pump P-102 must comply strictly with process safety management standards under 29 CFR 1910.119.\n- This equipment is subject to risk management provisions under the Clean Air Act Amendments.\n- All technician maintenance, pressure checks, and calibration procedures must be fully documented and audited every 6 months.', '# OSHA 29 CFR 1910.119 Process Safety Management\n\nOSHA standard for Process Safety Management referenced for emergency bypass compliance.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pre', ' PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit established by the governing safety regulation for bypass valves.', '# Safety Regulation SR-12: Valve Operations\n\nRegulatory standard specifying maximum 100 PSI for bypass valves in valve operations.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pressure a', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis""]","## Compliance Audit: Pump P-102 — Safety Procedure Coverage
+
+---
+
+### ⚠️ Preliminary Scope Note
+
+The provided source documents contain a **critical scoping limitation**: the regulatory procedure content (EBP-P101-2026) and the flagged compliance conflict both pertain exclusively to **Pump P-101**, not Pump P-102. The audit below reflects only what can be verified from the available sources without hallucinating requirements or cross-applying P-101 procedures to P-102.
+
+---
+
+### Overall Compliance Score: **1/4 requirements verifiable** from provided sources
+
+---
+
+## Compliance Matrix
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| Compliance with PSM standards under **29 CFR 1910.119** | P-102 Procedure (P-102-procedure.md, General Requirements) | UNVERIFIED | No P-102-specific PSM procedure content provided in sources. Requirement is stated but implementing procedures are absent. | Critical |
+| Compliance with **Clean Air Act Amendments** Risk Management provisions | P-102 Procedure (P-102-procedure.md, General Requirements) | UNVERIFIED | No RMP documentation, hazard analysis, or risk management plan content provided for P-102. | Critical |
+| Full documentation of all maintenance, pressure checks, and calibration — **audited every 6 months** | P-102 Procedure (P-102-procedure.md, Documentation Requirements) | UNVERIFIED | No audit records, documentation templates, or audit schedule provided in sources. | Major |
+| Handling of highly hazardous process fluids in compliance with applicable safety standards | P-102 Procedure (P-102-procedure.md, Scope) | PARTIAL | Requirement is acknowledged in procedure scope, but no specific safe-handling protocols, PPE requirements, or chemical-specific controls are present in provided sources. | Major |
+
+---
+
+## Additional Findings
+
+> **⚠️ Cross-Contamination Risk — P-101 Conflict Alert:**
+> The sources include a **Critical compliance conflict** flagged for Pump P-101 (Alert: conflict-emergency-bypass-pro-osha-29-cfr-1910.119): Procedure EBP-P101-2026 directs operators to set bypass pressure to **145 PSI**, which exceeds the **100 PSI maximum** established by **Safety Regulation SR-12: Valve Operations**. While this conflict is scoped to P-101, if any analogous bypass procedures exist for P-102, they must be audited against SR-12 immediately.
+
+---
+
+## Recommended Actions
+
+1. **Obtain and submit P-102-specific PSM documentation** to complete verification against 29 CFR 1910.119.
+2. **Provide RMP documentation** to assess Clean Air Act Amendments compliance.
+3. **Supply audit records** to verify the 6-month documentation audit cadence is being met.
+4. **Confirm whether SR-12 valve pressure limits apply to P-102** bypass configurations and audit accordingly.
+
+---
+
+*All findings are based strictly on provided source documents. No regulatory requirements have been inferred or extrapolated beyond cited sources.*",Pump P-102 handles process fluids and must comply with process safety management standards under 29 CFR 1910.119 and Clean Air Act Amendments.,0.6388888888888888,0.0,0.9999999999,1.0
+Is there a calibration schedule conflict for any equipment?,"['# P-102 Maintenance Log\n\nMaintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration\n\n## References & Links\nNo links established.', '# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts.\n\n## Conflict Details\n- **Conflicting Source A**: [Safety Regulation SR-12](../regulations/sr-12.md)\n- **Conflicting Source B**: [Process Procedure P-03](../procedures/p-03.md)\n\n## Audit Findings\nSafety Regulation SR-12 explicitly limits the maximum operating pressure of V-202 to 100 PSI. However, Process Procedure P-03 instructs technicians to set the bypass pressure to 120 PSI, directly violating SR-12 and creating an overpressure explosion hazard.', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis"", ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: Safety Regulation SR-12: Valve Operations\n\n## Explanation\nThe Emergency Bypass Procedure (Entity A) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document references 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves)' as a governing standard. Entity B is described as Safety Regulation SR-12 specifying a maximum of 100 PSI for bypass valves. The procedure commands a bypass pressure of 145 PSI, which exceeds the regulatory maximum of 100 PSI by 45 PSI (a 45% exceedance). This is a direct conflict between an operational procedure and its own referenced safety regulation, presenting a critical safety and regul""]","## Lessons-Learned Pattern Summary Table
+
+| Pattern | Frequency | Severity | Recommended Fix |
+|---|---|---|---|
+| Overdue Equipment Calibration | 1 confirmed instance (P-102, as of 2026-01-12 log) | **Medium** | Implement automated calibration tracking with escalating alerts |
+| Procedure-vs-Regulation Pressure Limit Conflict | 3 occurrences across 2 procedures & 2 regulations | **Critical** | Mandatory cross-reference audit before procedure approval |
+
+---
+
+> ⚠️ **Scope Limitation Notice:** The available source data contains **one equipment record** (P-102). A statistically robust calibration pattern analysis would require a broader equipment dataset. The finding below is grounded in available evidence but should be validated against a full equipment registry.
+
+---
+
+## Pattern 1: Overdue Equipment Calibration — P-102
+
+**PATTERN**
+Equipment P-102 has exceeded its scheduled calibration/service date with no documented resolution.
+
+**EVIDENCE**
+- **Source [maintenance/p-102-maintenance-log.md]:** Last serviced **2026-01-12**, next service due **2026-07-12**, current status explicitly flagged as **""overdue calibration.""** Assigned technician: Sarah Connor.
+- **Corroborating Context:** The existence of a dedicated maintenance log with a status field confirms this is a tracked obligation, not an informal note — making the overdue status a formal compliance gap.
+
+> 📌 *Note: Only one equipment record was provided. A second independent calibration record was not available in the source data. This pattern is flagged as a **single-instance finding** pending broader data review.*
+
+**DESIGN LESSON**
+Calibration schedules without automated enforcement mechanisms rely entirely on manual follow-up, creating silent compliance gaps. When a due date passes without a triggered escalation, overdue status can persist indefinitely.
+
+**RECOMMENDED ACTION**
+1. **Immediate:** Assign and schedule P-102 calibration with technician Sarah Connor; document completion date.
+2. **Systemic:** Implement an automated alert system that escalates calibration overdue status at **T+0 days** (due date), **T+7 days**, and **T+30 days** to supervisory personnel.
+3. **Audit:** Cross-check all other equipment logs for similar overdue statuses — the P-102 finding may indicate a systemic tracking failure.
+
+---
+
+## Pattern 2 (Contextual Finding): Procedure-vs-Regulation Pressure Conflicts
+
+*While not a calibration conflict, this pattern was identified across 3 source documents and is included per the engine's mandate to surface recurring safety patterns.*
+
+**PATTERN**
+Operational procedures repeatedly specify bypass pressures (120–145 PSI) that directly contradict Safety Regulation SR-12's 100 PSI maximum.
+
+**EVIDENCE**
+- **Source [alerts/conflict-mock.md]:** P-03 instructs 120 PSI bypass on V-202 vs. SR-12's 100 PSI limit.
+- **Source [alerts/conflict-emergency-bypass-pro-osha-29-cfr-1910.119...]:** EBP-P101-2026 instructs 145 PSI — a **45% exceedance** of SR-12, flagged against OSHA 29 CFR 1910.119.
+- **Source [alerts/conflict-emergency-bypass-pro-safety-regulation-sr-...]:** Same EBP-P101-2026 procedure internally cites SR-12 as its own governing standard while violating it.
+
+**DESIGN LESSON**
+Procedures authored without automated regulatory cross-referencing can embed violations even when they cite the violated regulation — indicating a systemic document governance failure.
+
+**RECOMMENDED ACTION**
+1. Freeze EBP-P101-2026 and P-03 pending revision.
+2. Establish a **pre-publication compliance gate** requiring automated pressure-limit validation against SR-12 before any procedure is approved.
+3. Conduct a full audit of all bypass procedures for SR-12 compliance.
+
+---
+
+*Engine confidence on Pattern 1 (calibration): **Moderate** — single source record. Expand equipment dataset for higher confidence. Pattern 2 confidence: **High** — 3 corroborating sources.*","No direct scheduling conflicts or timeline overlaps are present in the maintenance logs. However, pump P-102 is overdue for calibration, violating P&ID completeness and quality assurance requirements.",0.4772727272727273,0.7499321893290164,0.9999999999,0.0
+What does OSHA 1910.119 require for process safety management?,"[' References & Links\nNo links established.', '# 29 CFR 1910.119\n\nProcess safety management of highly hazardous chemicals\n\n## References & Links\nNo links established.', '# OSHA 29 CFR 1910.119 Process Safety Management\n\nOSHA standard for Process Safety Management referenced for emergency bypass compliance.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pre', '# Process Safety Management\n\nA standard for preventing or minimizing the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals\n\n## References & Links\n- [Hazard Communication Standard](./hazard-communication-standard.md)\n- [Occupational Safety and Health Act of 1970](./occupational-safety-and-health-act-of-1970.md)', '# Clean Air Act Amendments\n\nA law that requires employers to implement process safety management programs\n\n## References & Links\n- [29 CFR 1910.119](./29-cfr-1910-119.md)']","## Compliance Audit: Emergency Bypass Procedure EBP-P101-2026 vs. OSHA 29 CFR 1910.119
+
+---
+
+**⚠️ Important Preliminary Note:** The source documents provided contain only **title/reference stubs** for 29 CFR 1910.119 — no specific regulatory clause text (e.g., §1910.119(e), (f), (j), etc.) was supplied in the context. Per my operating rules, **I cannot hallucinate or fabricate specific regulatory requirements** not present in the sources.
+
+---
+
+## What the Sources Actually Establish
+
+| Source | Content Available |
+|---|---|
+| `regulations/29-cfr-1910-119.md` | Title only — ""Process safety management of highly hazardous chemicals."" No clause text provided. |
+| `regulations/osha-29-cfr-1910-119-process-safety-management.md` | References the standard for emergency bypass compliance, but contains **procedure text (EBP-P101-2026)**, not regulatory requirements. |
+| `regulations/process-safety-management.md` | Describes PSM as a standard for preventing catastrophic releases. No specific requirements cited. |
+| `regulations/clean-air-act-amendments.md` | References 29 CFR 1910.119. No clause text provided. |
+
+---
+
+## Compliance Matrix
+
+**Overall Score: UNVERIFIABLE — 0/0 specific requirements auditable from provided sources.**
+
+| Requirement | Procedure Section | Status | Gap | Severity |
+|---|---|---|---|---|
+| *No specific 29 CFR 1910.119 clause text was present in the provided sources* | EBP-P101-2026, All Sections | UNVERIFIED | Full regulatory clause text for 29 CFR 1910.119 was not supplied; no compliant/non-compliant determination can be made without fabricating requirements | N/A |
+
+---
+
+## What I Can Observe About the Procedure (Factual, Source-Grounded)
+
+From `EBP-P101-2026` as provided in the source content:
+
+- **Step 2** sets a pressure override of **145 PSI** for a minimum of 3 minutes, then reduction to 130 PSI — *the regulatory acceptability of this cannot be assessed without clause text.*
+- **Step 3** permits vibration up to **8.0 mm/s RMS** — *the source text appears truncated (""maintain current pre...""), meaning the procedure itself is **incomplete as provided**.*
+
+---
+
+## Recommendation
+
+To conduct a proper compliance audit, please supply:
+
+1. The **full text of 29 CFR 1910.119**, including specific subsections (e.g., §119(e) Process Hazard Analysis, §119(f) Operating Procedures, §119(j) Mechanical Integrity).
+2. The **complete, untruncated** EBP-P101-2026 procedure (Step 3 appears cut off).
+
+I will not generate a compliance finding against fabricated regulatory language.","OSHA 1910.119 requires process safety management of highly hazardous chemicals to prevent or minimize the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals.",0.7272727272727273,0.0,0.249999999975,1.0
+"Summarize the maintenance history for equipment (P-101, P-102, V-202, T-301) using the maintenance logs.","['# P-102 Maintenance Log\n\nMaintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration\n\n## References & Links\nNo links established.', '# P-101 Maintenance Log\n\nMaintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check\n\n## References & Links\nNo links established.', '# T-301 Maintenance Log\n\nMaintenance log for equipment T-301, last serviced on 2026-04-20, next service due on 2026-10-20, technician Marcus Wright, status completed\n\n## References & Links\nNo links established.', '# V-202 Maintenance Log\n\nMaintenance log for equipment V-202, last serviced on 2026-05-10, next service due on 2026-11-10, technician John Doe, status completed\n\n## References & Links\nNo links established.']","# Maintenance History Summary & Lessons-Learned Analysis
+
+## Pattern Summary Table
+
+| Pattern | Frequency | Severity | Recommended Fix |
+|---|---|---|---|
+| Overdue/Pending Calibration & Inspection Items | 2 of 4 units (50%) | High | Implement automated scheduling alerts 30/60 days before due dates |
+| Single Technician Overload (Sarah Connor) | 2 of 4 units (50%) | Medium | Redistribute workload; assign backup technicians per asset |
+| Missing Cross-Reference Links in Logs | 4 of 4 units (100%) | Medium | Mandate linked references to prior logs, work orders, and schematics |
+| Short Service Intervals on Pump Equipment | 2 of 2 pumps (100%) | Medium | Review pump service interval policy vs. actual failure/wear data |
+
+---
+
+## Expanded Pattern Analysis
+
+---
+
+### PATTERN 1 → Overdue/Pending Maintenance Items
+
+**PATTERN:** Active maintenance deficiencies exist on 2 of 4 tracked assets.
+
+**EVIDENCE:**
+- `[maintenance/p-102-maintenance-log.md]` — P-102 status is **""overdue calibration""**; last serviced 2026-01-12, next due 2026-07-12. The service interval has already elapsed with no recorded completion.
+- `[maintenance/p-101-maintenance-log.md]` — P-101 status is **""pending impeller check""**; last serviced 2026-06-15, indicating an open action item not yet resolved.
+
+**DESIGN LESSON:** A 50% open-item rate across a small asset pool signals a systemic gap in follow-through tracking, not isolated incidents. Overdue calibration on P-102 is particularly high-risk as calibration drift can propagate measurement errors across dependent systems.
+
+**RECOMMENDED ACTION:**
+1. Immediately schedule P-102 calibration and document completion.
+2. Close the P-101 impeller check with a formal sign-off entry.
+3. Deploy automated escalation alerts at T-30 and T-7 days before due dates.
+4. Introduce a ""status aging"" report flagging any item open >14 days past due.
+
+---
+
+### PATTERN 2 → Single Technician Overload (Sarah Connor)
+
+**PATTERN:** One technician is assigned to multiple assets with active deficiencies.
+
+**EVIDENCE:**
+- `[maintenance/p-102-maintenance-log.md]` — Sarah Connor is the assigned technician for P-102, which is **overdue**.
+- `[maintenance/p-101-maintenance-log.md]` — Sarah Connor is also the assigned technician for P-101, which has a **pending action item**.
+
+**DESIGN LESSON:** Both of the non-completed maintenance items in this dataset belong to the same technician. While causality cannot be confirmed from logs alone, concentration of open items under a single resource is a recognized risk factor for maintenance backlog accumulation and single-point-of-failure in staffing.
+
+**RECOMMENDED ACTION:**
+1. Audit Sarah Connor's full workload queue for additional open items beyond this dataset.
+2. Assign a secondary/backup technician to each critical asset.
+3. Establish a maximum concurrent open-item threshold per technician (e.g., ≤3 active items).
+
+---
+
+### PATTERN 3 → Missing Cross-Reference Links in All Logs
+
+**PATTERN:** Zero logs contain references to prior records, work orders, or related documentation.
+
+**EVIDENCE:**
+- `[maintenance/p-101-maintenance-log.md]` — Explicitly states: *""No links established.""*
+- `[maintenance/p-102-maintenance-log.md]` — Explicitly states: *""No links established.""*
+- *(Same finding confirmed in `t-301-maintenance-log.md` and `v-202-maintenance-log.md` — 4/4 assets affected.)*
+
+**DESIGN LESSON:** Isolated logs without cross-references prevent technicians from identifying recurring failure modes, reviewing prior repair history, or linking calibration records to operational anomalies. This is a 100% systemic documentation gap.
+
+**RECOMMENDED ACTION:**
+1. Update the log template to include mandatory fields: *Prior Log Reference*, *Work Order ID*, *Related Schematic/Drawing*, and *Failure History Link*.
+2. Retroactively link existing logs during the next scheduled service event.
+3. Integrate logs with a CMMS (Computerized Maintenance Management System) to auto-populate cross-references.
+
+---
+
+### PATTERN 4 → Shorter Service Intervals on Pump Equipment
+
+**PATTERN:** Both pump assets (P-101, P-102) have 3-month service intervals, compared to 6-month intervals for T-301 and V-202.
+
+**EVIDENCE:**
+- `[maintenance/p-102-maintenance-log.md]` — Last service 2026-01-12 → Next due 2026-07-12 = **6-month interval** *(however, calibration is already overdue, suggesting the interval may be insufficient in practice).*
+- `[maintenance/p-101-maintenance-log.md]` — Last service 2026-06-15 → Next due 2026-09-15 = **3-month interval**, the shortest in the dataset.
+
+**DESIGN LESSON:** P-101's 3-month interval suggests higher wear sensitivity or prior failure history warranting closer monitoring. The combination of short intervals and a pending impeller check indicates the current interval may still be reactive rather than predictive.
+
+**RECOMMENDED ACTION:**
+1. Review the engineering basis for P-101's 3-month interval — confirm it reflects actual wear data, not arbitrary scheduling.
+2. Consider condition-based monitoring (vibration, flow rate trending) to shift from time-based to predictive maintenance for pump assets.
+3. Document the rationale for service intervals in each log to enable future review.
+
+---
+
+## Asset Status Snapshot
+
+| Equipment | Last Serviced | Next Due | Technician | Status | Risk Level |
+|---|---|---|---|---|---|
+| P-102 | 2026-01-12 | 2026-07-12 | Sarah Connor | ⚠️ Overdue Calibration | **High** |
+| P-101 | 2026-06-15 | 2026-09-15 | Sarah Connor | ⚠️ Pending Impeller Check | **Medium** |
+| T-301 | 2026-04-20 | 2026-10-20 | Marcus Wright | ✅ Completed | Low |
+| V-202 | 2026-05-10 | 2026-11-10 | John Doe | ✅ Completed | Low |
+
+> **⚠️ Data Limitation Notice:** All patterns are grounded exclusively in the four provided source logs. No failure rates, incident reports, or operational data were available. Severity ratings reflect maintenance status risk, not confirmed failure probability. Expand the dataset with work orders and incident logs for higher-confidence analysis.","P-101 was serviced on 2026-06-15 (due 2026-09-15), P-102 was serviced on 2026-01-12 (due 2026-07-12), V-202 was serviced on 2026-05-10 (due 2026-11-10), and T-301 was serviced on 2026-04-20 (due 2026-10-20).",,0.6782212280970005,0.0,1.0
+Are there any unresolved compliance alerts right now?,"['References & Links\nNo links established.', ' References & Links\nNo links established.', 'Management\n\n\n## References & Links\nNo links established.', 'nces & Links\nNo links established.', '# References & Links\nNo links established.']","## Compliance Audit Report — Vigil Compliance Agent
+
+---
+
+### ⚠️ Assessment Limitation
+
+**Overall Compliance Score: UNVERIFIABLE / Indeterminate**
+
+The provided source documents contain **no substantive content** — all five sources return only metadata headers and ""No links established"" entries. No regulatory clauses, procedural steps, requirements, or operational details are present in the retrieved content.
+
+---
+
+### Compliance Matrix
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| OSHA 29 CFR 1910.119 (PSM) | pressure-override-settings.md | UNVERIFIED | Document content not retrievable | — |
+| OSHA 29 CFR 1910.119 (PSM) | emergency-bypass-procedure-pump-p-101.md | UNVERIFIED | Document content not retrievable | — |
+| SR-12 Valve Operations | emergency-bypass-procedure-pump-p-101.md | UNVERIFIED | Document content not retrievable | — |
+| SR-12 Valve Operations | vibration-monitoring.md | UNVERIFIED | Document content not retrievable | — |
+| Vibration Monitoring Requirements | vibration-monitoring.md | UNVERIFIED | Document content not retrievable | — |
+
+---
+
+### ⛔ Critical Notice
+
+> I cannot confirm or deny unresolved compliance alerts. Doing so would require me to **hallucinate regulatory requirements or procedural content**, which is prohibited under my operating rules.
+
+**Recommended Actions:**
+1. **Re-index** the five source documents — content appears missing or failed to parse
+2. **Re-run this audit** once full document bodies are available
+3. **Treat all five documents as unverified** until content is confirmed","Yes, there is an active contradiction alert between Safety Regulation SR-12 and Process Procedure P-03, where P-03 specifies a bypass setpoint of 120 PSI, directly violating SR-12's maximum limit of 100 PSI for valve V-202.",0.23809523809523808,0.0,0.0,0.0
+What is the function of control loops in engineering diagrams?,"['# Control Loops\n\nSystems that maintain a process condition at a set value by adjusting devices based on feedback from instruments.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Logic Diagrams\n\nDiagrams conveying control descriptions pictorially, including ladder logic diagrams, binary logic diagrams, and Boolean logic diagrams.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', '# SCADA Network Diagrams\n\nBlock diagrams showing the basic SCADA architecture and communication channels between devices, controllers, and computers.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Instrument Loop Elements\n\nComponents of an instrument loop, including sensors, transmitters, and controllers\n\n## References & Links\n- [P&ID](./p-id.md)']","Control loops are systems that maintain a process condition at a set value by continuously adjusting devices based on feedback from instruments.
+
+## Function of Control Loops
+
+According to **control-loops.md**, a control loop serves the following core purpose:
+
+- **Monitors** a process condition (e.g., pressure, temperature, flow) via instruments
+- **Compares** the measured value against a desired set value
+- **Adjusts** connected devices automatically to correct any deviation from that set value
+- **Operates on feedback**, meaning the output of the process is continuously fed back into the control system to drive corrective action
+
+## Relationship to Engineering Diagrams
+
+Control loops are closely tied to **Piping and Instrumentation Diagrams (P&IDs)**, as noted in both **control-loops.md** and **piping-and-instrumentation-diagrams-p-ids.md**. P&IDs illustrate:
+
+- The **functional relationship** between piping, instrumentation, equipment, and controllers
+- Control features represented as **symbols** on schematic drawings
+
+Additionally, the physical components that make up a control loop — such as sensors, transmitters, and controllers — are described in **instrument-loop-elements.md** as *instrument loop elements*.
+
+## Summary of Related Document Relationships
+
+| Document | Role in Control Loop Context |
+|---|---|
+| `control-loops.md` | Defines the function of control loops |
+| `piping-and-instrumentation-diagrams-p-ids.md` | Shows control features and functional relationships visually |
+| `instrument-loop-elements.md` | Describes the physical components within a loop |
+| `logic-diagrams.md` | Conveys control descriptions pictorially |",Control loops maintain a process condition at a set value by adjusting devices based on feedback from instruments.,0.4375,0.8405225521968592,0.9999999999,1.0
+What standard defines the format for displaying equipment information on a P&ID?,"['# Equipment Title Blocks\n\nA standard format for displaying equipment information on a P&ID\n\n## References & Links\n- [P&ID](./p-id.md)', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# P&ID Drafting Procedure\n\nA set of guidelines for creating P&IDs, including drawing size, borders, and title blocks\n\n## References & Links\n- [P&ID](../equipment/p-id.md)', '# P&ID Quality Assurance Matrix\n\nA framework for ensuring the quality and consistency of P&IDs\n\n## References & Links\n- [P&ID](../equipment/p-id.md)', '# P&ID Completeness Checklist\n\nA list of items to verify for completeness in a P&ID\n\n## References & Links\n- [P&ID](../equipment/p-id.md)']","The **Equipment Title Blocks** standard defines the format for displaying equipment information on a P&ID.
+
+## Standard Definition
+
+According to **`equipment/equipment-title-blocks.md`**, the Equipment Title Blocks document establishes:
+
+- A **standard format** for displaying equipment information on a P&ID
+- It is directly linked to and referenced by the **P&ID** documentation (`equipment/p-id.md`)
+
+## Related Documentation
+
+The broader P&ID documentation ecosystem includes several supporting documents that work alongside Equipment Title Blocks:
+
+| Document | Purpose |
+|---|---|
+| `equipment/p-id.md` | Defines the P&ID as a schematic diagram showing how equipment and instruments connect |
+| `procedures/p-id-drafting-procedure.md` | Guidelines for creating P&IDs, including drawing size, borders, and title blocks |
+| `regulations/p-id-quality-assurance-matrix.md` | Framework for ensuring quality and consistency of P&IDs |
+| `regulations/p-id-completeness-checklist.md` | Checklist for verifying P&ID completeness |
+
+> **Note:** The provided sources establish the existence and purpose of the Equipment Title Blocks standard but do not detail its specific formatting requirements. Refer directly to `equipment/equipment-title-blocks.md` for the full specification.",Equipment Title Blocks define the standard format for displaying equipment information on a Piping and Instrumentation Diagram.,0.6,0.7678728223890836,0.9999999999,1.0
+Who serviced the equipment T-301 and when is it next due?,"['# T-301 Maintenance Log\n\nMaintenance log for equipment T-301, last serviced on 2026-04-20, next service due on 2026-10-20, technician Marcus Wright, status completed\n\n## References & Links\nNo links established.', '# V-202 Maintenance Log\n\nMaintenance log for equipment V-202, last serviced on 2026-05-10, next service due on 2026-11-10, technician John Doe, status completed\n\n## References & Links\nNo links established.', '# P-101 Maintenance Log\n\nMaintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check\n\n## References & Links\nNo links established.', '# P-102 Maintenance Log\n\nMaintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration\n\n## References & Links\nNo links established.', 't\n\n\n## References & Links\nNo links established.', 'Real-time sensor telemetry for T-301 shows all metrics within nominal baseline parameters.']","## OBSERVATION
+
+The query requests maintenance personnel and scheduling information for equipment **T-301**.
+
+| Field | Details |
+|---|---|
+| Equipment ID | T-301 |
+| Last Serviced | 2026-04-20 |
+| Next Service Due | 2026-10-20 |
+| Technician | Marcus Wright |
+| Status | Completed |
+
+---
+
+## ANALYSIS
+
+The maintenance log for T-301 (`maintenance/t-301-maintenance-log.md`) contains clear, unambiguous records for the requested fields. No anomalies or discrepancies are present in the scheduling data. Real-time telemetry additionally confirms that **T-301 is currently operating within all nominal baseline parameters**, indicating no urgent maintenance triggers outside the scheduled window.
+
+---
+
+## ROOT CAUSE
+
+> ℹ️ **Not Applicable** — This query is an informational records lookup, not a fault or degradation investigation. No root cause analysis is warranted at this time.
+
+---
+
+## RECOMMENDATION
+
+- **No immediate action required** for T-301. The unit is operating nominally per real-time telemetry.
+- Ensure the next scheduled service on **2026-10-20** is assigned to technician **Marcus Wright** or a designated replacement in advance.
+- Consider cross-referencing with **P-102**, which is currently flagged as **overdue for calibration** (due 2026-07-12), as that may represent a more pressing maintenance priority.","T-301 was serviced by technician Marcus Wright on 2026-04-20, and is next due for service on 2026-10-20.",0.5,0.876275252157988,0.9999999999,1.0
+What is the purpose of the Hazard Communication Standard?,"['# Hazard Communication Standard\n\nA standard for communicating hazards associated with chemicals in the workplace\n\n## References & Links\n- [Process Safety Management](./process-safety-management.md)\n- [Occupational Safety and Health Act of 1970](./occupational-safety-and-health-act-of-1970.md)', '# Process Safety Management\n\nA standard for preventing or minimizing the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals\n\n## References & Links\n- [Hazard Communication Standard](./hazard-communication-standard.md)\n- [Occupational Safety and Health Act of 1970](./occupational-safety-and-health-act-of-1970.md)', '# Occupational Safety and Health Act of 1970\n\nA federal law that regulates workplace safety and health\n\n## References & Links\n- [Process Safety Management](./process-safety-management.md)\n- [Hazard Communication Standard](./hazard-communication-standard.md)', '# 29 CFR 1910.119\n\nProcess safety management of highly hazardous chemicals\n\n## References & Links\nNo links established.', '# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts.\n\n## Conflict Details\n- **Conflicting Source A**: [Safety Regulation SR-12](../regulations/sr-12.md)\n- **Conflicting Source B**: [Process Procedure P-03](../procedures/p-03.md)\n\n## Audit Findings\nSafety Regulation SR-12 explicitly limits the maximum operating pressure of V-202 to 100 PSI. However, Process Procedure P-03 instructs technicians to set the bypass pressure to 120 PSI, directly violating SR-12 and creating an overpressure explosion hazard.']","## Compliance Audit Response
+
+**Query Assessment:** The submitted query asks about the *purpose* of the Hazard Communication Standard — this is an **informational request**, not a procedure-against-regulation audit. No operational procedure has been submitted for compliance evaluation.
+
+---
+
+### Overall Compliance Score: N/A — No Procedure Submitted
+
+*A compliance matrix requires both a regulatory requirement and a corresponding operational procedure to audit against. Neither has been provided in this query.*
+
+---
+
+### What the Sources Do State
+
+Based solely on **Source [regulations/hazard-communication-standard.md]**:
+
+> The Hazard Communication Standard is *""a standard for communicating hazards associated with chemicals in the workplace.""*
+
+---
+
+### Audit Notices
+
+| Item | Detail |
+|---|---|
+| **Procedure Submitted** | None |
+| **Regulation Clauses Available** | Hazard Communication Standard (title/purpose only — no clauses provided in sources) |
+| **Alert on File** | `alerts/conflict-mock.md` references SR-12 vs. P-03 overpressure conflict — **this is unrelated to the current query and has not been incorporated** |
+
+---
+
+> ⚠️ **I cannot fabricate specific regulatory clauses, requirements, or compliance findings** beyond what is present in the provided sources. To conduct a full audit, please submit the operational procedure and the specific regulation sections to evaluate against.",The Hazard Communication Standard is a standard for communicating hazards associated with chemicals in the workplace.,0.3076923076923077,0.0,0.9999999999,1.0
+What does a Piping and Instrumentation Diagram (P&ID) show?,"['# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# Process Flow Diagrams (PFDs)\n\nDrawings with lines for piping and symbols for major components, used to create P&IDs.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)\n- [Instrument Schematics](./instrument-schematics.md)', '# Wiring Diagrams\n\nDiagrams showing circuit components as simplified shapes with power and signal wiring between devices.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Instrument Schematics\n\nDetailed drawings for particular instruments, showing wiring details and control logic notes.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)']","A P&ID is a schematic diagram that illustrates the functional relationships between piping, instrumentation, equipment, and controllers within a process system.
+
+## What a P&ID Shows
+
+According to **piping-and-instrumentation-diagrams-p-ids.md**, a P&ID includes:
+
+- **Piping and communications** represented as schematic lines
+- **Control features** represented as symbols
+- The **functional relationship** of the following elements:
+  - Piping
+  - Instrumentation
+  - Equipment
+  - Controllers
+
+This is further reinforced by **p-id.md**, which describes a P&ID as:
+> *""A schematic diagram that shows how equipment and instruments connect to form a functional process system.""*
+
+## Relationship to Other Diagrams
+
+P&IDs sit within a broader documentation ecosystem:
+
+| Diagram Type | Role in Relation to P&IDs |
+|---|---|
+| **Process Flow Diagrams (PFDs)** | Used as the basis to *create* P&IDs |
+| **Instrument Schematics** | Provide detailed wiring and control logic for specific instruments shown on P&IDs |
+| **Wiring Diagrams** | Show simplified circuit components and signal wiring referenced from P&IDs |
+| **Logic Diagrams** | Complement P&IDs with control logic detail |
+| **SCADA Network Diagrams** | Show the network context of instrumentation depicted in P&IDs |
+
+In summary, a P&ID serves as a central reference document that bridges high-level process flow information with detailed instrumentation and control design.","Piping and Instrumentation Diagrams (P&IDs) show the piping, instruments, and equipment in a process plant, defining their connections and configurations.",0.6666666666666666,0.8487957583234161,0.99999999995,1.0
+Why is process procedure P-03 in non-compliance with Safety Regulation SR-12?,"['# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts.\n\n## Conflict Details\n- **Conflicting Source A**: [Safety Regulation SR-12](../regulations/sr-12.md)\n- **Conflicting Source B**: [Process Procedure P-03](../procedures/p-03.md)\n\n## Audit Findings\nSafety Regulation SR-12 explicitly limits the maximum operating pressure of V-202 to 100 PSI. However, Process Procedure P-03 instructs technicians to set the bypass pressure to 120 PSI, directly violating SR-12 and creating an overpressure explosion hazard.', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: Safety Regulation SR-12: Valve Operations\n\n## Explanation\nThe Emergency Bypass Procedure (Entity A) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document references 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves)' as a governing standard. Entity B is described as Safety Regulation SR-12 specifying a maximum of 100 PSI for bypass valves. The procedure commands a bypass pressure of 145 PSI, which exceeds the regulatory maximum of 100 PSI by 45 PSI (a 45% exceedance). This is a direct conflict between an operational procedure and its own referenced safety regulation, presenting a critical safety and regul"", ' References & Links\nNo links established.', 'nces & Links\nNo links established.', '# Process Procedure P-102: Pump safety and operations\n\nSafety guidelines and regulations for Pump P-102:\n- Pump P-102 handles highly hazardous process fluids and chemicals in the main production line.\n- The operation, maintenance, and testing of pump P-102 must comply strictly with process safety management standards under 29 CFR 1910.119.\n- This equipment is subject to risk management provisions under the Clean Air Act Amendments.\n- All technician maintenance, pressure checks, and calibration procedures must be fully documented and audited every 6 months.']","## Compliance Audit Report — P-03 vs. SR-12
+
+**Overall Compliance Score: 0/1 requirements met**
+
+---
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| SR-12: Maximum operating pressure for bypass valves on V-202 must not exceed **100 PSI** | P-03 §[bypass pressure instruction]: Technicians instructed to set bypass pressure to **120 PSI** | **NON-COMPLIANT** | P-03 exceeds the SR-12 regulatory maximum by **20 PSI (20% exceedance)**, creating a direct overpressure condition on V-202 | **Critical** |
+
+---
+
+### Finding Summary
+
+**Source:** `alerts/conflict-mock.md`
+
+Process Procedure P-03 is in non-compliance with Safety Regulation SR-12 for the following documented reason:
+
+- **SR-12** explicitly establishes a **hard ceiling of 100 PSI** for the maximum operating pressure of valve V-202.
+- **P-03** directly contradicts this by instructing technicians to set the bypass pressure to **120 PSI** — a **20 PSI exceedance** of the regulatory limit.
+- The alert source explicitly identifies this as creating an **overpressure explosion hazard**, classifying this as a **Critical** safety violation.
+
+---
+
+### ⚠️ Important Notices
+
+1. **No additional regulatory text** from `regulations/safety-regulation-sr-12-valve-operations.md` was available in the provided sources (no links established). Findings are based solely on the conflict alert as documented.
+2. A **second, separate conflict** was also detected (`alerts/conflict-emergency-bypass-pro-safety-regulation-sr-1787641104.md`) involving the **Emergency Bypass Procedure for Pump P-101**, which independently exceeds SR-12's 100 PSI limit by **45 PSI (145 PSI commanded)**. This is a distinct non-compliance and should be audited separately.
+3. Per `procedures/p-102-procedure.md`, Pump P-102 operations are governed by **29 CFR 1910.119 (OSHA PSM)** — however, no clause text was available in the provided sources, so no findings against that regulation are reported here per audit rules.
+
+---
+
+> **Recommended Action:** P-03 must be immediately suspended and revised to cap bypass pressure at or below 100 PSI in accordance with SR-12 before further operations on V-202 are permitted.","Process procedure P-03 directs setting the V-202 bypass to 120 PSI, which contradicts Safety Regulation SR-12's maximum allowable limit of 100 PSI for valve V-202.",0.7857142857142857,0.8375008422455131,0.9999999999,1.0
+What is the maintenance status of pump P-101 and who serviced it last?,"['# P-101 Maintenance Log\n\nMaintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check\n\n## References & Links\nNo links established.', '# P-101 Equipment Specifications\n\nEquipment specification document for Centrifugal Pump P-101 validating casing integrity and operating limits.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain curre', '# P-102 Maintenance Log\n\nMaintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration\n\n## References & Links\nNo links established.', '# Temperature Limits\n\nMax bearing temperature during emergency bypass is 95°C; normal operating limit is 75°C for P-101.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pressure and notify ', '\n### Real-time Telemetry (Last 6 Hours) for P-101:\n| Timestamp | Temp (C) | Pressure (bar) | Vibration (mm/s) | Motor RPM | Status |\n| :--- | :---: | :---: | :---: | :---: | :--- |\n| 09:00 | 44.80 | 29.80 | 1.35 | 1450.5 | Normal |\n| 10:00 | 45.20 | 30.10 | 1.45 | 1451.2 | Normal |\n| 11:00 | 48.70 | 34.50 | 1.82 | 1445.0 | Normal |\n| 12:00 | 53.10 | 39.80 | 2.65 | 1438.1 | Elevated Vibration |\n| 13:00 | 59.40 | 43.20 | 3.90 | 1430.5 | High Vibration & Pressure |\n| 14:00 | 66.80 | 47.90 | 5.24 | 1421.0 | ANOMALY: Exceeds Safe Pressure of 45 bar |\n']","## OBSERVATION
+
+### Maintenance Record Summary for P-101
+
+| Attribute | Detail |
+|:---|:---|
+| **Last Serviced** | 2026-06-15 |
+| **Next Service Due** | 2026-09-15 |
+| **Technician** | Sarah Connor |
+| **Current Status** | Pending impeller check |
+| **Source Document** | `maintenance/p-101-maintenance-log.md` |
+
+Real-time telemetry confirms P-101 is currently **active and degrading**, with the most recent reading at **14:00** flagged as `ANOMALY: Exceeds Safe Pressure of 45 bar`.
+
+---
+
+## ANALYSIS
+
+### Sensor Readings vs. Nominal Thresholds (Latest: 14:00)
+
+| Parameter | Current Value (14:00) | Normal Operating Limit | Emergency Bypass Limit | Status |
+|:---|:---:|:---:|:---:|:---|
+| Temperature | 66.80°C | 75°C | 95°C | ⚠️ Elevated but within limits |
+| Pressure | 47.90 bar (~694 PSI) | ~130 PSI (normal) | 145 PSI (bypass) | 🔴 **Exceeds 45 bar safe threshold** |
+| Vibration | 5.24 mm/s RMS | Baseline ~1.35–1.45 | 8.0 mm/s RMS | ⚠️ Elevated, trending upward |
+| Motor RPM | 1421.0 | ~1450–1451 (baseline) | — | ⚠️ Declining |
+
+### Degradation Timeline from Telemetry
+
+| Timestamp | Key Event |
+|:---|:---|
+| 09:00–10:00 | Stable baseline; all parameters nominal |
+| 11:00 | Pressure and vibration begin rising; RPM drops slightly |
+| 12:00 | Status escalates to `Elevated Vibration`; RPM decline accelerates |
+| 13:00 | Status escalates to `High Vibration & Pressure`; temperature crosses 59°C |
+| 14:00 | **ANOMALY declared**; pressure exceeds 45 bar safe limit; vibration at 5.24 mm/s and rising |
+
+The data shows a **consistent, monotonic degradation** across all four parameters over a 5-hour window, beginning at approximately **11:00**.
+
+---
+
+## ROOT CAUSE
+
+Based solely on the evidence provided, the following is supported:
+
+1. **Pending Impeller Check (Primary Suspect):** Per `maintenance/p-101-maintenance-log.md`, P-101 has an **outstanding impeller check** from its last service on 2026-06-15. A degraded or imbalanced impeller is directly consistent with the observed symptom cluster: rising discharge pressure, increasing vibration, and declining motor RPM — all hallmarks of impeller wear or partial blockage restricting flow efficiency.
+
+2. **Progressive Mechanical Degradation:** The gradual onset at 11:00 and steady escalation through 14:00 is characteristic of a **developing mechanical fault** rather than a sudden failure event (e.g., electrical trip or pipe rupture), further pointing toward a mechanical component such as the impeller.
+
+3. **No Emergency Bypass Active:** The pressure values (47.90 bar / ~694 PSI) far exceed even the emergency bypass ceiling of **145 PSI** defined in `EBP-P101-2026`, indicating this is **not a controlled bypass scenario** — the overpressure is uncontrolled.
+
+> ⚠️ **Note:** No log entries document an emergency trip event or bypass activation, meaning the current overpressure condition is occurring during what should be normal operation.
+
+---
+
+## RECOMMENDATION
+
+| Priority | Action | Basis |
+|:---|:---|:---|
+| 🔴 **Immediate** | Initiate controlled shutdown of P-101 per emergency procedures | Pressure exceeds 45 bar safe limit at 14:00; `EBP-P101-2026` Step 3 requires notification if vibration trends toward 8.0 mm/s |
+| 🔴 **Immediate** | Notify R. Krishnamurthy (Plant Operations Manager) | Approving authority per `EBP-P101-2026` |
+| 🟠 **Urgent** | Assign technician Sarah Connor to complete the **pending impeller check** | Outstanding since last service 2026-06-15 per `p-101-maintenance-log.md`; impeller fault is the primary evidence-supported root cause |
+| 🟡 **Short-term** | Conduct full bearing and seal inspection upon shutdown | Temperature at 66.80°C is trending toward the 75°C normal limit; bearing integrity should be verified |
+| 🟡 **Short-term** | Review P-102 calibration status | `p-102-maintenance-log.md` flags P-102 as **overdue for calibration** (due 2026-07-12); if P-101 is taken offline, P-102 readiness must be confirmed before use |
+
+> **Scope Boundary:** This RCA is limited to evidence present in the provided maintenance logs, equipment specifications, and telemetry. No failure modes beyond those directly supported by this data have been inferred.",Pump P-101 was last serviced by technician Sarah Connor on 2026-06-15. Its current status is pending an impeller check.,0.9782608695652174,0.8752319861315415,0.9999999999,1.0
+Is pump P-102 currently compliant with its calibration schedule?,"['# Process Procedure P-102: Pump safety and operations\n\nSafety guidelines and regulations for Pump P-102:\n- Pump P-102 handles highly hazardous process fluids and chemicals in the main production line.\n- The operation, maintenance, and testing of pump P-102 must comply strictly with process safety management standards under 29 CFR 1910.119.\n- This equipment is subject to risk management provisions under the Clean Air Act Amendments.\n- All technician maintenance, pressure checks, and calibration procedures must be fully documented and audited every 6 months.', '# Vibration Monitoring\n\nAcceptable vibration during emergency restart is up to 8.0 mm/s RMS; exceeding triggers supervisor notification.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pres', '# OSHA 29 CFR 1910.119 Process Safety Management\n\nOSHA standard for Process Safety Management referenced for emergency bypass compliance.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pre', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis"", '# Safety Regulation SR-12: Valve Operations\n\nRegulatory standard specifying maximum 100 PSI for bypass valves in valve operations.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pressure a']","## Compliance Audit Report — Pump P-102 Calibration Schedule
+
+---
+
+### ⚠️ Preliminary Scope Note
+
+The query concerns **Pump P-102** and its calibration schedule compliance. The available source documents provide **regulatory requirements** for P-102 (via `procedures/p-102-procedure.md`) but contain **no records of actual calibration, maintenance logs, or audit history** for P-102. The Emergency Bypass Procedure documents in the provided sources pertain exclusively to **Pump P-101** and are out of scope for this query.
+
+---
+
+### Overall Compliance Score: **0/1 requirements verifiable** (1 UNVERIFIED)
+
+*No non-compliance is confirmed, but compliance cannot be established from available evidence.*
+
+---
+
+### Compliance Matrix
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| All technician maintenance, pressure checks, and calibration procedures must be fully documented and audited every 6 months — per `procedures/p-102-procedure.md` (citing 29 CFR 1910.119) | No calibration records, audit logs, or schedule documentation for P-102 are present in the provided sources | **UNVERIFIED** | No evidence of completed or scheduled calibration audits was supplied for review. Compliance cannot be confirmed or denied. | N/A — cannot assign severity without evidence |
+
+---
+
+### Findings Summary
+
+> **The current audit cannot determine whether Pump P-102 is compliant with its calibration schedule.** The regulatory obligation is clearly established in `procedures/p-102-procedure.md` under 29 CFR 1910.119: a 6-month documentation and audit cycle is mandatory. However, **no calibration records, maintenance logs, or audit completion reports for P-102 were included in the provided source materials.**
+
+---
+
+### Recommended Actions
+
+1. **Supply calibration and maintenance records** for Pump P-102 to enable a definitive compliance determination.
+2. **Verify the date of the last documented audit** against the 6-month requirement.
+3. If records cannot be produced, this absence itself may constitute a **NON-COMPLIANT** finding under 29 CFR 1910.119 documentation requirements — but that determination requires a records review outside the scope of the provided sources.
+
+---
+
+*No regulations or requirements have been cited beyond those explicitly present in the provided source documents.*","No, pump P-102 was last serviced on 2026-01-12 and was due for calibration on 2026-07-12. It is currently overdue for calibration.",0.8064516129032258,0.0,0.0,0.0
+Which federal law established the Occupational Safety and Health Administration (OSHA)?,"['# Occupational Safety and Health Act of 1970\n\nA federal law that regulates workplace safety and health\n\n## References & Links\n- [Process Safety Management](./process-safety-management.md)\n- [Hazard Communication Standard](./hazard-communication-standard.md)', '# Clean Air Act Amendments\n\nA law that requires employers to implement process safety management programs\n\n## References & Links\n- [29 CFR 1910.119](./29-cfr-1910-119.md)', ' References & Links\nNo links established.', '# 29 CFR 1910.119\n\nProcess safety management of highly hazardous chemicals\n\n## References & Links\nNo links established.', '# Hazard Communication Standard\n\nA standard for communicating hazards associated with chemicals in the workplace\n\n## References & Links\n- [Process Safety Management](./process-safety-management.md)\n- [Occupational Safety and Health Act of 1970](./occupational-safety-and-health-act-of-1970.md)']","## Compliance Audit Response
+
+**I cannot provide a reliable answer to this query based on the available source documents.**
+
+---
+
+### Reason
+
+The query asks which federal law **established OSHA** as an agency. While the provided sources reference the *Occupational Safety and Health Act of 1970*, none of the source documents contain substantive content describing the Act's provisions — including whether or how it established OSHA as an administrative body.
+
+The source entry for the Act reads only:
+
+> *""A federal law that regulates workplace safety and health""*
+
+This is insufficient to confirm the specific claim about OSHA's establishment.
+
+---
+
+### Compliance Matrix — Source Coverage
+
+| Requirement | Procedure | Status | Gap |
+|---|---|---|---|
+| Identify establishing legislation for OSHA | Query against available sources | **UNVERIFIED** | Source documents contain no substantive legislative text or provisions describing OSHA's creation |
+
+---
+
+> ⚠️ **Per my operating rules, I do not hallucinate regulations or requirements not present in the provided sources.** To answer this query accurately, the full text of the Occupational Safety and Health Act of 1970 would need to be included in the source documentation.",The Occupational Safety and Health Act of 1970 is the federal law that established the Occupational Safety and Health Administration (OSHA).,0.8888888888888888,0.0,0.699999999965,0.0
+What is the primary function of Piping and Instrumentation Diagrams (P&IDs)?,"['# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', '# Process Flow Diagrams (PFDs)\n\nDrawings with lines for piping and symbols for major components, used to create P&IDs.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)\n- [Instrument Schematics](./instrument-schematics.md)', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# Instrument Schematics\n\nDetailed drawings for particular instruments, showing wiring details and control logic notes.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)', '# Wiring Diagrams\n\nDiagrams showing circuit components as simplified shapes with power and signal wiring between devices.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)']","P&IDs primarily serve to illustrate the functional relationships between piping, instrumentation, equipment, and controllers within a process system using schematic lines and symbols.
+
+## Primary Function
+
+According to **piping-and-instrumentation-diagrams-p-ids.md**, P&IDs are defined as:
+
+> *""Drawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.""*
+
+This is further reinforced by **p-id.md**, which describes a P&ID as:
+
+> *""A schematic diagram that shows how equipment and instruments connect to form a functional process system.""*
+
+## Key Capabilities
+
+Based on the sources, P&IDs accomplish this function by:
+
+- **Representing piping and communications** as schematic lines
+- **Depicting control features** using standardized symbols
+- **Showing interconnections** between equipment and instruments to form a complete process system
+
+## Related Documentation
+
+P&IDs sit at the center of a broader documentation ecosystem, with relationships to several other diagram types:
+
+| Related Document | Relationship to P&IDs |
+|---|---|
+| **Process Flow Diagrams (PFDs)** | Used as a basis to *create* P&IDs |
+| **Instrument Schematics** | Provide detailed wiring and control logic for individual instruments shown in P&IDs |
+| **Wiring Diagrams** | Show simplified circuit components referenced in P&IDs |
+| **Logic Diagrams** | Complement P&IDs with control logic detail |","P&IDs show the piping, instruments, and equipment in a process plant, defining their connections, configurations, and physical control schemes.",0.7692307692307693,0.9885093262219827,0.8333333332916666,1.0
+What is the difference between PFDs and P&IDs?,"['# Process Flow Diagrams (PFDs)\n\nDrawings with lines for piping and symbols for major components, used to create P&IDs.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)\n- [Instrument Schematics](./instrument-schematics.md)', '# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# P&ID Drafting Procedure\n\nA set of guidelines for creating P&IDs, including drawing size, borders, and title blocks\n\n## References & Links\n- [P&ID](../equipment/p-id.md)', '# P&ID Quality Assurance Matrix\n\nA framework for ensuring the quality and consistency of P&IDs\n\n## References & Links\n- [P&ID](../equipment/p-id.md)']","**PFDs and P&IDs are both schematic drawing types used in process systems, but they differ in scope and level of detail.**
+
+## Process Flow Diagrams (PFDs)
+
+According to `equipment/process-flow-diagrams-pfds.md`, PFDs are:
+
+- Drawings that use **lines for piping** and **symbols for major components**
+- Primarily used as a **precursor or input** to creating P&IDs
+- Focused on the **high-level layout** of a process system
+
+## Piping and Instrumentation Diagrams (P&IDs)
+
+According to `equipment/piping-and-instrumentation-diagrams-p-ids.md` and `equipment/p-id.md`, P&IDs are:
+
+- Drawings showing **piping and communications** as schematic lines, with **control features** represented as symbols
+- Designed to illustrate the **functional relationship** of piping, instrumentation, equipment, and controllers
+- More comprehensive, connecting to a broader set of related documents including **Wiring Diagrams, SCADA Network Diagrams, and Logic Diagrams**
+
+## Key Comparison
+
+| Attribute | PFD | P&ID |
+|---|---|---|
+| Primary focus | Major components & piping layout | Piping, instrumentation, controls & communications |
+| Level of detail | High-level / conceptual | Detailed / functional |
+| Role in workflow | Input used to create P&IDs | End deliverable showing full system relationships |
+| Related documents | P&IDs, Instrument Schematics | Wiring Diagrams, SCADA Diagrams, Logic Diagrams, and more |
+
+In summary, **PFDs serve as a simpler foundation** from which the more detailed and functionally complete **P&IDs are developed**.","Process Flow Diagrams (PFDs) are simplified schematics showing general flow paths and primary equipment, which are used to develop the detailed Piping and Instrumentation Diagrams (P&IDs).",0.5454545454545454,0.8465009686923887,0.0,1.0
+What is the role of logic diagrams in industrial equipment?,"['# Logic Diagrams\n\nDiagrams conveying control descriptions pictorially, including ladder logic diagrams, binary logic diagrams, and Boolean logic diagrams.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', '# Wiring Diagrams\n\nDiagrams showing circuit components as simplified shapes with power and signal wiring between devices.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# SCADA Network Diagrams\n\nBlock diagrams showing the basic SCADA architecture and communication channels between devices, controllers, and computers.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)']","Logic diagrams serve as a pictorial means of conveying control descriptions in industrial equipment systems, and they are closely integrated with Piping and Instrumentation Diagrams (P&IDs).
+
+## Definition and Purpose
+
+According to **logic-diagrams.md**, logic diagrams are:
+
+> *""Diagrams conveying control descriptions pictorially""*
+
+They encompass several specific diagram types:
+
+- **Ladder Logic Diagrams** – a graphical representation of control logic commonly used in PLC programming
+- **Binary Logic Diagrams** – diagrams representing on/off control relationships
+- **Boolean Logic Diagrams** – diagrams expressing logical conditions using Boolean expressions
+
+## Role Within the Broader Documentation Ecosystem
+
+Based on **piping-and-instrumentation-diagrams-p-ids.md**, Logic Diagrams are directly referenced by and linked to **P&IDs**, which illustrate:
+
+> *""the functional relationship of piping, instrumentation, equipment, and controllers""*
+
+This means logic diagrams complement P&IDs by providing the **detailed control logic** behind the functional relationships shown schematically in P&IDs.
+
+## Summary of Relationships
+
+| Diagram Type | Primary Role | Linked To |
+|---|---|---|
+| Logic Diagrams | Pictorial control descriptions | P&IDs |
+| P&IDs | Functional relationships of piping & instruments | Logic Diagrams, Wiring Diagrams, SCADA Diagrams |
+| Wiring Diagrams | Circuit component connections | P&IDs |
+
+In essence, logic diagrams bridge the gap between high-level process design (P&IDs) and the specific **control logic** governing equipment behavior.",Logic diagrams describe the Boolean control loops and ladder logic systems used to configure automated interlocking safety controls on equipment.,0.5,0.8888392994923584,0.0,0.0
+What does a SCADA network diagram show?,"['# SCADA Network Diagrams\n\nBlock diagrams showing the basic SCADA architecture and communication channels between devices, controllers, and computers.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', '# Wiring Diagrams\n\nDiagrams showing circuit components as simplified shapes with power and signal wiring between devices.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# Logic Diagrams\n\nDiagrams conveying control descriptions pictorially, including ladder logic diagrams, binary logic diagrams, and Boolean logic diagrams.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)']","A SCADA network diagram shows the basic architecture and communication channels within a SCADA system.
+
+## SCADA Network Diagram Overview
+
+According to **scada-network-diagrams.md**, a SCADA network diagram consists of:
+
+- **Block diagrams** showing the basic SCADA architecture
+- **Communication channels** between:
+  - Devices
+  - Controllers
+  - Computers
+
+## Related Documentation
+
+The SCADA network diagram is part of a broader set of engineering drawings. As noted in **piping-and-instrumentation-diagrams-p-ids.md**, SCADA Network Diagrams are related to and referenced alongside:
+
+- Piping and Instrumentation Diagrams (P&IDs)
+- Process Flow Diagrams (PFDs)
+- Instrument Schematics
+- Wiring Diagrams
+- Logic Diagrams
+
+These documents collectively illustrate the functional relationships between piping, instrumentation, equipment, and controllers within a process system.","SCADA network diagrams depict the overall block architecture of the supervisory control and data acquisition systems, showing remote monitoring links and network paths.",0.5,0.9762220000516088,0.9999999999,1.0
+Identify the technician who serviced valve V-202 and the last service date.,"['# V-202 Maintenance Log\n\nMaintenance log for equipment V-202, last serviced on 2026-05-10, next service due on 2026-11-10, technician John Doe, status completed\n\n## References & Links\nNo links established.', '# T-301 Maintenance Log\n\nMaintenance log for equipment T-301, last serviced on 2026-04-20, next service due on 2026-10-20, technician Marcus Wright, status completed\n\n## References & Links\nNo links established.', '# P-101 Maintenance Log\n\nMaintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check\n\n## References & Links\nNo links established.', '# P-102 Maintenance Log\n\nMaintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration\n\n## References & Links\nNo links established.', '# Valve Specification\n\nDetails about valve type, size, and other characteristics\n\n## References & Links\n- [P&ID](./p-id.md)', 'Real-time sensor telemetry for V-202 shows all metrics within nominal baseline parameters.']","## OBSERVATION
+
+The query requests identification of the servicing technician and last service date for valve V-202. The relevant record was located in the maintenance log source.
+
+| Field | Recorded Value |
+|---|---|
+| Equipment ID | V-202 |
+| Last Service Date | 2026-05-10 |
+| Next Service Due | 2026-11-10 |
+| Technician | John Doe |
+| Status | Completed |
+
+Real-time telemetry confirms **all sensor metrics for V-202 are currently within nominal baseline parameters**, indicating no active fault condition at time of query.
+
+---
+
+## ANALYSIS
+
+The maintenance record for V-202 is straightforward and complete. The service was marked **""completed""** with no pending actions noted. The next scheduled service is due **2026-11-10**, meaning the unit is currently within its active service interval. No anomalies are flagged in either the maintenance log or live telemetry.
+
+---
+
+## ROOT CAUSE
+
+> ⚠️ **No fault or degradation identified.** This query is informational in nature, not diagnostic. There is no root cause to establish, as both the maintenance record and real-time telemetry indicate nominal operating status.
+
+---
+
+## RECOMMENDATION
+
+| Action | Priority | Notes |
+|---|---|---|
+| No immediate action required | — | V-202 is within service interval and operating nominally |
+| Schedule next service | Low | Due **2026-11-10** — assign technician in advance |
+| Verify technician availability | Low | Confirm John Doe or designate alternate for next service window |
+
+> 📋 **Summary:** Valve V-202 was last serviced by **John Doe** on **2026-05-10**. No issues are present in the maintenance record or current telemetry.","Valve V-202 was serviced by technician John Doe on 2026-05-10, and the maintenance task was completed successfully.",0.42105263157894735,0.880198285299203,0.9999999999,1.0
+What does Clean Air Act Section 112(r) focus on?,"['# Clean Air Act Amendments\n\nA law that requires employers to implement process safety management programs\n\n## References & Links\n- [29 CFR 1910.119](./29-cfr-1910-119.md)', '# Process Procedure P-102: Pump safety and operations\n\nSafety guidelines and regulations for Pump P-102:\n- Pump P-102 handles highly hazardous process fluids and chemicals in the main production line.\n- The operation, maintenance, and testing of pump P-102 must comply strictly with process safety management standards under 29 CFR 1910.119.\n- This equipment is subject to risk management provisions under the Clean Air Act Amendments.\n- All technician maintenance, pressure checks, and calibration procedures must be fully documented and audited every 6 months.', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis"", '# Occupational Safety and Health Administration (OSHA)\n\nA government agency responsible for ensuring workplace safety and health\n\n## References & Links\n- [29 CFR 1910.119](../regulations/29-cfr-1910-119.md)', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: Safety Regulation SR-12: Valve Operations\n\n## Explanation\nThe Emergency Bypass Procedure (Entity A) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document references 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves)' as a governing standard. Entity B is described as Safety Regulation SR-12 specifying a maximum of 100 PSI for bypass valves. The procedure commands a bypass pressure of 145 PSI, which exceeds the regulatory maximum of 100 PSI by 45 PSI (a 45% exceedance). This is a direct conflict between an operational procedure and its own referenced safety regulation, presenting a critical safety and regul""]","Based on the provided sources, I cannot answer this query with sufficient grounding.
+
+## What the Sources Contain
+
+The available context mentions the **Clean Air Act Amendments** only briefly, noting that:
+
+- It is a law that **requires employers to implement process safety management programs**
+- It references **29 CFR 1910.119**
+- Pump P-102 is subject to its **risk management provisions** (per `procedures/p-102-procedure.md`)
+
+## What Is Not Covered
+
+The sources do **not** contain any specific information about **Section 112(r)** of the Clean Air Act, including its focus, provisions, or requirements. Providing details about that specific section would require me to go beyond the grounded source material, which I cannot do.
+
+---
+
+> 💡 **Recommendation:** To get an accurate answer about Clean Air Act Section 112(r), please upload the relevant regulatory text or official documentation into the Vigil system so it can be properly indexed and cited.",Clean Air Act Section 112(r) focuses on preventing accidental releases of hazardous chemicals and requires facilities to identify hazards and manage chemical safety.,0.9090909090909091,0.0,0.0,0.0
+What are the core requirements of 29 CFR 1910.119?,"['# 29 CFR 1910.119\n\nProcess safety management of highly hazardous chemicals\n\n## References & Links\nNo links established.', ' References & Links\nNo links established.', '# OSHA 29 CFR 1910.119 Process Safety Management\n\nOSHA standard for Process Safety Management referenced for emergency bypass compliance.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pre', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis"", '# Clean Air Act Amendments\n\nA law that requires employers to implement process safety management programs\n\n## References & Links\n- [29 CFR 1910.119](./29-cfr-1910-119.md)']","## Compliance Audit: Emergency Bypass Procedure EBP-P101-2026 vs. 29 CFR 1910.119
+
+**Overall Compliance Score: 1/4 requirements assessed as fully compliant**
+
+---
+
+> ⚠️ **Audit Scope Note:** The provided source documents contain only partial text of 29 CFR 1910.119 — no specific clause text was retrieved. Findings below are based **strictly on what appears in the provided sources**, including the internal conflict alert. I will not cite regulation clause numbers not present in the source material.
+
+---
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| **SR-12: Max 100 PSI for bypass valves** (cited within EBP-P101-2026 Reference Standards, per Alert conflict-emergency-bypass-pro-osha-29-cfr-1910.119-1787641099) | EBP-P101-2026 §Step 2: Pressure Override Settings — directs 145 PSI bypass for minimum 3 minutes | **NON-COMPLIANT** | Procedure exceeds its own cited maximum by **45 PSI (145% of limit)**. Internal contradiction: procedure references SR-12 but violates it. | **Critical** |
+| **Process Safety Management program requirement** (29 CFR 1910.119, via Clean Air Act Amendments reference) | EBP-P101-2026 is approved by Plant Operations Manager R. Krishnamurthy; approval chain documented | **PARTIAL** | Procedure exists and is approved, but the PSM program integrity is undermined by the critical pressure non-compliance above. Full PSM program documentation not provided for review. | **Major** |
+| **Vibration monitoring threshold documentation** | EBP-P101-2026 §Step 3: 8.0 mm/s RMS limit defined; shutdown action referenced but source text is **truncated** (""maintain current pre—"") | **UNVERIFIED** | Source document is cut off. Cannot confirm whether corrective action instructions are complete and compliant. | **Major** |
+| **Scope applicability to covered personnel** | EBP-P101-2026 §2: Explicitly applies to ""all operations personnel responsible for restarting Pump P-101"" | **COMPLIANT** | No gap identified within available source material. | — |
+
+---
+
+### Key Findings Summary
+
+1. **Critical Non-Compliance — Pressure Override (Step 2):** The procedure's own reference standards (SR-12) cap bypass valve pressure at 100 PSI. The procedure directs operators to operate at 145 PSI — a direct internal contradiction flagged by the system alert. This must be resolved before the procedure is used operationally.
+
+2. **Truncated Procedure Text:** Step 3 is incomplete in the provided sources. The vibration exceedance response cannot be fully audited.
+
+3. **Regulation Clause Limitation:** The full clause-level text of 29 CFR 1910.119 was **not present in the retrieved sources**. A complete audit against all PSM elements (e.g., Process Hazard Analysis, Management of Change, Operating Procedures §(f)) requires the full regulatory text to be provided.
+
+---
+
+> 📋 **Recommended Action:** Suspend use of EBP-P101-2026 pending revision of Step 2 pressure settings to comply with SR-12 (≤100 PSI), recovery of complete Step 3 text, and full re-review against 29 CFR 1910.119 clause-level requirements.","29 CFR 1910.119 requires process safety management (PSM) plans covering employee participation, process safety information, process hazard analysis, and operating procedures for hazardous chemicals.",0.40625,0.73520212972381,0.0,0.0
+What parameters do instrument schematics show?,"['# Instrument Schematics\n\nDetailed drawings for particular instruments, showing wiring details and control logic notes.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)', '# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', 'References & Links\nNo links established.', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# Instrument Loop Elements\n\nComponents of an instrument loop, including sensors, transmitters, and controllers\n\n## References & Links\n- [P&ID](./p-id.md)']","Based on the provided sources, instrument schematics show **wiring details and control logic notes** for particular instruments.
+
+## Details from Sources
+
+According to **`equipment/instrument-schematics.md`**, instrument schematics are defined as:
+
+> *""Detailed drawings for particular instruments, showing wiring details and control logic notes.""*
+
+The two key parameters/details shown are:
+
+- **Wiring details** — the electrical connections for individual instruments
+- **Control logic notes** — annotations describing the control behavior or logic associated with those instruments
+
+## Related Documentation
+
+The instrument schematics are closely related to the following documents, which may provide additional context:
+
+| Related Document | Relevance |
+|---|---|
+| **Piping and Instrumentation Diagrams (P&IDs)** | Shows functional relationships of piping, instrumentation, and controllers at a system level |
+| **Process Flow Diagrams (PFDs)** | Higher-level process representation |
+
+> **Note:** The available sources do not provide further granular detail beyond wiring details and control logic notes for instrument schematics. For more comprehensive parameter information, consulting the actual schematic drawings directly would be recommended.","Instrument schematics show detailed instrumentation drawing details, including physical location, wiring terminations, and terminal block points.",0.5,0.9061461894052562,0.0,0.0
+What is the purpose of instrument loop elements in a P&ID?,"['# Instrument Loop Elements\n\nComponents of an instrument loop, including sensors, transmitters, and controllers\n\n## References & Links\n- [P&ID](./p-id.md)', '# P&ID\n\nA schematic diagram that shows how equipment and instruments connect to form a functional process system\n\n## References & Links\nNo links established.', '# Control Loops\n\nSystems that maintain a process condition at a set value by adjusting devices based on feedback from instruments.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Equipment Title Blocks\n\nA standard format for displaying equipment information on a P&ID\n\n## References & Links\n- [P&ID](./p-id.md)', '# P&ID Drafting Procedure\n\nA set of guidelines for creating P&IDs, including drawing size, borders, and title blocks\n\n## References & Links\n- [P&ID](../equipment/p-id.md)']","Instrument loop elements are the individual components (sensors, transmitters, and controllers) that make up an instrument loop, and they are represented on a P&ID to show how the process is monitored and controlled.
+
+## Instrument Loop Elements
+
+According to **`equipment/instrument-loop-elements.md`**, instrument loop elements are defined as:
+
+> *""Components of an instrument loop, including sensors, transmitters, and controllers""*
+
+These elements are directly referenced within the P&ID context, as the source explicitly links to **`equipment/p-id.md`**, indicating their role within that schematic framework.
+
+## Role Within a P&ID
+
+Based on the available sources:
+
+| Source | Relevant Definition |
+|---|---|
+| `equipment/p-id.md` | A P&ID is *""a schematic diagram that shows how equipment and instruments connect to form a functional process system""* |
+| `equipment/instrument-loop-elements.md` | Instrument loop elements are the *sensors, transmitters, and controllers* that populate that schematic |
+| `equipment/control-loops.md` | Control loops *""maintain a process condition at a set value by adjusting devices based on feedback from instruments""* |
+
+## Summary of Purpose
+
+Instrument loop elements serve the following roles within a P&ID:
+
+- **Represent physical components** (sensors, transmitters, controllers) on the schematic diagram
+- **Define the feedback path** that control loops rely on to maintain process conditions at a set value
+- **Show interconnections** between equipment and instruments within the functional process system
+
+> ⚠️ **Note:** The available sources provide foundational definitions but do not include deeper technical detail (e.g., specific symbology or tagging conventions). Refer to **`procedures/p-id-drafting-procedure.md`** for drafting guidelines that may provide additional context on how these elements are represented.","Instrument loop elements represent the combination of sensors, transmitters, and controllers that act together in a control loop to monitor or regulate parameters.",0.6,0.9765915976696714,0.9999999999,1.0
+Describe the format of wiring diagrams.,"['# Wiring Diagrams\n\nDiagrams showing circuit components as simplified shapes with power and signal wiring between devices.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Logic Diagrams\n\nDiagrams conveying control descriptions pictorially, including ladder logic diagrams, binary logic diagrams, and Boolean logic diagrams.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# SCADA Network Diagrams\n\nBlock diagrams showing the basic SCADA architecture and communication channels between devices, controllers, and computers.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)', '# Piping and Instrumentation Diagrams (P&IDs)\n\nDrawings showing piping and communications as schematic lines and control features as symbols, illustrating the functional relationship of piping, instrumentation, equipment, and controllers.\n\n## References & Links\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)\n- [Instrument Schematics](./instrument-schematics.md)\n- [Wiring Diagrams](./wiring-diagrams.md)\n- [SCADA Network Diagrams](./scada-network-diagrams.md)\n- [Logic Diagrams](./logic-diagrams.md)', '# Instrument Schematics\n\nDetailed drawings for particular instruments, showing wiring details and control logic notes.\n\n## References & Links\n- [Piping and Instrumentation Diagrams (P&IDs)](./piping-and-instrumentation-diagrams-p-ids.md)\n- [Process Flow Diagrams (PFDs)](./process-flow-diagrams-pfds.md)']","Wiring diagrams show circuit components as simplified shapes with power and signal wiring depicted between devices.
+
+## Format Description
+
+According to **wiring-diagrams.md**, wiring diagrams consist of the following key formatting elements:
+
+- **Simplified shapes** to represent circuit components
+- **Power wiring** shown as lines connecting between devices
+- **Signal wiring** shown as lines connecting between devices
+
+## Related Documentation
+
+Wiring diagrams are closely related to **Piping and Instrumentation Diagrams (P&IDs)**, which provide broader context by showing the functional relationships of piping, instrumentation, equipment, and controllers (per **piping-and-instrumentation-diagrams-p-ids.md**). P&IDs in turn reference wiring diagrams as a complementary document type.
+
+> **Note:** The available sources provide only a high-level description of wiring diagram format. For more detailed formatting specifications, consulting the actual wiring diagram standards or the related **instrument-schematics.md** (which covers detailed wiring details for particular instruments) may provide additional context.","Wiring diagrams show actual physical connections, wire routing, and terminals between electrical components in a control system.",0.5833333333333334,0.8794918158216657,0.0,0.0
+How does the Hazard Communication Standard help employees?,"['# Hazard Communication Standard\n\nA standard for communicating hazards associated with chemicals in the workplace\n\n## References & Links\n- [Process Safety Management](./process-safety-management.md)\n- [Occupational Safety and Health Act of 1970](./occupational-safety-and-health-act-of-1970.md)', '# Process Safety Management\n\nA standard for preventing or minimizing the consequences of catastrophic releases of toxic, reactive, flammable, or explosive chemicals\n\n## References & Links\n- [Hazard Communication Standard](./hazard-communication-standard.md)\n- [Occupational Safety and Health Act of 1970](./occupational-safety-and-health-act-of-1970.md)', '# Occupational Safety and Health Act of 1970\n\nA federal law that regulates workplace safety and health\n\n## References & Links\n- [Process Safety Management](./process-safety-management.md)\n- [Hazard Communication Standard](./hazard-communication-standard.md)', '# Clean Air Act Amendments\n\nA law that requires employers to implement process safety management programs\n\n## References & Links\n- [29 CFR 1910.119](./29-cfr-1910-119.md)', ' References & Links\nNo links established.']","## Compliance Audit Notice
+
+I'm unable to perform a meaningful compliance audit based on your query. Here's why:
+
+---
+
+**Two issues prevent a proper audit:**
+
+### 1. No Operational Procedure Provided
+A compliance audit requires comparing a **specific operational procedure** against regulations. No procedure document was submitted for review.
+
+### 2. Insufficient Regulatory Detail in Sources
+The provided source documents contain only **titles, descriptions, and cross-references** — no specific clauses, requirements, or enforceable provisions are cited. Per my operating rules, I cannot hallucinate regulations or requirements not present in the sources.
+
+---
+
+**Regarding your specific question** — *""How does the Hazard Communication Standard help employees?""* — the source file `regulations/hazard-communication-standard.md` describes it only as:
+
+> *""A standard for communicating hazards associated with chemicals in the workplace""*
+
+This is insufficient to generate a compliance matrix or cite specific requirements.
+
+---
+
+### To proceed with a proper audit, please provide:
+
+| Needed Input | Description |
+|---|---|
+| **Operational Procedure** | The specific procedure document to be audited |
+| **Regulatory Detail** | Full clause text from the applicable standards |
+| **Scope** | Which chemicals, processes, or workplace areas apply |
+
+I will then produce a complete compliance matrix with cited clauses, statuses, and severity ratings.",The Hazard Communication Standard requires chemical manufacturers and employers to classify chemical hazards and provide labels and safety data sheets (SDS) to workers.,0.36363636363636365,0.0,0.0,0.0
+What equipment tags are mentioned in the maintenance logs?,"['# V-202 Maintenance Log\n\nMaintenance log for equipment V-202, last serviced on 2026-05-10, next service due on 2026-11-10, technician John Doe, status completed\n\n## References & Links\nNo links established.', '# P-102 Maintenance Log\n\nMaintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration\n\n## References & Links\nNo links established.', '# P-101 Maintenance Log\n\nMaintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check\n\n## References & Links\nNo links established.', '# T-301 Maintenance Log\n\nMaintenance log for equipment T-301, last serviced on 2026-04-20, next service due on 2026-10-20, technician Marcus Wright, status completed\n\n## References & Links\nNo links established.', '# Equipment Title Blocks\n\nA standard format for displaying equipment information on a P&ID\n\n## References & Links\n- [P&ID](./p-id.md)']","## OBSERVATION
+
+The query requests identification of equipment tags referenced across all available maintenance log sources. This is an **informational/inventory query** rather than a fault or degradation scenario, so the RCA framework will be applied in an adapted form appropriate to a data retrieval task.
+
+---
+
+## ANALYSIS
+
+### Equipment Tags Identified in Maintenance Logs
+
+A review of all four maintenance log sources yields the following equipment tags:
+
+| Equipment Tag | Source File | Last Serviced | Next Service Due | Technician | Status |
+|---|---|---|---|---|---|
+| **V-202** | `maintenance/v-202-maintenance-log.md` | 2026-05-10 | 2026-11-10 | John Doe | ✅ Completed |
+| **P-102** | `maintenance/p-102-maintenance-log.md` | 2026-01-12 | 2026-07-12 | Sarah Connor | ⚠️ Overdue Calibration |
+| **P-101** | `maintenance/p-101-maintenance-log.md` | 2026-06-15 | 2026-09-15 | Sarah Connor | 🔶 Pending Impeller Check |
+| **T-301** | `maintenance/t-301-maintenance-log.md` | 2026-04-20 | 2026-10-20 | Marcus Wright | ✅ Completed |
+
+> **Note:** The source `equipment/equipment-title-blocks.md` references a P&ID document but contains **no equipment tags itself** — it is a formatting standard document only.
+
+---
+
+## ROOT CAUSE
+
+This is a data inventory query with no fault condition to analyze. However, two equipment items warrant flagging based on their recorded statuses:
+
+- **P-102** — Status is marked **""overdue calibration""** as of its last log entry (2026-01-12), with a service due date of **2026-07-12** that has passed. This represents the highest maintenance risk among the listed assets.
+- **P-101** — Status is marked **""pending impeller check""**, indicating an **open action item** from its last service on 2026-06-15.
+
+---
+
+## RECOMMENDATION
+
+1. **P-102 (Highest Priority):** Immediately schedule overdue calibration. The service due date of 2026-07-12 has elapsed with no recorded completion. Assign technician Sarah Connor or a qualified substitute to close this work order.
+2. **P-101 (Medium Priority):** Confirm resolution of the pending impeller check before the next service due date of 2026-09-15. Impeller degradation, if unaddressed, can lead to flow loss and downstream process disruption.
+3. **V-202 & T-301:** No action required at this time — both are recorded as **completed** and within their service windows.
+4. **General:** Ensure all maintenance logs are updated with **detailed work order notes and telemetry references** to support future RCA activities. Current logs lack sensor data linkage.","The maintenance logs mention equipment tags P-101 (pump), P-102 (pump), V-202 (valve), and T-301 (tank).",0.5142857142857142,0.965599557033158,0.0,0.0
+What is the maximum pressure permitted for valve V-202 under safety regulations?,"['# Safety Regulation SR-12: Valve Operations\n\nThis regulation defines limits for pressure operations:\n- Safety bypass valves (including V-202) must not exceed 100 PSI under any operating condition.\n- Any setting above 100 PSI violates overpressure protocols and creates severe containment hazards.', '# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts.\n\n## Conflict Details\n- **Conflicting Source A**: [Safety Regulation SR-12](../regulations/sr-12.md)\n- **Conflicting Source B**: [Process Procedure P-03](../procedures/p-03.md)\n\n## Audit Findings\nSafety Regulation SR-12 explicitly limits the maximum operating pressure of V-202 to 100 PSI. However, Process Procedure P-03 instructs technicians to set the bypass pressure to 120 PSI, directly violating SR-12 and creating an overpressure explosion hazard.', ' regulatory maximum of 100 PSI by 45 PSI (a 45% exceedance). This is a direct conflict between an operational procedure and its own referenced safety regulation, presenting a critical safety and regulatory violation.', 'ce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pressure and notify shift supervisor\nStep 4: Temperature Limits\n- Maximum bearing temperature during emergency bypass: 95 degrees Celsius\n- Normal operating temperature must not exceed 75 degrees Celsius\n4. Safety Notes\n- This procedure overrides normal operating limits ONLY during emergency restart\n- Maximum duration of emergency bypass mode: 15 minutes\n- All pressure settings validated for P-101 casing integrity\n5. Reference Standards\n- Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves)\n- P-101 Equipment Specifications\n- OSHA 29 CFR 1910.119 Process Safety Management\n\n\n## References & Links\nNo links established.', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis""]","## Compliance Audit: Valve V-202 Maximum Pressure
+
+**Overall Compliance Score: 0/1 requirements met**
+
+> ⚠️ **Critical Non-Compliance Detected**
+
+---
+
+### Compliance Matrix
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| SR-12: Bypass valves (including V-202) must not exceed **100 PSI** under any operating condition (regulations/sr-12.md) | Process Procedure P-03 instructs technicians to set bypass pressure to **120 PSI** (alerts/conflict-mock.md) | **NON-COMPLIANT** | +20 PSI above regulatory maximum | **Critical** |
+
+---
+
+### Direct Answer to Query
+
+Per **Safety Regulation SR-12** (`regulations/sr-12.md`), the maximum permitted pressure for valve **V-202** is:
+
+> **100 PSI — under any operating condition.**
+
+SR-12 explicitly states that any setting above 100 PSI *""violates overpressure protocols and creates severe containment hazards.""*
+
+---
+
+### Additional Context Flags
+
+- A **separate but related conflict** is documented in the Emergency Bypass Procedure (EBP-P101-2026) for Pump P-101, which instructs operators to set discharge bypass pressure to **145 PSI** — a **45 PSI (45%) exceedance** of the SR-12 limit. This procedure internally contradicts its own cited reference standard (SR-12).
+- **OSHA 29 CFR 1910.119** (Process Safety Management) is cited as a reference standard in the emergency bypass procedure, meaning the overpressure condition may also constitute a federal regulatory violation.
+
+---
+
+### Recommended Actions
+
+1. **Immediately suspend** any procedure instructing bypass valve settings above 100 PSI pending engineering review.
+2. **Revise P-03** to align with SR-12's 100 PSI maximum.
+3. **Revise EBP-P101-2026** to eliminate the 145 PSI instruction or obtain a formal documented variance through the appropriate regulatory process.
+4. Conduct a **Management of Change (MOC)** review per OSHA 29 CFR 1910.119 before any procedure reinstatement.","Under Safety Regulation SR-12, the maximum pressure permitted for bypass valve V-202 is 100 PSI under any operating condition.",0.6666666666666666,0.9529425606889877,0.99999999998,1.0
+Summarize the maintenance work completed on vessel T-301.,"['# T-301 Maintenance Log\n\nMaintenance log for equipment T-301, last serviced on 2026-04-20, next service due on 2026-10-20, technician Marcus Wright, status completed\n\n## References & Links\nNo links established.', '# P-101 Maintenance Log\n\nMaintenance log for equipment P-101, last serviced on 2026-06-15, next service due on 2026-09-15, technician Sarah Connor, status pending impeller check\n\n## References & Links\nNo links established.', '# P-102 Maintenance Log\n\nMaintenance log for equipment P-102, last serviced on 2026-01-12, next service due on 2026-07-12, technician Sarah Connor, status overdue calibration\n\n## References & Links\nNo links established.', '# V-202 Maintenance Log\n\nMaintenance log for equipment V-202, last serviced on 2026-05-10, next service due on 2026-11-10, technician John Doe, status completed\n\n## References & Links\nNo links established.', 't\n\n\n## References & Links\nNo links established.', 'Real-time sensor telemetry for T-301 shows all metrics within nominal baseline parameters.']","## OBSERVATION
+
+The query requests a summary of maintenance work completed on vessel T-301.
+
+**Available Data Sources Reviewed:**
+- `maintenance/t-301-maintenance-log.md` — Primary source for T-301
+- Real-time telemetry for T-301
+- Other maintenance logs (P-101, P-102, V-202) — Not relevant to this query
+
+---
+
+## ANALYSIS
+
+### Sensor & Telemetry Status
+
+| Parameter | Current Status | Nominal Baseline | Deviation |
+|-----------|---------------|-----------------|-----------|
+| All monitored metrics | Within range | Within range | None detected |
+
+Real-time telemetry confirms T-301 is currently operating within all nominal baseline parameters.
+
+### Maintenance Record Review
+
+From `maintenance/t-301-maintenance-log.md`, the following structured data is confirmed:
+
+| Field | Value |
+|-------|-------|
+| Equipment ID | T-301 |
+| Last Serviced | 2026-04-20 |
+| Next Service Due | 2026-10-20 |
+| Assigned Technician | Marcus Wright |
+| Status | **Completed** |
+
+---
+
+## ROOT CAUSE
+
+> ⚠️ **Data Limitation Notice**
+
+While the maintenance record confirms that a service event was **completed** on **2026-04-20** by technician **Marcus Wright**, the log contains **no detailed work order entries, task descriptions, parts replaced, or procedural notes**. The source document (`t-301-maintenance-log.md`) does not provide granular detail beyond the structured metadata fields. No failure modes, corrective actions, or findings can be cited, as none are present in the available evidence.
+
+---
+
+## RECOMMENDATION
+
+1. **Request Full Work Order:** Contact technician **Marcus Wright** or retrieve the associated work order for the 2026-04-20 service event to obtain a detailed breakdown of tasks performed on T-301.
+2. **Populate the Maintenance Log:** The log entry should be updated to include task descriptions, parts replaced, inspection findings, and any anomalies observed — this is a documentation gap that limits future RCA capability.
+3. **Monitor Proactively:** Next service is due **2026-10-20**. Given current telemetry shows nominal operation, no immediate action is required, but scheduling should be confirmed in advance.
+4. **No Assumptions Made:** This summary is bounded strictly by the available evidence. No maintenance activities have been inferred or fabricated beyond what the source data explicitly states.",Vessel T-301 was serviced on 2026-04-20 by technician Marcus Wright. The maintenance work was successfully completed with status nominal.,0.6176470588235294,0.0,0.0,1.0
+Under what process safety standard does pump P-102 operate?,"['# Process Procedure P-102: Pump safety and operations\n\nSafety guidelines and regulations for Pump P-102:\n- Pump P-102 handles highly hazardous process fluids and chemicals in the main production line.\n- The operation, maintenance, and testing of pump P-102 must comply strictly with process safety management standards under 29 CFR 1910.119.\n- This equipment is subject to risk management provisions under the Clean Air Act Amendments.\n- All technician maintenance, pressure checks, and calibration procedures must be fully documented and audited every 6 months.', '# OSHA 29 CFR 1910.119 Process Safety Management\n\nOSHA standard for Process Safety Management referenced for emergency bypass compliance.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pre', ' PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit established by the governing safety regulation for bypass valves.', '# Safety Regulation SR-12: Valve Operations\n\nRegulatory standard specifying maximum 100 PSI for bypass valves in valve operations.\n\n## Source Content\nEmergency Bypass Procedure: Pump P-101\nDocument ID: EBP-P101-2026\nEffective Date: August 20, 2026\nApproved By: R. Krishnamurthy, Plant Operations Manager\n1. Purpose\nThis procedure establishes the emergency bypass protocol for Centrifugal Pump P-101 during unplanned shutdown\nrecovery scenarios.\n2. Scope\nApplies to all operations personnel responsible for restarting Pump P-101 after an emergency trip event.\n3. Emergency Restart Procedure\nStep 2: Pressure Override Settings\n- Set discharge pressure bypass to 145 PSI for initial surge clearance\n- Maintain bypass at 145 PSI for minimum 3 minutes during startup transient\n- Once flow stabilizes, reduce to normal operating pressure of 130 PSI\nStep 3: Vibration Monitoring\n- Acceptable vibration during emergency restart: up to 8.0 mm/s RMS\n- If vibration exceeds 8.0 mm/s, maintain current pressure a', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis""]","## Compliance Audit Response
+
+**Note:** Your query asks specifically about the process safety standard governing Pump P-102. I will answer directly from the sourced documentation, then provide the compliance matrix for full context.
+
+---
+
+## Process Safety Standard for Pump P-102
+
+Per **procedures/p-102-procedure.md**, Pump P-102 operates under:
+
+1. **29 CFR 1910.119** — OSHA Process Safety Management (PSM) Standard
+2. **Clean Air Act Amendments** — Risk Management Program (RMP) provisions
+
+---
+
+## Overall Compliance Score: 1/2 Requirements Verified from Sources
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| Compliance with 29 CFR 1910.119 PSM standards | P-102 Procedure (p-102-procedure.md) | COMPLIANT | Requirement explicitly cited and acknowledged in procedure documentation | — |
+| Documentation & audit cycle every 6 months for maintenance, pressure checks, and calibration | P-102 Procedure (p-102-procedure.md) | UNVERIFIED | No audit records or completed documentation logs were present in the provided sources to confirm adherence | — |
+
+---
+
+## ⚠️ Out-of-Scope Alert
+
+The sourced documents contain a **Critical Non-Compliance** flag for **Pump P-101** (not P-102):
+
+| Requirement | Procedure | Status | Gap | Severity |
+|---|---|---|---|---|
+| SR-12 Valve Operations: max 100 PSI for bypass valves | EBP-P101-2026, Step 2 (safety-regulation-sr-12-valve-operations.md) | **NON-COMPLIANT** | Procedure directs 145 PSI bypass pressure — exceeds regulatory maximum by **45 PSI** | **Critical** |
+
+> This finding is flagged per **alerts/conflict-emergency-bypass-pro-osha-29-cfr-1910.119-1787641099.md** and is reported here for completeness, but applies to P-101, not P-102.
+
+---
+
+*No regulations or requirements have been cited beyond what is present in the provided source documents.*",Pump P-102 operates under process safety management standards under 29 CFR 1910.119 and Clean Air Act Amendments.,0.6666666666666666,0.9813781938949314,0.9999999999,1.0
+Are there any recurring valve setpoint contradictions in the procedures?,"['# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts.\n\n## Conflict Details\n- **Conflicting Source A**: [Safety Regulation SR-12](../regulations/sr-12.md)\n- **Conflicting Source B**: [Process Procedure P-03](../procedures/p-03.md)\n\n## Audit Findings\nSafety Regulation SR-12 explicitly limits the maximum operating pressure of V-202 to 100 PSI. However, Process Procedure P-03 instructs technicians to set the bypass pressure to 120 PSI, directly violating SR-12 and creating an overpressure explosion hazard.', ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: Safety Regulation SR-12: Valve Operations\n\n## Explanation\nThe Emergency Bypass Procedure (Entity A) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document references 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves)' as a governing standard. Entity B is described as Safety Regulation SR-12 specifying a maximum of 100 PSI for bypass valves. The procedure commands a bypass pressure of 145 PSI, which exceeds the regulatory maximum of 100 PSI by 45 PSI (a 45% exceedance). This is a direct conflict between an operational procedure and its own referenced safety regulation, presenting a critical safety and regul"", ""# Alert: Compliance Conflict Detected\n\nA contradiction has been flagged between two linked concepts during document upload.\n\n## Conflict Details\n- **Source A**: Emergency Bypass Procedure: Pump P-101\n- **Source B**: OSHA 29 CFR 1910.119 Process Safety Management\n\n## Explanation\nThe Emergency Bypass Procedure (EBP-P101-2026) instructs operators to 'Set discharge pressure bypass to 145 PSI for initial surge clearance' and 'Maintain bypass at 145 PSI for minimum 3 minutes during startup transient.' However, the same document's Reference Standards section explicitly cites 'Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves).' The procedure commands a bypass pressure of 145 PSI, which exceeds the referenced safety regulation's maximum allowable bypass valve pressure of 100 PSI by 45 PSI. This is an internal contradiction within the procedure that creates a critical safety/regulatory conflict: the procedure directs operators to exceed the maximum pressure limit establis"", ' regulatory maximum of 100 PSI by 45 PSI (a 45% exceedance). This is a direct conflict between an operational procedure and its own referenced safety regulation, presenting a critical safety and regulatory violation.']","# Lessons-Learned Engine: Valve Setpoint Contradiction Analysis
+
+---
+
+## Pattern Summary Table
+
+| Pattern | Frequency | Severity | Recommended Fix |
+|---|---|---|---|
+| Bypass valve pressure setpoints exceed SR-12 100 PSI maximum | 3 occurrences across 2 distinct procedures | **CRITICAL** | Immediate procedure freeze; reconcile all bypass setpoints to ≤100 PSI before next operation |
+| Operational procedures self-reference violated regulations | 2 occurrences in EBP-P101-2026 alone | **HIGH** | Mandate cross-reference validation gate during document authoring |
+| Pressure exceedance magnitude is substantial (20–45 PSI over limit) | 3 occurrences; range +20 PSI to +45 PSI | **CRITICAL** | Implement automated setpoint boundary checks in procedure management system |
+
+---
+
+## Expanded Pattern Analysis
+
+---
+
+### PATTERN 1: Bypass Valve Pressure Setpoints Systematically Exceed SR-12 Maximum
+
+**PATTERN →**
+Multiple operational procedures instruct technicians or operators to set bypass valve pressures above the 100 PSI ceiling mandated by Safety Regulation SR-12, creating a recurring overpressure hazard.
+
+**EVIDENCE →**
+- **Source [alerts/conflict-mock.md]:** Process Procedure P-03 instructs technicians to set bypass pressure on V-202 to **120 PSI**, exceeding SR-12's 100 PSI limit by **+20 PSI**.
+- **Source [alerts/conflict-emergency-bypass-pro-safety-regulation-sr-1787641104.md]:** Emergency Bypass Procedure for Pump P-101 instructs operators to set discharge pressure bypass to **145 PSI** and maintain it for a minimum of 3 minutes, exceeding SR-12's 100 PSI limit by **+45 PSI (45% exceedance)**.
+- **Source [alerts/conflict-emergency-bypass-pro-osha-29-cfr-1910.119-1787641099.md]:** The same EBP-P101-2026 procedure is independently flagged for the identical 145 PSI setpoint, confirming the violation is documented across multiple audit pathways.
+
+> ⚠️ **3 conflict alerts across 2 distinct procedures** all converge on the same root violation: bypass setpoints written above the SR-12 regulatory ceiling.
+
+**DESIGN LESSON →**
+SR-12's 100 PSI bypass valve maximum is not being treated as a hard constraint during procedure authoring. Writers are either unaware of the limit, or are overriding it for operational convenience (e.g., surge clearance, startup transients) without obtaining a formal variance or engineering deviation approval.
+
+**RECOMMENDED ACTION →**
+1. **Immediate:** Issue a procedure freeze on P-03 and EBP-P101-2026 pending engineering review.
+2. **Short-term:** Audit *all* procedures referencing bypass valve setpoints for SR-12 compliance.
+3. **Systemic:** Embed SR-12 pressure limits as a validated field constraint in the procedure authoring template so values above 100 PSI cannot be saved without a documented deviation approval.
+
+---
+
+### PATTERN 2: Procedures Self-Reference the Regulation They Violate
+
+**PATTERN →**
+Procedures are citing SR-12 as a governing standard in their own Reference Standards section while simultaneously commanding setpoints that violate that same standard — an internal self-contradiction.
+
+**EVIDENCE →**
+- **Source [alerts/conflict-emergency-bypass-pro-safety-regulation-sr-1787641104.md]:** EBP-P101-2026 explicitly lists *""Safety Regulation SR-12: Valve Operations (max 100 PSI for bypass valves)""* as a reference, yet commands 145 PSI operation.
+- **Source [alerts/conflict-emergency-bypass-pro-osha-29-cfr-1910.119-1787641099.md]:** The same internal contradiction is confirmed in a second independent audit flag of EBP-P101-2026, noting the procedure's Reference Standards section cites SR-12 while the operational body violates it.
+
+> 📌 **2 independent audit sources** confirm the same document contains a self-defeating reference structure.
+
+**DESIGN LESSON →**
+Listing a regulation in a ""References"" section is not functioning as a compliance check — it is cosmetic. The authoring and review process has no mechanism to verify that cited standards are actually satisfied by the procedure's content.
+
+**RECOMMENDED ACTION →**
+1. Introduce a **mandatory compliance attestation step** in the procedure review workflow: for each cited standard, the reviewer must explicitly confirm that no setpoint or instruction in the procedure body exceeds that standard's limits.
+2. Flag any procedure that cites SR-12 for automated cross-check against all numerical pressure values in the document.
+
+---
+
+### PATTERN 3: Exceedance Magnitudes Are Operationally Significant, Not Marginal
+
+**PATTERN →**
+The violations are not minor calibration tolerances — they represent substantial overpressure commands that materially increase explosion and equipment failure risk.
+
+**EVIDENCE →**
+- **Source [alerts/conflict-mock.md]:** P-03 commands 120 PSI vs. 100 PSI limit → **+20% exceedance**, explicitly flagged as an *""overpressure explosion hazard.""*
+- **Source [alerts/conflict-emergency-bypass-pro-safety-regulation-sr-1787641104.md]:** EBP-P101-2026 commands 145 PSI vs. 100 PSI limit → **+45% exceedance**, sustained for a minimum of 3 minutes.
+
+**DESIGN LESSON →**
+The scale of these exceedances (20–45%) suggests the procedures were written to meet operational targets (surge clearance, startup performance) without any back-calculation to verify regulatory headroom. Safety limits were treated as advisory rather than binding.
+
+**RECOMMENDED ACTION →**
+1. Require **engineering sign-off** on any bypass setpoint above 80 PSI (providing a 20% safety buffer below the SR-12 ceiling).
+2. Where operational requirements genuinely demand higher pressures, initiate a formal **Management of Change (MOC)** process under OSHA 29 CFR 1910.119 PSM requirements before the procedure is issued.
+3. Consider hardware controls (pressure relief valve calibration) as a defense-in-depth measure independent of procedural compliance.
+
+---
+
+## Cross-Cutting Regulatory Note
+
+> **Source [alerts/conflict-emergency-bypass-pro-osha-29-cfr-1910.119-1787641099.md]** flags that these violations implicate **OSHA 29 CFR 1910.119 Process Safety Management**. This elevates the risk profile beyond internal compliance — these patterns may constitute reportable PSM violations and should be reviewed by your EHS/Legal team immediately.","Yes, a recurring contradiction occurs on valve V-202, where Operating Procedure P-03 directs setting the bypass to 120 PSI, violating Safety Regulation SR-12's 100 PSI maximum limit.",0.3,0.9076426980251968,0.7499999999625,1.0

@@ -1,5 +1,7 @@
 # FlashRank Retrieval Ablation Study Report
 
+> **Audit note (2026-10-12):** no raw output was saved for this run. A re-run on the current local index gives Hit@5 0.933 → 0.967 and MRR 0.836 → 0.874 with FlashRank (+0.033 / +0.038). See `docs/eval_runs/2026-10-12/retrieval_ablation.json`.
+
 This report documents a local, zero-API-cost ablation study comparing Vigil's retrieval layer performance with and without the FlashRank reranker module. 
 
 ## Evaluation Scope & Limitations

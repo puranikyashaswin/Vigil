@@ -1,0 +1,11 @@
+{
+  "calls": 107,
+  "in": 71630,
+  "out": 22070,
+  "by_model": {
+    "us.anthropic.claude-sonnet-4-6": [
+      71630,
+      22070
+    ]
+  }
+}

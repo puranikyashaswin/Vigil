@@ -1,5 +1,7 @@
 # VIGIL - Industrial Knowledge Intelligence
 
+> **Audit note (2026-10-12):** the RAGAS, ablation and contradiction figures in these notes predate the audit. For saved, re-run numbers, see `README.md` (Empirical Evaluation) and `docs/eval_runs/2026-10-12/`.
+
 ---
 
 ## Table of Contents

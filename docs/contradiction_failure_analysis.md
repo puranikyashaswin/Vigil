@@ -1,5 +1,7 @@
 # Contradiction Detection Failure Taxonomy Report
 
+> **Superseded (audit note, 2026-10-12):** this report comes from an earlier run that is not saved in the repo (6 misses, 2 false positives). The saved runs from 2026-08-24 and 2026-10-12 both give 4 misses (pairs 25, 35, 39, 41) and 0 false positives on 41 scored pairs. Pair 32 failed to parse and pair 34 was judged clean. Every missed pair in those runs has a non-zero verdict confidence (0.90, 0.30, 0.85, 0.35), not 0.00. See `docs/eval_runs/2026-10-12/`.
+
 This report analyzes the failure modes of Vigil's proactive contradiction detection system. We evaluate the detector against the 42-pair safety and compliance benchmark to map out its competence boundaries and identify false positives.
 
 ---
