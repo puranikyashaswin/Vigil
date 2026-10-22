@@ -148,7 +148,12 @@ def get_knowledge_base_tree() -> Dict[str, Any]:
             except Exception:
                 pass
             files.append(
-                {"name": fname, "path": f"{category_name}/{fname}", "title": title, "resource": resource}
+                {
+                    "name": fname,
+                    "path": f"{category_name}/{fname}",
+                    "title": title,
+                    "resource": resource,
+                }
             )
 
         categories.append({"name": category_name, "count": len(files), "files": files})
@@ -671,14 +676,28 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                     # Load existing entities from knowledge graph for cross-checking
                     existing_entities = []
                     import re as _re
-                    _equip_pattern = _re.compile(r'\b([A-Z]-\d{2,4}|P-\d{2,4}|V-\d{2,4}|T-\d{2,4})\b')
-                    _reg_pattern = _re.compile(r'\b(SR-\d+|OSHA[\s\d.]+|CFR[\s\d.]+|1910\.\d+)\b', _re.IGNORECASE)
-                    for sub in ["regulations", "procedures", "equipment", "maintenance"]:
+
+                    _equip_pattern = _re.compile(
+                        r"\b([A-Z]-\d{2,4}|P-\d{2,4}|V-\d{2,4}|T-\d{2,4})\b"
+                    )
+                    _reg_pattern = _re.compile(
+                        r"\b(SR-\d+|OSHA[\s\d.]+|CFR[\s\d.]+|1910\.\d+)\b",
+                        _re.IGNORECASE,
+                    )
+                    for sub in [
+                        "regulations",
+                        "procedures",
+                        "equipment",
+                        "maintenance",
+                    ]:
                         sub_path = os.path.join(kg_dir, sub)
                         if not os.path.isdir(sub_path):
                             continue
                         for fname in os.listdir(sub_path):
-                            if not fname.endswith(".md") or fname in ("index.md", "log.md"):
+                            if not fname.endswith(".md") or fname in (
+                                "index.md",
+                                "log.md",
+                            ):
                                 continue
                             fpath = os.path.join(sub_path, fname)
                             with open(fpath, "r", encoding="utf-8") as ef:
@@ -689,27 +708,44 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                                 for line in parts[1].strip().splitlines():
                                     if ":" in line:
                                         k, v = line.split(":", 1)
-                                        meta[k.strip()] = v.strip().strip('"').strip("'")
+                                        meta[k.strip()] = (
+                                            v.strip().strip('"').strip("'")
+                                        )
                                 body = "---".join(parts[2:])
-                                full_text = meta.get("title", "") + " " + meta.get("description", "") + " " + body
-                                equip_tags = list(set(_equip_pattern.findall(full_text)))
+                                full_text = (
+                                    meta.get("title", "")
+                                    + " "
+                                    + meta.get("description", "")
+                                    + " "
+                                    + body
+                                )
+                                equip_tags = list(
+                                    set(_equip_pattern.findall(full_text))
+                                )
                                 reg_refs = list(set(_reg_pattern.findall(full_text)))
-                                existing_entities.append({
-                                    "name": meta.get("title", fname.replace(".md", "")),
-                                    "type": meta.get("type", "concept"),
-                                    "description": meta.get("description", ""),
-                                    "equipment_tags": equip_tags,
-                                    "regulatory_references": reg_refs,
-                                    "linked_concepts": [],
-                                })
+                                existing_entities.append(
+                                    {
+                                        "name": meta.get(
+                                            "title", fname.replace(".md", "")
+                                        ),
+                                        "type": meta.get("type", "concept"),
+                                        "description": meta.get("description", ""),
+                                        "equipment_tags": equip_tags,
+                                        "regulatory_references": reg_refs,
+                                        "linked_concepts": [],
+                                    }
+                                )
 
                     # Only check new entities against existing REGULATION entities
                     new_names = {e["name"].lower() for e in entities}
-                    reg_entities = [e for e in existing_entities if e.get("type") == "regulation"]
+                    reg_entities = [
+                        e for e in existing_entities if e.get("type") == "regulation"
+                    ]
                     pairs = []
                     for ne in entities:
                         for re_ent in reg_entities:
                             pairs.append((ne, re_ent))
+
                     # Prioritize pairs where equipment tags or reg refs overlap
                     def pair_score(pair):
                         a, b = pair
@@ -718,24 +754,41 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                         a_refs = set(a.get("regulatory_references", []))
                         b_refs = set(b.get("regulatory_references", []))
                         return len(a_tags & b_tags) + len(a_refs & b_refs)
+
                     pairs.sort(key=pair_score, reverse=True)
                     for ent_a, ent_b in pairs[:2]:
                         # Enrich with full content for accurate contradiction checking
                         enriched_a = dict(ent_a)
                         enriched_b = dict(ent_b)
                         if ent_a["name"].lower() in new_names:
-                            enriched_a["description"] = ent_a.get("description", "") + "\n\nFull source content:\n" + parsed_text[:2000]
+                            enriched_a["description"] = (
+                                ent_a.get("description", "")
+                                + "\n\nFull source content:\n"
+                                + parsed_text[:2000]
+                            )
                         if ent_b["name"].lower() in new_names:
-                            enriched_b["description"] = ent_b.get("description", "") + "\n\nFull source content:\n" + parsed_text[:2000]
+                            enriched_b["description"] = (
+                                ent_b.get("description", "")
+                                + "\n\nFull source content:\n"
+                                + parsed_text[:2000]
+                            )
                         # For existing entities, load their full file body
                         for enriched, ent in [(enriched_a, ent_a), (enriched_b, ent_b)]:
                             if ent["name"].lower() not in new_names:
-                                for sub in ["regulations", "procedures", "equipment", "maintenance"]:
+                                for sub in [
+                                    "regulations",
+                                    "procedures",
+                                    "equipment",
+                                    "maintenance",
+                                ]:
                                     sub_path = os.path.join(kg_dir, sub)
                                     if not os.path.isdir(sub_path):
                                         continue
                                     for fn in os.listdir(sub_path):
-                                        if not fn.endswith(".md") or fn in ("index.md", "log.md"):
+                                        if not fn.endswith(".md") or fn in (
+                                            "index.md",
+                                            "log.md",
+                                        ):
                                             continue
                                         fp = os.path.join(sub_path, fn)
                                         with open(fp, "r", encoding="utf-8") as rf:
@@ -756,9 +809,15 @@ def ingest_upload(files: List[UploadFile] = File(...)):
                             alerts_dir = os.path.join(kg_dir, "alerts")
                             os.makedirs(alerts_dir, exist_ok=True)
                             severity = res.get("severity", "medium")
-                            explanation = res.get("explanation", "Contradiction detected between documents.")
-                            alert_title = f"Conflict: {ent_a['name']} vs {ent_b['name']}"
+                            explanation = res.get(
+                                "explanation",
+                                "Contradiction detected between documents.",
+                            )
+                            alert_title = (
+                                f"Conflict: {ent_a['name']} vs {ent_b['name']}"
+                            )
                             from datetime import datetime as _dt
+
                             alert_ts = _dt.now().strftime("%Y-%m-%dT%H:%M:%S")
                             alert_slug = f"conflict-{ent_a['name'].lower().replace(' ', '-')[:20]}-{ent_b['name'].lower().replace(' ', '-')[:20]}-{int(_dt.now().timestamp())}"
                             alert_content = f"""---
@@ -867,15 +926,17 @@ def get_graph_data() -> Dict[str, list]:
                 continue
             doc_id = f"doc:{fname}"
             ext = os.path.splitext(fname)[1].lower()
-            nodes.append({
-                "id": doc_id,
-                "label": fname,
-                "type": "source_document",
-                "description": f"Source document: {fname}",
-                "val": 5,
-                "interactive": True,
-                "file_ext": ext,
-            })
+            nodes.append(
+                {
+                    "id": doc_id,
+                    "label": fname,
+                    "type": "source_document",
+                    "description": f"Source document: {fname}",
+                    "val": 5,
+                    "interactive": True,
+                    "file_ext": ext,
+                }
+            )
             node_set.add(doc_id)
             doc_nodes.add(doc_id)
 
@@ -920,22 +981,26 @@ def get_graph_data() -> Dict[str, list]:
                         doc_id = f"doc:{doc_filename}"
                         if doc_id not in doc_nodes:
                             ext = os.path.splitext(doc_filename)[1].lower()
-                            nodes.append({
-                                "id": doc_id,
-                                "label": doc_filename,
-                                "type": "source_document",
-                                "description": f"Source document: {doc_filename}",
-                                "val": 5,
-                                "interactive": True,
-                                "file_ext": ext,
-                            })
+                            nodes.append(
+                                {
+                                    "id": doc_id,
+                                    "label": doc_filename,
+                                    "type": "source_document",
+                                    "description": f"Source document: {doc_filename}",
+                                    "val": 5,
+                                    "interactive": True,
+                                    "file_ext": ext,
+                                }
+                            )
                             node_set.add(doc_id)
                             doc_nodes.add(doc_id)
-                        links.append({
-                            "source": doc_id,
-                            "target": node_id,
-                            "type": "EXTRACTED_FROM",
-                        })
+                        links.append(
+                            {
+                                "source": doc_id,
+                                "target": node_id,
+                                "type": "EXTRACTED_FROM",
+                            }
+                        )
                         entity_to_doc[node_id] = doc_id
 
     # 3. Cross-document links between entities (existing logic)
@@ -958,23 +1023,43 @@ def get_graph_data() -> Dict[str, list]:
 
                         if target_path in node_set and target_path not in doc_nodes:
                             link_exists = any(
-                                (l["source"] == source_id and l["target"] == target_path)
-                                or (l["source"] == target_path and l["target"] == source_id)
+                                (
+                                    l["source"] == source_id
+                                    and l["target"] == target_path
+                                )
+                                or (
+                                    l["source"] == target_path
+                                    and l["target"] == source_id
+                                )
                                 for l in links
                             )
                             if not link_exists:
                                 rel_type = "REFERENCES"
-                                if source_id.startswith("alerts/") or target_path.startswith("alerts/"):
+                                if source_id.startswith(
+                                    "alerts/"
+                                ) or target_path.startswith("alerts/"):
                                     rel_type = "VIOLATES"
                                 elif (
                                     source_id.startswith("regulations/")
-                                    and (target_path.startswith("procedures/") or target_path.startswith("maintenance/"))
+                                    and (
+                                        target_path.startswith("procedures/")
+                                        or target_path.startswith("maintenance/")
+                                    )
                                 ) or (
                                     target_path.startswith("regulations/")
-                                    and (source_id.startswith("procedures/") or source_id.startswith("maintenance/"))
+                                    and (
+                                        source_id.startswith("procedures/")
+                                        or source_id.startswith("maintenance/")
+                                    )
                                 ):
                                     rel_type = "COMPLIES_WITH"
-                                links.append({"source": source_id, "target": target_path, "type": rel_type})
+                                links.append(
+                                    {
+                                        "source": source_id,
+                                        "target": target_path,
+                                        "type": rel_type,
+                                    }
+                                )
 
     # 4. Add inter-document links where entities from different docs reference each other
     for l in links[:]:
@@ -984,10 +1069,13 @@ def get_graph_data() -> Dict[str, list]:
             doc_link_exists = any(
                 (dl["source"] == src_doc and dl["target"] == tgt_doc)
                 or (dl["source"] == tgt_doc and dl["target"] == src_doc)
-                for dl in links if dl["type"] == "SHARED_CONTEXT"
+                for dl in links
+                if dl["type"] == "SHARED_CONTEXT"
             )
             if not doc_link_exists:
-                links.append({"source": src_doc, "target": tgt_doc, "type": "SHARED_CONTEXT"})
+                links.append(
+                    {"source": src_doc, "target": tgt_doc, "type": "SHARED_CONTEXT"}
+                )
 
     # Fallback: if no document nodes exist, make all entity nodes interactive
     if not doc_nodes:
@@ -1119,7 +1207,9 @@ def auto_seed_knowledge_graph_on_startup() -> None:
     Set AUTO_INDEX_ON_STARTUP=1 to enable, or indexing happens lazily on first query.
     """
     if not os.getenv("AUTO_INDEX_ON_STARTUP", ""):
-        logger.info("Skipping auto-indexing on startup (set AUTO_INDEX_ON_STARTUP=1 to enable). Embeddings load lazily on first query.")
+        logger.info(
+            "Skipping auto-indexing on startup (set AUTO_INDEX_ON_STARTUP=1 to enable). Embeddings load lazily on first query."
+        )
         return
 
     import threading

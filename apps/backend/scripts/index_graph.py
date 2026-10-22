@@ -88,6 +88,7 @@ def main():
 
     try:
         from fastembed import TextEmbedding
+
         logger.info("Initializing embedding model: BAAI/bge-small-en-v1.5...")
         embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
     except Exception as e:

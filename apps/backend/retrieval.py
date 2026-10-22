@@ -15,9 +15,13 @@ def get_embedding_model():
     global _embedding_model
     if _embedding_model is None:
         from fastembed import TextEmbedding
-        logger.info("Initializing TextEmbedding model: BAAI/bge-small-en-v1.5 (lazy)...")
+
+        logger.info(
+            "Initializing TextEmbedding model: BAAI/bge-small-en-v1.5 (lazy)..."
+        )
         _embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
     return _embedding_model
+
 
 _reranker = None
 
